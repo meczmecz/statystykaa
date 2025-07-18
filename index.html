@@ -1,91 +1,97 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Strona Trenera Jaguara</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
     body {
-      font-family: 'Poppins', sans-serif;
-      background: #f4f7fa;
-      margin: 0;
-      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background: #f5f7fa;
       color: #333;
     }
     h1 {
       text-align: center;
-      color: #0a6aa6;
-    }
-    nav {
-      text-align: center;
-      margin: 20px 0;
+      margin-bottom: 20px;
+      color: #2c3e50;
     }
     nav button {
-      background: #0a6aa6;
-      color: white;
+      margin-right: 10px;
+      padding: 10px 15px;
       border: none;
-      padding: 10px 20px;
-      margin: 5px;
-      border-radius: 8px;
-      font-size: 16px;
+      background-color: #2980b9;
+      color: white;
+      border-radius: 5px;
       cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s;
     }
     nav button:hover {
-      background: #084d7c;
+      background-color: #3498db;
     }
     .tab {
       display: none;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 20px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
     }
     .active {
       display: block;
     }
-    form {
-      background: white;
-      padding: 20px;
-      margin: 20px auto;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      max-width: 600px;
-    }
-    input, textarea, select, button[type="submit"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px;
+    .box {
       border: 1px solid #ccc;
-      font-size: 15px;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 7px;
+      background: #ecf0f1;
+    }
+    input, textarea, select, button {
+      margin: 8px 0;
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
     }
     button[type="submit"] {
-      background-color: #28a745;
+      background-color: #27ae60;
       color: white;
-      font-weight: bold;
       border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s;
     }
     button[type="submit"]:hover {
-      background-color: #218838;
+      background-color: #2ecc71;
     }
-    .box {
-      background: white;
-      padding: 15px;
-      margin: 10px auto;
-      border-left: 5px solid #0a6aa6;
-      border-radius: 6px;
-      max-width: 600px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    label {
+      font-weight: 600;
+      margin-top: 12px;
     }
-    ul {
-      padding-left: 20px;
+    #chartContainer {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      gap: 30px;
     }
     canvas {
       background: white;
       border: 1px solid #ccc;
-      margin-top: 20px;
-      display: block;
       border-radius: 8px;
-      max-width: 100%;
+    }
+    /* Scroll for long lists */
+    #matchList, #teamList {
+      max-height: 300px;
+      overflow-y: auto;
     }
   </style>
 </head>
@@ -98,6 +104,7 @@
     <button onclick="showTab('stats')">3️⃣ Statystyki Zawodnika</button>
   </nav>
 
+  <!-- Analiza Meczów -->
   <div id="matches" class="tab active">
     <h2>Analiza Meczów</h2>
     <form id="matchForm">
@@ -118,6 +125,7 @@
     <div id="matchList"></div>
   </div>
 
+  <!-- Drużyny i Zawodnicy -->
   <div id="teams" class="tab">
     <h2>Drużyny i Zawodnicy</h2>
     <form id="teamForm">
@@ -127,10 +135,21 @@
     <div id="teamList"></div>
   </div>
 
+  <!-- Statystyki Zawodnika -->
   <div id="stats" class="tab">
     <h2>Statystyki Zawodnika</h2>
-    <select id="playerSelect"></select>
-    <form id="ratingForm">
+    
+    <label for="teamSelect">Wybierz drużynę:</label>
+    <select id="teamSelect">
+      <option value="">-- wybierz drużynę --</option>
+    </select>
+
+    <label for="playerSelect">Wybierz zawodnika:</label>
+    <select id="playerSelect" disabled>
+      <option value="">-- wybierz zawodnika --</option>
+    </select>
+
+    <form id="ratingForm" style="margin-top: 20px;">
       <input type="date" id="ratingDate" required />
       <select id="ratingType" required>
         <option value="">Typ oceny</option>
@@ -141,170 +160,366 @@
       <input type="number" id="minutesPlayed" placeholder="Minuty (jeśli mecz)" />
       <button type="submit">Dodaj ocenę</button>
     </form>
-    <div id="ratingOutput"></div>
-    <button onclick="drawChart()">📈 Zobacz wykres postępu</button>
-    <canvas id="chartCanvas" width="600" height="300"></canvas>
+
+    <div id="ratingOutput" style="margin-top: 15px; font-weight: 600;"></div>
+
+    <div id="chartContainer">
+      <div>
+        <h3>Oceny po meczu</h3>
+        <canvas id="matchChart" width="600" height="300"></canvas>
+      </div>
+      <div>
+        <h3>Oceny po treningu</h3>
+        <canvas id="trainingChart" width="600" height="300"></canvas>
+      </div>
+    </div>
   </div>
 
-  <script>
-    function showTab(id) {
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+<script>
+  // POKAZYWANIE ZAKŁADEK
+  function showTab(id) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'))
+    document.getElementById(id).classList.add('active')
+  }
+
+  // --- ANALIZA MECZÓW ---
+  const matchForm = document.getElementById('matchForm')
+  const matchList = document.getElementById('matchList')
+
+  matchForm.onsubmit = function (e) {
+    e.preventDefault()
+    const match = {
+      date: matchDate.value,
+      opponents: opponents.value,
+      score: score.value,
+      rating: matchRating.value,
+      scorers: scorers.value,
+      bestPlayer: bestPlayer.value,
+      top3Jaguar: top3Jaguar.value,
+      top3Opponents: top3Opponents.value,
+      description: matchDescription.value
+    }
+    const matches = JSON.parse(localStorage.getItem('matches') || '[]')
+    matches.push(match)
+    localStorage.setItem('matches', JSON.stringify(matches))
+    renderMatches()
+    matchForm.reset()
+  }
+
+  function renderMatches() {
+    const matches = JSON.parse(localStorage.getItem('matches') || '[]')
+    matchList.innerHTML = ''
+    matches.forEach(m => {
+      const div = document.createElement('div')
+      div.className = 'box'
+      div.innerHTML = `
+        <strong>${m.date}</strong> – ${m.opponents} (${m.score})<br>
+        Ocena: ${m.rating}/5<br>
+        Strzelcy: ${m.scorers}<br>
+        MVP: ${m.bestPlayer}<br>
+        Top 3 Jaguar: ${m.top3Jaguar}<br>
+        Top 3 Przeciwnik: ${m.top3Opponents}<br>
+        Opis: ${m.description || '-'}
+      `
+      matchList.appendChild(div)
+    })
+  }
+
+  renderMatches()
+
+  // --- DRUŻYNY I ZAWODNICY ---
+  const teamForm = document.getElementById('teamForm')
+  const teamList = document.getElementById('teamList')
+  const teamSelect = document.getElementById('teamSelect')
+  const playerSelect = document.getElementById('playerSelect')
+
+  teamForm.onsubmit = function (e) {
+    e.preventDefault()
+    const name = teamName.value.trim()
+    if(!name) return
+    const teams = JSON.parse(localStorage.getItem('teams') || '[]')
+    if(teams.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+      alert('Taka drużyna już istnieje!')
+      return
+    }
+    teams.push({ name, players: [] })
+    localStorage.setItem('teams', JSON.stringify(teams))
+    teamForm.reset()
+    renderTeams()
+    renderTeamSelect()
+  }
+
+  function renderTeams() {
+    const teams = JSON.parse(localStorage.getItem('teams') || '[]')
+    teamList.innerHTML = ''
+    teams.forEach((t, i) => {
+      const div = document.createElement('div')
+      div.className = 'box'
+      div.innerHTML = `
+        <strong>${t.name}</strong><br>
+        <input type="text" id="p-${i}" placeholder="Dodaj zawodnika" />
+        <button onclick="addPlayer(${i})" style="margin-top: 5px; max-width: 120px;">Dodaj</button>
+        <ul id="players-${i}"></ul>
+      `
+      teamList.appendChild(div)
+
+      const playerList = document.getElementById(`players-${i}`)
+      playerList.innerHTML = ''
+      t.players.forEach(p => {
+        const li = document.createElement('li')
+        li.textContent = p
+        playerList.appendChild(li)
+      })
+    })
+  }
+
+  function addPlayer(teamIndex) {
+    const teams = JSON.parse(localStorage.getItem('teams') || '[]')
+    const input = document.getElementById(`p-${teamIndex}`)
+    const name = input.value.trim()
+    if (!name) return alert("Wpisz nazwę zawodnika")
+    // Sprawdź czy zawodnik już istnieje w drużynie
+    if(teams[teamIndex].players.some(p => p.toLowerCase() === name.toLowerCase())) {
+      alert("Taki zawodnik już jest w drużynie")
+      return
+    }
+    teams[teamIndex].players.push(name)
+    localStorage.setItem('teams', JSON.stringify(teams))
+    input.value = ''
+    renderTeams()
+    renderTeamSelect()
+  }
+
+  function renderTeamSelect() {
+    const teams = JSON.parse(localStorage.getItem('teams') || '[]')
+    teamSelect.innerHTML = '<option value="">-- wybierz drużynę --</option>'
+    teams.forEach(t => {
+      const option = document.createElement('option')
+      option.value = t.name
+      option.text = t.name
+      teamSelect.appendChild(option)
+    })
+    playerSelect.innerHTML = '<option value="">-- wybierz zawodnika --</option>'
+    playerSelect.disabled = true
+  }
+
+  teamSelect.addEventListener('change', () => {
+    const selectedTeam = teamSelect.value
+    playerSelect.innerHTML = '<option value="">-- wybierz zawodnika --</option>'
+    if(!selectedTeam) {
+      playerSelect.disabled = true
+      return
+    }
+    const teams = JSON.parse(localStorage.getItem('teams') || '[]')
+    const team = teams.find(t => t.name === selectedTeam)
+    if(team) {
+      team.players.forEach(p => {
+        const option = document.createElement('option')
+        option.value = p
+        option.text = p
+        playerSelect.appendChild(option)
+      })
+      playerSelect.disabled = false
+    } else {
+      playerSelect.disabled = true
+    }
+    clearStatsAndCharts()
+  })
+
+  // --- STATYSTYKI ZAWODNIKA ---
+  const ratingForm = document.getElementById('ratingForm')
+  const ratingOutput = document.getElementById('ratingOutput')
+  const matchChart = document.getElementById('matchChart').getContext('2d')
+  const trainingChart = document.getElementById('trainingChart').getContext('2d')
+
+  // Dane do wykresów
+  let ratingsData = {}
+
+  ratingForm.onsubmit = function(e) {
+    e.preventDefault()
+    const player = playerSelect.value
+    if (!player) {
+      alert("Wybierz zawodnika")
+      return
+    }
+    const data = {
+      date: ratingDate.value,
+      type: ratingType.value,
+      rating: Number(ratingValue.value),
+      minutes: Number(minutesPlayed.value) || 0
+    }
+    if (!data.date || !data.type || !data.rating) {
+      alert("Wypełnij wszystkie wymagane pola")
+      return
     }
 
-    const matchForm = document.getElementById('matchForm');
-    const matchList = document.getElementById('matchList');
+    const all = JSON.parse(localStorage.getItem('ratings') || '{}')
+    if (!all[player]) all[player] = []
+    all[player].push(data)
+    localStorage.setItem('ratings', JSON.stringify(all))
 
-    matchForm.onsubmit = function (e) {
-      e.preventDefault();
-      const match = {
-        date: matchDate.value,
-        opponents: opponents.value,
-        score: score.value,
-        rating: matchRating.value,
-        scorers: scorers.value,
-        bestPlayer: bestPlayer.value,
-        top3Jaguar: top3Jaguar.value,
-        top3Opponents: top3Opponents.value,
-        description: matchDescription.value
-      };
-      const matches = JSON.parse(localStorage.getItem('matches') || '[]');
-      matches.push(match);
-      localStorage.setItem('matches', JSON.stringify(matches));
-      renderMatches();
-      matchForm.reset();
+    ratingForm.reset()
+    showStats(player)
+    drawCharts(player)
+  }
+
+  playerSelect.addEventListener('change', () => {
+    const player = playerSelect.value
+    if(player) {
+      showStats(player)
+      drawCharts(player)
+    } else {
+      clearStatsAndCharts()
+    }
+  })
+
+  function showStats(player) {
+    const all = JSON.parse(localStorage.getItem('ratings') || '{}')
+    const data = all[player] || []
+    if(data.length === 0) {
+      ratingOutput.textContent = `Brak ocen dla ${player}`
+      return
+    }
+    const avgAll = (arr) => arr.reduce((a,b) => a + b.rating, 0) / arr.length
+    const matchRatings = data.filter(d => d.type === 'mecz')
+    const trainingRatings = data.filter(d => d.type === 'trening')
+    const avgMatch = matchRatings.length ? avgAll(matchRatings).toFixed(2) : '-'
+    const avgTraining = trainingRatings.length ? avgAll(trainingRatings).toFixed(2) : '-'
+
+    ratingOutput.innerHTML = `
+      Średnia ocena po meczu: <strong>${avgMatch}</strong><br>
+      Średnia ocena po treningu: <strong>${avgTraining}</strong>
+    `
+  }
+
+  function clearStatsAndCharts() {
+    ratingOutput.textContent = ''
+    clearCanvas(matchChart)
+    clearCanvas(trainingChart)
+  }
+
+  function clearCanvas(ctx) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  }
+
+  // Funkcja do rysowania wykresów
+  function drawCharts(player) {
+    const all = JSON.parse(localStorage.getItem('ratings') || '{}')
+    const data = all[player] || []
+    if(data.length === 0) {
+      clearStatsAndCharts()
+      return
     }
 
-    function renderMatches() {
-      const matches = JSON.parse(localStorage.getItem('matches') || '[]');
-      matchList.innerHTML = '';
-      matches.forEach(m => {
-        const div = document.createElement('div');
-        div.className = 'box';
-        div.innerHTML = `
-          <strong>${m.date}</strong> – ${m.opponents} (${m.score})<br>
-          Ocena: ${m.rating}/5<br>
-          Strzelcy: ${m.scorers}<br>
-          MVP: ${m.bestPlayer}<br>
-          Top 3 Jaguar: ${m.top3Jaguar}<br>
-          Top 3 Przeciwnik: ${m.top3Opponents}<br>
-          Opis: ${m.description || '-'}
-        `;
-        matchList.appendChild(div);
-      });
+    // Sortowanie po dacie
+    const parseDate = d => new Date(d.date)
+    const matchRatings = data.filter(d => d.type === 'mecz').sort((a,b) => parseDate(a) - parseDate(b))
+    const trainingRatings = data.filter(d => d.type === 'trening').sort((a,b) => parseDate(a) - parseDate(b))
+
+    drawLineChart(matchChart, matchRatings, 'Ocena po meczu')
+    drawLineChart(trainingChart, trainingRatings, 'Ocena po treningu')
+  }
+
+  // Rysowanie wykresu liniowego
+  function drawLineChart(ctx, dataPoints, label) {
+    clearCanvas(ctx)
+    if(dataPoints.length === 0) {
+      ctx.font = "16px Arial"
+      ctx.fillText("Brak danych", 10, 50)
+      return
     }
 
-    renderMatches();
+    const width = ctx.canvas.width
+    const height = ctx.canvas.height
+    const padding = 50
 
-    const teamForm = document.getElementById('teamForm');
-    const teamList = document.getElementById('teamList');
-    const playerSelect = document.getElementById('playerSelect');
+    // Oś Y - skala ocen od 0 do 5
+    const maxRating = 5
+    const minRating = 0
 
-    teamForm.onsubmit = function (e) {
-      e.preventDefault();
-      const name = teamName.value;
-      const teams = JSON.parse(localStorage.getItem('teams') || '[]');
-      teams.push({ name, players: [] });
-      localStorage.setItem('teams', JSON.stringify(teams));
-      teamForm.reset();
-      renderTeams();
+    // Oś X - daty
+    const dates = dataPoints.map(d => new Date(d.date))
+    const minDate = Math.min(...dates)
+    const maxDate = Math.max(...dates)
+    const dateRange = maxDate - minDate || 1
+
+    // Funkcje przeliczające wartości na współrzędne
+    const xPos = (date) => padding + ((date - minDate) / dateRange) * (width - 2 * padding)
+    const yPos = (rating) => height - padding - ((rating - minRating) / (maxRating - minRating)) * (height - 2 * padding)
+
+    // Rysowanie osi
+    ctx.strokeStyle = "#333"
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    // Oś Y
+    ctx.moveTo(padding, padding)
+    ctx.lineTo(padding, height - padding)
+    // Oś X
+    ctx.lineTo(width - padding, height - padding)
+    ctx.stroke()
+
+    // Oś Y - podziałka i etykiety
+    ctx.fillStyle = "#333"
+    ctx.font = "12px Arial"
+    for(let i=0; i <= maxRating; i++) {
+      let y = yPos(i)
+      ctx.beginPath()
+      ctx.moveTo(padding - 5, y)
+      ctx.lineTo(padding + 5, y)
+      ctx.stroke()
+      ctx.fillText(i.toString(), 10, y + 4)
     }
 
-    function renderTeams() {
-      const teams = JSON.parse(localStorage.getItem('teams') || '[]');
-      teamList.innerHTML = '';
-      playerSelect.innerHTML = '';
-      teams.forEach((t, i) => {
-        const div = document.createElement('div');
-        div.className = 'box';
-        div.innerHTML = `
-          <strong>${t.name}</strong><br>
-          <input type="text" id="p-${i}" placeholder="Dodaj zawodnika" />
-          <button onclick="addPlayer(${i})">Dodaj</button>
-          <ul id="players-${i}"></ul>
-        `;
-        teamList.appendChild(div);
-
-        const playerList = document.getElementById(`players-${i}`);
-        t.players.forEach(p => {
-          const li = document.createElement('li');
-          li.textContent = p;
-          playerList.appendChild(li);
-
-          const option = document.createElement('option');
-          option.value = p;
-          option.text = p;
-          playerSelect.appendChild(option);
-        });
-      });
+    // Oś X - podziałka co 3 punkty (daty)
+    const dateStep = Math.max(1, Math.floor(dataPoints.length / 4))
+    ctx.textAlign = "center"
+    for(let i=0; i < dataPoints.length; i += dateStep) {
+      let x = xPos(new Date(dataPoints[i].date))
+      ctx.beginPath()
+      ctx.moveTo(x, height - padding - 5)
+      ctx.lineTo(x, height - padding + 5)
+      ctx.stroke()
+      // Format daty: dd.mm
+      const d = new Date(dataPoints[i].date)
+      const labelDate = `${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}`
+      ctx.fillText(labelDate, x, height - padding + 20)
     }
 
-    function addPlayer(teamIndex) {
-      const teams = JSON.parse(localStorage.getItem('teams') || '[]');
-      const input = document.getElementById(`p-${teamIndex}`);
-      const name = input.value;
-      if (!name) return;
-      teams[teamIndex].players.push(name);
-      localStorage.setItem('teams', JSON.stringify(teams));
-      renderTeams();
-    }
+    // Rysowanie linii i punktów
+    ctx.strokeStyle = "#2980b9"
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    dataPoints.forEach((p, i) => {
+      let x = xPos(new Date(p.date))
+      let y = yPos(p.rating)
+      if(i === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    })
+    ctx.stroke()
 
-    renderTeams();
+    // Punkty na wykresie
+    ctx.fillStyle = "#2980b9"
+    dataPoints.forEach(p => {
+      let x = xPos(new Date(p.date))
+      let y = yPos(p.rating)
+      ctx.beginPath()
+      ctx.arc(x, y, 5, 0, 2*Math.PI)
+      ctx.fill()
+    })
 
-    const ratingForm = document.getElementById('ratingForm');
-    const ratingOutput = document.getElementById('ratingOutput');
-    const chartCanvas = document.getElementById('chartCanvas');
-    const ctx = chartCanvas.getContext('2d');
+    // Tytuł wykresu
+    ctx.fillStyle = "#2c3e50"
+    ctx.font = "16px Arial"
+    ctx.textAlign = "center"
+    ctx.fillText(label, width / 2, padding / 2)
+  }
 
-    ratingForm.onsubmit = function (e) {
-      e.preventDefault();
-      const player = playerSelect.value;
-      const data = {
-        date: ratingDate.value,
-        type: ratingType.value,
-        rating: Number(ratingValue.value),
-        minutes: Number(minutesPlayed.value) || 0
-      };
-      const all = JSON.parse(localStorage.getItem('ratings') || '{}');
-      if (!all[player]) all[player] = [];
-      all[player].push(data);
-      localStorage.setItem('ratings', JSON.stringify(all));
-      ratingForm.reset();
-      showStats(player);
-    }
+  // Inicjalizacja
+  renderTeams()
+  renderTeamSelect()
 
-    function showStats(player) {
-      const all = JSON.parse(localStorage.getItem('ratings') || '{}');
-      const data = all[player] || [];
-      let avg = 0;
-      if (data.length) {
-        avg = data.reduce((sum, d) => sum + d.rating, 0) / data.length;
-      }
-      ratingOutput.innerHTML = `Średnia ocen ${player}: ${avg.toFixed(2)}`;
-    }
+</script>
 
-    function drawChart() {
-      const player = playerSelect.value;
-      const all = JSON.parse(localStorage.getItem('ratings') || '{}');
-      const data = all[player] || [];
-
-      ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
-      if (data.length === 0) return;
-
-      const maxRating = 5;
-      const spacing = 600 / (data.length + 1);
-
-      ctx.beginPath();
-      ctx.moveTo(0, 300 - (data[0].rating / maxRating * 300));
-      data.forEach((d, i) => {
-        const x = (i + 1) * spacing;
-        const y = 300 - (d.rating / maxRating * 300);
-        ctx.lineTo(x, y);
-        ctx.arc(x, y, 3, 0, Math.PI * 2);
-      });
-      ctx.stroke();
-    }
-  </script>
 </body>
 </html>
 
