@@ -19,7 +19,8 @@
   <nav class="flex justify-center gap-6 mt-4">
     <button onclick="showTab('teams')" class="tab bg-white px-4 py-2 rounded shadow">Drużyny</button>
     <button onclick="showTab('players')" class="tab bg-white px-4 py-2 rounded shadow">Zawodnicy</button>
-    <button onclick="showTab('matches')" class="tab bg-white px-4 py-2 rounded shadow">Analiza Meczy</button>
+    <button onclick="showTab('matches')" class="tab bg-white px-4 py-2 rounded shadow">Analiza Meczów</button>
+    <button onclick="showTab('charts')" class="tab bg-white px-4 py-2 rounded shadow">Wykresy</button>
   </nav>
 
   <main class="p-6">
@@ -34,21 +35,29 @@
 
     <!-- Zawodnicy -->
     <section id="players" class="tab-content hidden">
-      <form onsubmit="addPlayer(event)" class="mb-4">
+      <form onsubmit="addPlayer(event)" class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-2">
         <select id="playerTeam" class="p-2 border rounded"></select>
         <input type="text" id="playerName" placeholder="Imię Zawodnika" class="p-2 border rounded">
-        <button class="bg-blue-500 text-white px-4 py-2 rounded">Dodaj zawodnika</button>
+        <input type="number" id="playerRating" placeholder="Ocena Meczu (1-5)" min="1" max="5" class="p-2 border rounded">
+        <input type="number" id="playerTraining" placeholder="Ocena Treningu (1-5)" min="1" max="5" class="p-2 border rounded">
+        <input type="text" id="playTime" placeholder="Czas gry (minuty)" class="p-2 border rounded">
+        <input type="date" id="performanceDate" class="p-2 border rounded">
+        <button class="bg-blue-500 text-white px-4 py-2 rounded col-span-full">Dodaj zawodnika</button>
       </form>
-      <div id="playerList" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      <div id="playerList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </section>
 
     <!-- Mecze -->
     <section id="matches" class="tab-content hidden">
-      <form onsubmit="addMatch(event)" class="mb-4">
-        <input type="date" id="matchDate" class="p-2 border rounded">
+      <form onsubmit="addMatch(event)" class="mb-4 grid gap-2 grid-cols-1 md:grid-cols-2">
+        <input type="date" id="matchDate" class="p-2 border rounded" required>
+        <input type="text" id="matchOpponent" placeholder="Przeciwnik" class="p-2 border rounded" required>
         <input type="text" id="matchScore" placeholder="Wynik" class="p-2 border rounded">
         <input type="text" id="matchScorer" placeholder="Strzelec bramki" class="p-2 border rounded">
-        <button class="bg-blue-500 text-white px-4 py-2 rounded">Dodaj mecz</button>
+        <input type="text" id="matchBestPlayers" placeholder="Najlepsi zawodnicy (Jaguar)" class="p-2 border rounded">
+        <input type="text" id="matchBestOpponents" placeholder="Najlepsi zawodnicy (przeciwnik)" class="p-2 border rounded">
+        <textarea id="matchNotes" placeholder="Uwagi / oceny indywidualne" class="p-2 border rounded col-span-full"></textarea>
+        <button class="bg-blue-500 text-white px-4 py-2 rounded col-span-full">Dodaj mecz</button>
       </form>
       <div id="matchList" class="space-y-4"></div>
     </section>
@@ -103,11 +112,19 @@
     function addPlayer(e) {
       e.preventDefault();
       const name = document.getElementById('playerName').value;
+      const rating = parseFloat(document.getElementById('playerRating').value);
+      const training = parseFloat(document.getElementById('playerTraining').value);
+      const time = document.getElementById('playTime').value;
+      const date = document.getElementById('performanceDate').value;
       const teamIdx = document.getElementById('playerTeam').value;
-      if (name && teamIdx !== '') {
-        players.push({ name, team: teams[teamIdx] });
+      if (name && teamIdx !== '' && rating >= 1 && rating <= 5) {
+        players.push({ name, rating, training, time, date, team: teams[teamIdx] });
         updatePlayerList();
+        updateChart();
         document.getElementById('playerName').value = '';
+        document.getElementById('playerRating').value = '';
+        document.getElementById('playerTraining').value = '';
+        document.getElementById('playTime').value = '';
       }
     }
 
@@ -117,7 +134,7 @@
       players.forEach(player => {
         const div = document.createElement('div');
         div.className = 'bg-white p-4 rounded shadow';
-        div.innerHTML = `<strong>${player.name}</strong><br>Drużyna: ${player.team}`;
+        div.innerHTML = `<strong>${player.name}</strong><br>Drużyna: ${player.team}<br>Ocena meczu: ${player.rating}<br>Ocena treningu: ${player.training}<br>Czas gry: ${player.time} min<br>Data: ${player.date}`;
         list.appendChild(div);
       });
     }
@@ -125,9 +142,13 @@
     function addMatch(e) {
       e.preventDefault();
       const date = document.getElementById('matchDate').value;
+      const opponent = document.getElementById('matchOpponent').value;
       const score = document.getElementById('matchScore').value;
       const scorer = document.getElementById('matchScorer').value;
-      matches.push({ date, score, scorer });
+      const bestPlayers = document.getElementById('matchBestPlayers').value;
+      const bestOpponents = document.getElementById('matchBestOpponents').value;
+      const notes = document.getElementById('matchNotes').value;
+      matches.push({ date, opponent, score, scorer, bestPlayers, bestOpponents, notes });
       updateMatchList();
     }
 
@@ -137,36 +158,53 @@
       matches.forEach(match => {
         const div = document.createElement('div');
         div.className = 'bg-white p-4 rounded shadow';
-        div.innerHTML = `<strong>${match.date}</strong><br>Wynik: ${match.score}<br>Strzelec: ${match.scorer}`;
+        div.innerHTML = `<strong>${match.date} vs ${match.opponent}</strong><br>Wynik: ${match.score}<br>Strzelec: ${match.scorer}<br>Najlepsi (Jaguar): ${match.bestPlayers}<br>Najlepsi (Przeciwnik): ${match.bestOpponents}<br><em>${match.notes}</em>`;
         list.appendChild(div);
       });
     }
 
-    // przykładowy wykres
-    const ctx = document.getElementById('ratingChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['2025-07-01', '2025-07-10', '2025-07-18'],
-        datasets: [{
-          label: 'Oceny zawodnika',
-          data: [3, 4, 5],
-          fill: false,
-          borderColor: 'rgb(59, 130, 246)',
-          tension: 0.3
-        }]
-      },
-      options: {
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 5
+    function updateChart() {
+      const ctx = document.getElementById('ratingChart').getContext('2d');
+      const labels = players.map(p => p.name);
+      const ratings = players.map(p => p.rating);
+      const trainings = players.map(p => p.training);
+
+      if (window.ratingChart) window.ratingChart.destroy();
+
+      window.ratingChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Oceny z meczów',
+              data: ratings,
+              borderColor: 'rgba(59,130,246,1)',
+              backgroundColor: 'rgba(59,130,246,0.2)',
+              fill: true
+            },
+            {
+              label: 'Oceny z treningów',
+              data: trainings,
+              borderColor: 'rgba(16,185,129,1)',
+              backgroundColor: 'rgba(16,185,129,0.2)',
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 5
+            }
           }
         }
-      }
-    });
+      });
+    }
+
+    showTab('teams');
   </script>
 </body>
 </html>
-
-
