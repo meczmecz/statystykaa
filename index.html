@@ -3,96 +3,170 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Trenerzy Jaguara - Pinterest Style</title>
+  <title>Panel Trenerów Jaguara</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* Scrollbar ładniejszy */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-thumb {
-      background-color: #2563eb;
-      border-radius: 4px;
-    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background-color: #2563eb; border-radius: 4px; }
   </style>
 </head>
-<body class="bg-gradient-to-tr from-blue-100 via-blue-200 to-blue-400 min-h-screen flex flex-col">
+<body class="bg-gradient-to-tr from-blue-100 via-blue-200 to-blue-400 min-h-screen">
+  <header class="bg-blue-800 text-white p-6 shadow-lg">
+    <h1 class="text-4xl font-extrabold text-center">Panel Trenerów Jaguara</h1>
+  </header>
 
-<header class="bg-blue-800 text-white p-6 shadow-lg">
-  <h1 class="text-4xl font-extrabold text-center tracking-wide">Panel Trenerów Jaguara</h1>
-</header>
+  <nav class="flex justify-center gap-6 mt-4">
+    <button onclick="showTab('teams')" class="tab bg-white px-4 py-2 rounded shadow">Drużyny</button>
+    <button onclick="showTab('players')" class="tab bg-white px-4 py-2 rounded shadow">Zawodnicy</button>
+    <button onclick="showTab('matches')" class="tab bg-white px-4 py-2 rounded shadow">Analiza Meczy</button>
+  </nav>
 
-<nav class="flex justify-center gap-8 mt-6">
-  <button data-tab="teams" class="tab-btn bg-white text-blue-800 font-semibold px-6 py-2 rounded-xl shadow hover:bg-blue-100 transition">Drużyny</button>
-  <button data-tab="players" class="tab-btn bg-white text-blue-800 font-semibold px-6 py-2 rounded-xl shadow hover:bg-blue-100 transition">Zawodnicy</button>
-</nav>
-
-<main class="flex-grow max-w-7xl mx-auto px-4 py-8">
-
-  <!-- Drużyny -->
-  <section id="teams" class="tab-content grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
-
-    <div class="col-span-full bg-white rounded-xl shadow p-6">
-      <h2 class="text-2xl font-bold mb-4 text-blue-800">Dodaj nową drużynę</h2>
-      <form id="teamForm" class="flex gap-4 flex-wrap">
-        <input
-          type="text"
-          id="teamName"
-          placeholder="Nazwa drużyny"
-          required
-          class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-        />
-        <button
-          type="submit"
-          class="bg-blue-600 text-white px-6 rounded-lg font-semibold hover:bg-blue-800 transition"
-        >
-          Dodaj drużynę
-        </button>
+  <main class="p-6">
+    <!-- Drużyny -->
+    <section id="teams" class="tab-content">
+      <form onsubmit="addTeam(event)" class="mb-4">
+        <input type="text" id="teamName" placeholder="Nazwa drużyny" class="p-2 border rounded">
+        <button class="bg-blue-500 text-white px-4 py-2 rounded">Dodaj drużynę</button>
       </form>
-    </div>
+      <div id="teamList" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </section>
 
-    <div id="teamsList" class="col-span-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
-  </section>
-
-  <!-- Zawodnicy -->
-  <section id="players" class="tab-content hidden mt-6">
-
-    <div class="bg-white rounded-xl shadow p-6 max-w-lg mx-auto">
-      <h2 class="text-2xl font-bold mb-4 text-blue-800 text-center">Dodaj zawodnika</h2>
-      <form id="playerForm" class="flex flex-col gap-4">
-        <select
-          id="playerTeamSelect"
-          required
-          class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-        >
-          <option value="" disabled selected>Wybierz drużynę</option>
-        </select>
-        <input
-          type="text"
-          id="playerName"
-          placeholder="Imię i nazwisko zawodnika"
-          required
-          class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-        />
-        <button
-          type="submit"
-          class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800 transition"
-        >
-          Dodaj zawodnika
-        </button>
+    <!-- Zawodnicy -->
+    <section id="players" class="tab-content hidden">
+      <form onsubmit="addPlayer(event)" class="mb-4">
+        <select id="playerTeam" class="p-2 border rounded"></select>
+        <input type="text" id="playerName" placeholder="Imię Zawodnika" class="p-2 border rounded">
+        <button class="bg-blue-500 text-white px-4 py-2 rounded">Dodaj zawodnika</button>
       </form>
-    </div>
+      <div id="playerList" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </section>
 
-    <div id="playersList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10"></div>
-  </section>
-</main>
+    <!-- Mecze -->
+    <section id="matches" class="tab-content hidden">
+      <form onsubmit="addMatch(event)" class="mb-4">
+        <input type="date" id="matchDate" class="p-2 border rounded">
+        <input type="text" id="matchScore" placeholder="Wynik" class="p-2 border rounded">
+        <input type="text" id="matchScorer" placeholder="Strzelec bramki" class="p-2 border rounded">
+        <button class="bg-blue-500 text-white px-4 py-2 rounded">Dodaj mecz</button>
+      </form>
+      <div id="matchList" class="space-y-4"></div>
+    </section>
 
-<footer class="bg-blue-800 text-white p-4 text-center font-light">
-  © 2025 Jaguar Trenerzy — Strona wykonana przez Ciebie i ChatGPT
-</footer>
+    <!-- Wykres -->
+    <section id="charts" class="tab-content hidden">
+      <canvas id="ratingChart" width="400" height="200"></canvas>
+    </section>
+  </main>
 
-<script src="script.js"></script>
+  <script>
+    let teams = [], players = [], matches = [];
+
+    function showTab(id) {
+      document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function addTeam(e) {
+      e.preventDefault();
+      const name = document.getElementById('teamName').value;
+      if (name) {
+        teams.push(name);
+        updateTeamList();
+        updateTeamDropdown();
+        document.getElementById('teamName').value = '';
+      }
+    }
+
+    function updateTeamList() {
+      const list = document.getElementById('teamList');
+      list.innerHTML = '';
+      teams.forEach((team, i) => {
+        const div = document.createElement('div');
+        div.className = 'bg-white p-4 rounded shadow';
+        div.textContent = team;
+        list.appendChild(div);
+      });
+    }
+
+    function updateTeamDropdown() {
+      const select = document.getElementById('playerTeam');
+      select.innerHTML = '';
+      teams.forEach((team, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = team;
+        select.appendChild(opt);
+      });
+    }
+
+    function addPlayer(e) {
+      e.preventDefault();
+      const name = document.getElementById('playerName').value;
+      const teamIdx = document.getElementById('playerTeam').value;
+      if (name && teamIdx !== '') {
+        players.push({ name, team: teams[teamIdx] });
+        updatePlayerList();
+        document.getElementById('playerName').value = '';
+      }
+    }
+
+    function updatePlayerList() {
+      const list = document.getElementById('playerList');
+      list.innerHTML = '';
+      players.forEach(player => {
+        const div = document.createElement('div');
+        div.className = 'bg-white p-4 rounded shadow';
+        div.innerHTML = `<strong>${player.name}</strong><br>Drużyna: ${player.team}`;
+        list.appendChild(div);
+      });
+    }
+
+    function addMatch(e) {
+      e.preventDefault();
+      const date = document.getElementById('matchDate').value;
+      const score = document.getElementById('matchScore').value;
+      const scorer = document.getElementById('matchScorer').value;
+      matches.push({ date, score, scorer });
+      updateMatchList();
+    }
+
+    function updateMatchList() {
+      const list = document.getElementById('matchList');
+      list.innerHTML = '';
+      matches.forEach(match => {
+        const div = document.createElement('div');
+        div.className = 'bg-white p-4 rounded shadow';
+        div.innerHTML = `<strong>${match.date}</strong><br>Wynik: ${match.score}<br>Strzelec: ${match.scorer}`;
+        list.appendChild(div);
+      });
+    }
+
+    // przykładowy wykres
+    const ctx = document.getElementById('ratingChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['2025-07-01', '2025-07-10', '2025-07-18'],
+        datasets: [{
+          label: 'Oceny zawodnika',
+          data: [3, 4, 5],
+          fill: false,
+          borderColor: 'rgb(59, 130, 246)',
+          tension: 0.3
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 5
+          }
+        }
+      }
+    });
+  </script>
 </body>
 </html>
+
 
