@@ -1,784 +1,559 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Trener Jaguara - Panel</title>
-  <style>
-    /* Reset i podstawowy styl */
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0; padding: 0; background: #f5f7fa; color: #333;
-      min-height: 100vh;
-      display: flex;
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trenerzy Jaguara - Strona Analiz</title>
+<style>
+  /* Reset minimalny */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f9f9f9;
+    color: #333;
+  }
+  header {
+    background: #0d47a1;
+    color: white;
+    padding: 1.2rem 2rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 1px;
+    user-select: none;
+  }
+  nav {
+    display: flex;
+    justify-content: center;
+    background: white;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+  }
+  nav button {
+    border: none;
+    background: none;
+    font-size: 1rem;
+    padding: 1rem 2rem;
+    cursor: pointer;
+    color: #555;
+    font-weight: 600;
+    border-bottom: 3px solid transparent;
+    transition: border-color 0.3s, color 0.3s;
+  }
+  nav button:hover {
+    color: #0d47a1;
+  }
+  nav button.active {
+    color: #0d47a1;
+    border-bottom-color: #0d47a1;
+    font-weight: 700;
+  }
+  main {
+    max-width: 900px;
+    margin: 2rem auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 6px 15px rgb(0 0 0 / 0.1);
+  }
+  section {
+    display: none;
+  }
+  section.active {
+    display: block;
+  }
+
+  /* Formularze */
+  form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  label {
+    flex: 1 1 200px;
+    display: flex;
+    flex-direction: column;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  input, select, textarea {
+    margin-top: 0.3rem;
+    padding: 0.4rem 0.6rem;
+    font-size: 1rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-family: inherit;
+    transition: border-color 0.3s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: #0d47a1;
+    outline: none;
+  }
+  button[type="submit"] {
+    background-color: #0d47a1;
+    color: white;
+    padding: 0.8rem 1.6rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 700;
+    margin-top: 1rem;
+    transition: background-color 0.3s;
+  }
+  button[type="submit"]:hover {
+    background-color: #083974;
+  }
+
+  /* Tabela */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+  }
+  th, td {
+    padding: 0.8rem;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+    font-size: 0.95rem;
+  }
+  th {
+    background-color: #e3f2fd;
+  }
+  tr:hover {
+    background-color: #f1f9ff;
+  }
+
+  /* Wiadomości z formularzy */
+  .msg {
+    margin-top: 0.8rem;
+    font-weight: 700;
+  }
+  .msg.error {
+    color: #b00020;
+  }
+  .msg.success {
+    color: #1b5e20;
+  }
+
+  /* Responsywność */
+  @media (max-width: 600px) {
+    nav {
       flex-direction: column;
     }
-    header {
-      background: #003366;
-      color: white;
-      padding: 15px 30px;
-      text-align: center;
-      font-size: 1.8rem;
-      font-weight: 700;
-      letter-spacing: 1.2px;
-      user-select: none;
-    }
-    nav {
-      background: #0066cc;
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      padding: 12px 0;
-    }
     nav button {
-      background: transparent;
-      border: none;
-      color: white;
-      font-weight: 600;
+      padding: 1rem;
       font-size: 1.1rem;
-      cursor: pointer;
-      padding: 8px 16px;
-      border-radius: 6px;
-      transition: background-color 0.3s ease;
     }
-    nav button:hover,
-    nav button.active {
-      background: #004080;
-      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    form {
+      flex-direction: column;
     }
-    main {
-      flex: 1;
-      padding: 20px 30px;
-      max-width: 1100px;
-      margin: 0 auto;
-      background: white;
-      box-shadow: 0 0 20px rgba(0,0,0,0.07);
-      border-radius: 12px;
-      margin-top: 20px;
-      margin-bottom: 40px;
+    label {
+      flex: 1 1 100%;
     }
-    h2 {
-      margin-top: 0;
-      color: #003366;
-      border-bottom: 3px solid #0066cc;
-      padding-bottom: 6px;
-      margin-bottom: 20px;
-      font-weight: 700;
-    }
-    form label {
-      display: block;
-      font-weight: 600;
-      margin-top: 12px;
-      margin-bottom: 6px;
-      color: #004080;
-    }
-    input[type="text"],
-    input[type="date"],
-    input[type="number"],
-    select,
-    textarea {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1.8px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
-      transition: border-color 0.3s ease;
-    }
-    input[type="text"]:focus,
-    input[type="date"]:focus,
-    input[type="number"]:focus,
-    select:focus,
-    textarea:focus {
-      border-color: #0066cc;
-      outline: none;
-    }
-    textarea {
-      resize: vertical;
-      min-height: 70px;
-    }
-    button {
-      background: #0066cc;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 18px;
-      transition: background-color 0.3s ease;
-      user-select: none;
-    }
-    button:hover {
-      background: #004080;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 18px;
-      font-size: 0.95rem;
-    }
-    th, td {
-      padding: 10px 12px;
-      border: 1px solid #ddd;
-      text-align: left;
-    }
-    th {
-      background-color: #004080;
-      color: white;
-      font-weight: 600;
-      user-select: none;
-    }
-    tr:nth-child(even) {
-      background-color: #f7f9fc;
-    }
-    .error-msg {
-      color: #cc0000;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-    .success-msg {
-      color: #006600;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-    /* Layout na zakładki */
-    .tab-content {
-      display: none;
-      animation: fadeIn 0.4s ease forwards;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    @keyframes fadeIn {
-      from {opacity: 0;}
-      to {opacity: 1;}
-    }
-    /* Responsive */
-    @media (max-width: 720px) {
-      main {
-        margin: 10px 15px 40px 15px;
-        padding: 15px;
-      }
-      nav {
-        flex-wrap: wrap;
-      }
-      nav button {
-        flex: 1 1 45%;
-        margin-bottom: 8px;
-      }
-      th, td {
-        font-size: 0.85rem;
-        padding: 8px 6px;
-      }
-    }
-    /* Wykresy */
-    canvas {
-      max-width: 100%;
-      height: 300px;
-      margin-top: 20px;
-    }
-    /* Scroll w tabelkach */
-    .table-wrapper {
-      overflow-x: auto;
-    }
-    /* Edytowalne pola w tabelkach */
-    td.editable {
-      cursor: pointer;
-      background-color: #eef6ff;
-      transition: background-color 0.3s;
-    }
-    td.editable:hover {
-      background-color: #d1e5ff;
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
 
-<header>
-  Trener Jaguara - Panel zarządzania
-</header>
+<header>Trenerzy Jaguara - Panel Analiz</header>
 
 <nav>
-  <button id="tabMatches" class="active" aria-controls="matchesSection">Analiza meczy</button>
-  <button id="tabTeams" aria-controls="teamsSection">Drużyny</button>
-  <button id="tabPlayers" aria-controls="playersSection">Zawodnicy</button>
+  <button id="tab-analysis" class="active">Analiza meczów</button>
+  <button id="tab-teams">Drużyny</button>
+  <button id="tab-players">Zawodnicy</button>
 </nav>
 
 <main>
-
-  <!-- ZAKŁADKA 1: Analiza meczy -->
-  <section id="matchesSection" class="tab-content active" role="tabpanel" tabindex="0" aria-labelledby="tabMatches">
-    <h2>Analiza meczy</h2>
-    <form id="matchForm" aria-label="Formularz dodawania meczu">
-      <label for="matchDate">Data meczu:</label>
-      <input type="date" id="matchDate" name="matchDate" required aria-required="true" />
-
-      <label for="matchRating">Ocena meczu (1-5):</label>
-      <select id="matchRating" name="matchRating" required aria-required="true" >
-        <option value="">Wybierz</option>
-        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-        <option value="4">4</option><option value="5">5</option>
-      </select>
-
-      <label for="matchResult">Wynik meczu:</label>
-      <input type="text" id="matchResult" name="matchResult" placeholder="np. 3:2" required aria-required="true" />
-
-      <label for="goalScorers">Kto strzelił bramki (oddziel przecinkami):</label>
-      <textarea id="goalScorers" name="goalScorers" placeholder="Jan Kowalski, Adam Nowak"></textarea>
-
-      <label for="bestPlayer">Najlepszy zawodnik (wybierz z listy):</label>
-      <select id="bestPlayer" name="bestPlayer">
-        <option value="">Brak</option>
-      </select>
-
-      <fieldset style="margin-top:15px;">
-        <legend>Najlepsi zawodnicy z Jaguaara (3 miejsca)</legend>
-        <select id="topJaguar1"></select>
-        <select id="topJaguar2"></select>
-        <select id="topJaguar3"></select>
-      </fieldset>
-
-      <fieldset style="margin-top:15px;">
-        <legend>Najlepsi zawodnicy z drużyny przeciwnej (3 miejsca)</legend>
-        <select id="topOpponent1"></select>
-        <select id="topOpponent2"></select>
-        <select id="topOpponent3"></select>
-      </fieldset>
-
-      <button type="submit" aria-label="Dodaj mecz">Dodaj mecz</button>
-      <div id="matchFormMsg"></div>
+  <!-- Analiza meczów -->
+  <section id="analysis" class="active">
+    <h2>Analiza meczów</h2>
+    <form id="matchForm">
+      <label>
+        Data meczu:
+        <input type="date" name="date" required />
+      </label>
+      <label>
+        Ocena meczu (1-5):
+        <input type="number" name="rating" min="1" max="5" required />
+      </label>
+      <label>
+        Wynik meczu:
+        <input type="text" name="result" placeholder="np. 2-1" required />
+      </label>
+      <label>
+        Kto strzelił bramkę? (oddziel przecinkami)
+        <input type="text" name="goalScorers" placeholder="np. Kowalski, Nowak" />
+      </label>
+      <label>
+        Najlepszy zawodnik (imię i nazwisko):
+        <input type="text" name="bestPlayer" />
+      </label>
+      <label>
+        3 najlepszych zawodników Jaguara (oddziel przecinkami):
+        <input type="text" name="topJaguar" placeholder="np. Kowalski, Nowak, Wiśniewski" />
+      </label>
+      <label>
+        3 najlepszych zawodników drużyny przeciwnej (oddziel przecinkami):
+        <input type="text" name="topOpponents" placeholder="np. Zieliński, Lewandowski, Kamiński" />
+      </label>
+      <button type="submit">Dodaj mecz</button>
     </form>
+    <div id="matchMsg" class="msg"></div>
 
-    <h3>Lista meczy</h3>
-    <div class="table-wrapper" style="max-height: 350px; overflow-y: auto;">
-      <table aria-label="Tabela meczy">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Ocena</th>
-            <th>Wynik</th>
-            <th>Bramki</th>
-            <th>Najlepszy zawodnik</th>
-            <th>3 top Jaguar</th>
-            <th>3 top Przeciwnik</th>
-            <th>Opcje</th>
-          </tr>
-        </thead>
-        <tbody id="matchesTableBody"></tbody>
-      </table>
-    </div>
+    <table id="matchesTable" aria-label="Tabela meczów">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Ocena</th>
+          <th>Wynik</th>
+          <th>Strzelcy</th>
+          <th>Najlepszy</th>
+          <th>Top Jaguary</th>
+          <th>Top Przeciwnicy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Tutaj będą meczowe dane -->
+      </tbody>
+    </table>
   </section>
 
-  <!-- ZAKŁADKA 2: Drużyny -->
-  <section id="teamsSection" class="tab-content" role="tabpanel" tabindex="0" aria-labelledby="tabTeams">
+  <!-- Drużyny -->
+  <section id="teams">
     <h2>Drużyny Jaguara</h2>
-    <form id="teamForm" aria-label="Formularz dodawania drużyny">
-      <label for="teamName">Nazwa drużyny:</label>
-      <input type="text" id="teamName" name="teamName" placeholder="Wpisz nazwę drużyny" required aria-required="true" />
-
-      <button type="submit" aria-label="Dodaj drużynę">Dodaj drużynę</button>
-      <div id="teamFormMsg"></div>
+    <form id="teamForm">
+      <label>
+        Nazwa drużyny:
+        <input type="text" name="teamName" required />
+      </label>
+      <button type="submit">Dodaj drużynę</button>
     </form>
-
-    <h3>Lista drużyn</h3>
-    <div class="table-wrapper" style="max-height: 300px; overflow-y: auto;">
-      <table aria-label="Tabela drużyn">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nazwa drużyny</th>
-            <th>Opcje</th>
-          </tr>
-        </thead>
-        <tbody id="teamsTableBody"></tbody>
-      </table>
-    </div>
+    <div id="teamMsg" class="msg"></div>
+    <ul id="teamsList" aria-label="Lista drużyn">
+      <!-- Lista drużyn -->
+    </ul>
   </section>
 
-  <!-- ZAKŁADKA 3: Zawodnicy -->
-  <section id="playersSection" class="tab-content" role="tabpanel" tabindex="0" aria-labelledby="tabPlayers">
+  <!-- Zawodnicy -->
+  <section id="players">
     <h2>Zawodnicy i oceny</h2>
-    <form id="playerForm" aria-label="Formularz dodawania zawodnika i oceny">
-      <label for="selectTeamForPlayer">Wybierz drużynę:</label>
-      <select id="selectTeamForPlayer" name="selectTeamForPlayer" required aria-required="true">
-        <option value="">Wybierz drużynę</option>
-      </select>
-
-      <label for="selectPlayer">Wybierz zawodnika:</label>
-      <select id="selectPlayer" name="selectPlayer" required aria-required="true" disabled>
-        <option value="">Najpierw wybierz drużynę</option>
-      </select>
-
-      <label for="trainingRating">Ocena z treningu (1-5):</label>
-      <select id="trainingRating" name="trainingRating">
-        <option value="">Brak</option>
-        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-        <option value="4">4</option><option value="5">5</option>
-      </select>
-
-      <label for="matchRatingPlayer">Ocena z meczu (1-5):</label>
-      <select id="matchRatingPlayer" name="matchRatingPlayer">
-        <option value="">Brak</option>
-        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-        <option value="4">4</option><option value="5">5</option>
-      </select>
-
-      <label for="playTime">Czas na boisku (minuty):</label>
-      <input type="number" id="playTime" name="playTime" min="0" placeholder="np. 90" />
-
-      <label for="ratingDate">Data oceny:</label>
-      <input type="date" id="ratingDate" name="ratingDate" required aria-required="true" />
-
-      <button type="submit" aria-label="Dodaj ocenę zawodnika">Dodaj ocenę</button>
-      <div id="playerFormMsg"></div>
+    <form id="playerForm">
+      <label>
+        Wybierz drużynę:
+        <select name="teamSelect" required>
+          <option value="">-- Wybierz drużynę --</option>
+        </select>
+      </label>
+      <label>
+        Wybierz zawodnika:
+        <select name="playerSelect" required>
+          <option value="">-- Wybierz zawodnika --</option>
+        </select>
+      </label>
+      <label>
+        Ocena z treningu (1-5):
+        <input type="number" name="trainingRating" min="1" max="5" />
+      </label>
+      <label>
+        Ocena z meczu (1-5):
+        <input type="number" name="matchRating" min="1" max="5" />
+      </label>
+      <label>
+        Czas na boisku (minuty):
+        <input type="number" name="playTime" min="0" />
+      </label>
+      <label>
+        Data oceny:
+        <input type="date" name="ratingDate" required />
+      </label>
+      <button type="submit">Dodaj ocenę</button>
     </form>
+    <div id="playerMsg" class="msg"></div>
 
-    <h3>Progres zawodnika (wykresy)</h3>
-    <label for="selectPlayerChart">Wybierz zawodnika:</label>
-    <select id="selectPlayerChart" aria-label="Wybierz zawodnika do wykresu" style="width: 100%; max-width: 300px; margin-bottom: 15px;">
-      <option value="">Wybierz zawodnika</option>
-    </select>
-
-    <canvas id="trainingChart" aria-label="Wykres ocen z treningów" role="img"></canvas>
-    <canvas id="matchChart" aria-label="Wykres ocen z meczy" role="img"></canvas>
-
+    <h3>Wykres postępów</h3>
+    <label>
+      Wybierz zawodnika do wykresu:
+      <select id="chartPlayerSelect">
+        <option value="">-- Wybierz zawodnika --</option>
+      </select>
+    </label>
+    <canvas id="trainingChart" width="400" height="150" aria-label="Wykres ocen z treningów"></canvas>
+    <canvas id="matchChart" width="400" height="150" aria-label="Wykres ocen z meczów"></canvas>
   </section>
 </main>
 
-<!-- Skrypty -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Chart.js z CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-  // ------ KONFIGURACJA Supabase ------
-  const SUPABASE_URL = 'TWOJ_SUPABASE_URL_TUTAJ'; // PODMIEN NA SWOJ URL
-  const SUPABASE_KEY = 'TWOJ_SUPABASE_ANON_KEY_TUTAJ'; // PODMIEN NA SWOJ KLUCZ
-
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  // ------ ELEMENTY HTML ------
-  const tabs = {
-    matches: document.getElementById('tabMatches'),
-    teams: document.getElementById('tabTeams'),
-    players: document.getElementById('tabPlayers'),
-  };
-
-  const sections = {
-    matches: document.getElementById('matchesSection'),
-    teams: document.getElementById('teamsSection'),
-    players: document.getElementById('playersSection'),
-  };
-
-  // Formularze
-  const matchForm = document.getElementById('matchForm');
-  const teamForm = document.getElementById('teamForm');
-  const playerForm = document.getElementById('playerForm');
-
-  // Kontenery na dane
-  const matchesTableBody = document.getElementById('matchesTableBody');
-  const teamsTableBody = document.getElementById('teamsTableBody');
-
-  // Wybory w formularzach
-  const bestPlayerSelect = document.getElementById('bestPlayer');
-
-  // 3 najlepszych zawodników
-  const topJaguarSelects = [
-    document.getElementById('topJaguar1'),
-    document.getElementById('topJaguar2'),
-    document.getElementById('topJaguar3'),
-  ];
-  const topOpponentSelects = [
-    document.getElementById('topOpponent1'),
-    document.getElementById('topOpponent2'),
-    document.getElementById('topOpponent3'),
-  ];
-
-  // Zawodnicy - selekcje i wykresy
-  const selectTeamForPlayer = document.getElementById('selectTeamForPlayer');
-  const selectPlayer = document.getElementById('selectPlayer');
-  const selectPlayerChart = document.getElementById('selectPlayerChart');
-  const trainingChartCtx = document.getElementById('trainingChart').getContext('2d');
-  const matchChartCtx = document.getElementById('matchChart').getContext('2d');
-
-  // Wiadomości o statusie
-  const matchFormMsg = document.getElementById('matchFormMsg');
-  const teamFormMsg = document.getElementById('teamFormMsg');
-  const playerFormMsg = document.getElementById('playerFormMsg');
-
-  // ------- STAN APLIKACJI -------
+  // Prosta struktura danych - symulacja bazy lokalnej (do odświeżania po reloadzie)
   let teams = [];
   let players = [];
   let matches = [];
   let ratings = [];
 
-  // ------- FUNKCJE POMOCNICZE -------
+  // Elementy
+  const tabs = {
+    analysis: document.getElementById('tab-analysis'),
+    teams: document.getElementById('tab-teams'),
+    players: document.getElementById('tab-players'),
+  };
+  const sections = {
+    analysis: document.getElementById('analysis'),
+    teams: document.getElementById('teams'),
+    players: document.getElementById('players'),
+  };
 
-  // Przełączanie zakładek
-  function switchTab(tabName) {
-    Object.keys(tabs).forEach(key => {
-      if (key === tabName) {
-        tabs[key].classList.add('active');
-        sections[key].classList.add('active');
-        sections[key].focus();
-      } else {
-        tabs[key].classList.remove('active');
-        sections[key].classList.remove('active');
-      }
-    });
-  }
-
-  // Załaduj wszystkie drużyny z bazy
-  async function loadTeams() {
-    const { data, error } = await supabase.from('teams').select('*').order('name');
-    if (error) {
-      console.error('Błąd wczytywania drużyn:', error.message);
-      return;
-    }
-    teams = data;
-    renderTeamsTable();
-    populateTeamSelects();
-  }
-
-  // Wyświetl drużyny w tabeli
-  function renderTeamsTable() {
-    teamsTableBody.innerHTML = '';
-    teams.forEach(team => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${team.id}</td>
-        <td>${team.name}</td>
-        <td>
-          <button onclick="deleteTeam(${team.id})" aria-label="Usuń drużynę ${team.name}">Usuń</button>
-        </td>
-      `;
-      teamsTableBody.appendChild(tr);
-    });
-  }
-
-  // Wypełnij selecty drużyn w formularzach
-  function populateTeamSelects() {
-    // Wyczyść wszystkie
-    [selectTeamForPlayer].forEach(sel => {
-      sel.innerHTML = '<option value="">Wybierz drużynę</option>';
-      teams.forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t.id;
-        opt.textContent = t.name;
-        sel.appendChild(opt);
+  // Zakładki - kliknięcia
+  Object.keys(tabs).forEach(key => {
+    tabs[key].addEventListener('click', () => {
+      // Aktywne przycisk i sekcja
+      Object.keys(tabs).forEach(k => {
+        tabs[k].classList.toggle('active', k === key);
+        sections[k].classList.toggle('active', k === key);
       });
     });
-  }
+  });
 
-  // Usuń drużynę
-  async function deleteTeam(id) {
-    if (!confirm('Na pewno chcesz usunąć tę drużynę? Usunie to też zawodników i powiązane dane!')) return;
+  // Formy i wiadomości
+  const matchForm = document.getElementById('matchForm');
+  const matchMsg = document.getElementById('matchMsg');
+  const matchesTableBody = document.querySelector('#matchesTable tbody');
 
-    const { error } = await supabase.from('teams').delete().eq('id', id);
-    if (error) {
-      alert('Błąd usuwania drużyny: ' + error.message);
-      return;
-    }
-    alert('Drużyna usunięta');
-    await loadTeams();
-    await loadPlayers();
-  }
+  const teamForm = document.getElementById('teamForm');
+  const teamMsg = document.getElementById('teamMsg');
+  const teamsList = document.getElementById('teamsList');
 
-  // Załaduj zawodników
-  async function loadPlayers() {
-    const { data, error } = await supabase.from('players').select('*').order('name');
-    if (error) {
-      console.error('Błąd wczytywania zawodników:', error.message);
-      return;
-    }
-    players = data;
-    populatePlayersSelects();
-    populateBestPlayerSelect();
-  }
+  const playerForm = document.getElementById('playerForm');
+  const playerMsg = document.getElementById('playerMsg');
+  const teamSelect = playerForm.teamSelect;
+  const playerSelect = playerForm.playerSelect;
 
-  // Wypełnij selecty zawodników dla najlepszych w meczu i w formach
-  function populateBestPlayerSelect() {
-    bestPlayerSelect.innerHTML = '<option value="">Brak</option>';
-    players.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = p.name;
-      bestPlayerSelect.appendChild(opt);
-    });
+  const chartPlayerSelect = document.getElementById('chartPlayerSelect');
+  const trainingChartCtx = document.getElementById('trainingChart').getContext('2d');
+  const matchChartCtx = document.getElementById('matchChart').getContext('2d');
 
-    // też do pól top Jaguar i przeciwnik
-    function fillTopSelects(selects) {
-      selects.forEach(sel => {
-        sel.innerHTML = '<option value="">Brak</option>';
-        players.forEach(p => {
-          const opt = document.createElement('option');
-          opt.value = p.id;
-          opt.textContent = p.name;
-          sel.appendChild(opt);
-        });
-      });
-    }
-    fillTopSelects(topJaguarSelects);
-    fillTopSelects(topOpponentSelects);
-  }
+  let trainingChart = null;
+  let matchChart = null;
 
-  // Gdy wybierzesz drużynę, wczytaj zawodników tylko z niej
-  async function loadPlayersByTeam(teamId) {
-    if (!teamId) {
-      selectPlayer.innerHTML = '<option value="">Najpierw wybierz drużynę</option>';
-      selectPlayer.disabled = true;
-      return;
-    }
-    const { data, error } = await supabase.from('players').select('*').eq('team_id', teamId).order('name');
-    if (error) {
-      console.error('Błąd wczytywania zawodników drużyny:', error.message);
-      return;
-    }
-    // Wypełnij select
-    selectPlayer.innerHTML = '<option value="">Wybierz zawodnika</option>';
-    data.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = p.name;
-      selectPlayer.appendChild(opt);
-    });
-    selectPlayer.disabled = false;
-  }
+  // --- FUNKCJE ---
 
-  // Załaduj mecze
-  async function loadMatches() {
-    const { data, error } = await supabase.from('matches').select('*').order('date', { ascending: false });
-    if (error) {
-      console.error('Błąd wczytywania meczy:', error.message);
-      return;
-    }
-    matches = data;
-    renderMatchesTable();
-  }
+  // Dodaj mecz
+  matchForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const formData = new FormData(matchForm);
+    const newMatch = {
+      id: Date.now(),
+      date: formData.get('date'),
+      rating: +formData.get('rating'),
+      result: formData.get('result'),
+      goalScorers: formData.get('goalScorers'),
+      bestPlayer: formData.get('bestPlayer'),
+      topJaguar: formData.get('topJaguar'),
+      topOpponents: formData.get('topOpponents'),
+    };
+    matches.unshift(newMatch);
+    renderMatches();
+    matchMsg.textContent = 'Mecz dodany!';
+    matchMsg.className = 'msg success';
+    matchForm.reset();
+  });
 
-  // Wyświetl mecze w tabeli
-  async function renderMatchesTable() {
+  // Renderuj meczowe dane w tabeli
+  function renderMatches() {
     matchesTableBody.innerHTML = '';
-    for (const m of matches) {
-      // Pobierz nazwy zawodników po ID, jeśli są
-      const bestPlayerName = await getPlayerNameById(m.best_player_id);
-      const topJaguarNames = await getPlayersNamesByIds([m.top_jaguar_1, m.top_jaguar_2, m.top_jaguar_3]);
-      const topOpponentNames = await getPlayersNamesByIds([m.top_opponent_1, m.top_opponent_2, m.top_opponent_3]);
-
+    matches.forEach(m => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${m.date}</td>
         <td>${m.rating}</td>
         <td>${m.result}</td>
-        <td>${m.goal_scorers || ''}</td>
-        <td>${bestPlayerName || ''}</td>
-        <td>${topJaguarNames.join(', ')}</td>
-        <td>${topOpponentNames.join(', ')}</td>
-        <td><button onclick="deleteMatch(${m.id})" aria-label="Usuń mecz z dnia ${m.date}">Usuń</button></td>
+        <td>${m.goalScorers || ''}</td>
+        <td>${m.bestPlayer || ''}</td>
+        <td>${m.topJaguar || ''}</td>
+        <td>${m.topOpponents || ''}</td>
       `;
       matchesTableBody.appendChild(tr);
-    }
-  }
-
-  async function getPlayerNameById(id) {
-    if (!id) return '';
-    // Szukaj w cache players
-    const p = players.find(p => p.id === id);
-    if (p) return p.name;
-    // Jeśli nie ma, spróbuj z bazy
-    const { data, error } = await supabase.from('players').select('name').eq('id', id).single();
-    if (error || !data) return '';
-    return data.name;
-  }
-
-  async function getPlayersNamesByIds(ids) {
-    const names = [];
-    for (const id of ids) {
-      if (!id) continue;
-      const n = await getPlayerNameById(id);
-      if (n) names.push(n);
-    }
-    return names;
-  }
-
-  // Usuń mecz
-  async function deleteMatch(id) {
-    if (!confirm('Na pewno chcesz usunąć ten mecz?')) return;
-
-    const { error } = await supabase.from('matches').delete().eq('id', id);
-    if (error) {
-      alert('Błąd usuwania meczu: ' + error.message);
-      return;
-    }
-    alert('Mecz usunięty');
-    await loadMatches();
-  }
-
-  // Dodaj drużynę
-  teamForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const name = teamForm.teamName.value.trim();
-    if (!name) {
-      teamFormMsg.textContent = 'Podaj nazwę drużyny!';
-      teamFormMsg.className = 'error-msg';
-      return;
-    }
-    const { data, error } = await supabase.from('teams').insert([{ name }]);
-    if (error) {
-      teamFormMsg.textContent = 'Błąd dodawania drużyny: ' + error.message;
-      teamFormMsg.className = 'error-msg';
-      return;
-    }
-    teamFormMsg.textContent = 'Drużyna dodana!';
-    teamFormMsg.className = 'success-msg';
-    teamForm.reset();
-    await loadTeams();
-  });
-
-  // Dodaj mecz
-  matchForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    // Pobierz dane z formularza
-    const date = matchForm.matchDate.value;
-    const rating = parseInt(matchForm.matchRating.value);
-    const result = matchForm.matchResult.value.trim();
-    const goalScorers = matchForm.goalScorers.value.trim();
-    const bestPlayerId = matchForm.bestPlayer.value || null;
-    const topJaguar1 = matchForm.topJaguar1.value || null;
-    const topJaguar2 = matchForm.topJaguar2.value || null;
-    const topJaguar3 = matchForm.topJaguar3.value || null;
-    const topOpponent1 = matchForm.topOpponent1.value || null;
-    const topOpponent2 = matchForm.topOpponent2.value || null;
-    const topOpponent3 = matchForm.topOpponent3.value || null;
-
-    // Walidacja
-    if (!date || !rating || !result) {
-      matchFormMsg.textContent = 'Proszę uzupełnić wymagane pola!';
-      matchFormMsg.className = 'error-msg';
-      return;
-    }
-
-    const { data, error } = await supabase.from('matches').insert([{
-      date,
-      rating,
-      result,
-      goal_scorers: goalScorers || null,
-      best_player_id: bestPlayerId,
-      top_jaguar_1: topJaguar1,
-      top_jaguar_2: topJaguar2,
-      top_jaguar_3: topJaguar3,
-      top_opponent_1: topOpponent1,
-      top_opponent_2: topOpponent2,
-      top_opponent_3: topOpponent3,
-    }]);
-
-    if (error) {
-      matchFormMsg.textContent = 'Błąd dodawania meczu: ' + error.message;
-      matchFormMsg.className = 'error-msg';
-      return;
-    }
-    matchFormMsg.textContent = 'Mecz dodany!';
-    matchFormMsg.className = 'success-msg';
-    matchForm.reset();
-    await loadMatches();
-  });
-
-  // Dodaj zawodnika (i oceny)
-  playerForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const teamId = selectTeamForPlayer.value;
-    const playerId = selectPlayer.value;
-    const trainingRating = playerForm.trainingRating.value || null;
-    const matchRating = playerForm.matchRatingPlayer.value || null;
-    const playTime = playerForm.playTime.value ? parseInt(playerForm.playTime.value) : null;
-    const ratingDate = playerForm.ratingDate.value;
-
-    if (!teamId || !playerId || !ratingDate) {
-      playerFormMsg.textContent = 'Uzupełnij wymagane pola!';
-      playerFormMsg.className = 'error-msg';
-      return;
-    }
-
-    // Wstaw ocenę do tabeli ratings
-    const { data, error } = await supabase.from('ratings').insert([{
-      player_id: playerId,
-      team_id: teamId,
-      training_rating: trainingRating ? parseInt(trainingRating) : null,
-      match_rating: matchRating ? parseInt(matchRating) : null,
-      play_time: playTime,
-      date: ratingDate,
-    }]);
-    if (error) {
-      playerFormMsg.textContent = 'Błąd dodawania oceny: ' + error.message;
-      playerFormMsg.className = 'error-msg';
-      return;
-    }
-    playerFormMsg.textContent = 'Ocena dodana!';
-    playerFormMsg.className = 'success-msg';
-    playerForm.reset();
-    await loadRatings();
-  });
-
-  // Załaduj oceny (ratings)
-  async function loadRatings() {
-    const { data, error } = await supabase.from('ratings').select('*').order('date');
-    if (error) {
-      console.error('Błąd wczytywania ocen:', error.message);
-      return;
-    }
-    ratings = data;
-    renderPlayerChart(); // odśwież wykresy
-  }
-
-  // Wypełnij select zawodników do wykresów
-  function populatePlayersSelectForChart() {
-    selectPlayerChart.innerHTML = '<option value="">Wybierz zawodnika</option>';
-    players.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = p.name;
-      selectPlayerChart.appendChild(opt);
     });
   }
 
-  // Obsługa wyboru zawodnika na wykres
-  selectPlayerChart.addEventListener('change', renderPlayerChart);
-
-  let chartTraining = null;
-  let chartMatch = null;
-
-  // Rysuj wykresy progresu zawodnika
-  function renderPlayerChart() {
-    const playerId = selectPlayerChart.value;
-    if (!playerId) {
-      clearCharts();
+  // Dodaj drużynę
+  teamForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = teamForm.teamName.value.trim();
+    if (!name) {
+      teamMsg.textContent = 'Podaj nazwę drużyny!';
+      teamMsg.className = 'msg error';
       return;
     }
-    // Filtruj oceny zawodnika
-    const playerRatings = ratings.filter(r => r.player_id === playerId);
+    // Sprawdź czy nie ma już drużyny o takiej nazwie
+    if (teams.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+      teamMsg.textContent = 'Drużyna już istnieje!';
+      teamMsg.className = 'msg error';
+      return;
+    }
+    const newTeam = { id: Date.now(), name, players: [] };
+    teams.push(newTeam);
+    renderTeams();
+    updateTeamSelects();
+    teamMsg.textContent = 'Drużyna dodana!';
+    teamMsg.className = 'msg success';
+    teamForm.reset();
+  });
 
-    // Sortuj wg daty rosnąco
-    playerRatings.sort((a,b) => new Date(a.date) - new Date(b.date));
+  // Renderuj listę drużyn (w ul)
+  function renderTeams() {
+    teamsList.innerHTML = '';
+    teams.forEach(team => {
+      const li = document.createElement('li');
+      li.textContent = team.name + ' (' + (team.players.length) + ' zawodników)';
+      teamsList.appendChild(li);
+    });
+  }
 
-    const labels = playerRatings.map(r => r.date);
-    const trainingData = playerRatings.map(r => r.training_rating || null);
-    const matchData = playerRatings.map(r => r.match_rating || null);
+  // Aktualizuj select drużyn w formie zawodników
+  function updateTeamSelects() {
+    [teamSelect].forEach(select => {
+      const prevVal = select.value;
+      select.innerHTML = '<option value="">-- Wybierz drużynę --</option>';
+      teams.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name;
+        select.appendChild(opt);
+      });
+      select.value = prevVal;
+    });
+  }
 
-    // Zniszcz stare wykresy jeśli są
-    if (chartTraining) chartTraining.destroy();
-    if (chartMatch) chartMatch.destroy();
+  // Aktualizuj select zawodników wg drużyny
+  teamSelect.addEventListener('change', () => {
+    const teamId = +teamSelect.value;
+    if (!teamId) {
+      playerSelect.innerHTML = '<option value="">-- Wybierz zawodnika --</option>';
+      return;
+    }
+    const team = teams.find(t => t.id === teamId);
+    playerSelect.innerHTML = '<option value="">-- Wybierz zawodnika --</option>';
+    if (team && team.players.length > 0) {
+      team.players.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name;
+        playerSelect.appendChild(opt);
+      });
+    }
+  });
 
-    chartTraining = new Chart(trainingChartCtx, {
+  // Dodaj ocenę zawodnika (lub nowego zawodnika)
+  playerForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const formData = new FormData(playerForm);
+    const teamId = +formData.get('teamSelect');
+    const playerId = +formData.get('playerSelect');
+    const trainingRating = formData.get('trainingRating');
+    const matchRating = formData.get('matchRating');
+    const playTime = formData.get('playTime');
+    const ratingDate = formData.get('ratingDate');
+
+    if (!teamId || !ratingDate) {
+      playerMsg.textContent = 'Wybierz drużynę i podaj datę oceny!';
+      playerMsg.className = 'msg error';
+      return;
+    }
+    const team = teams.find(t => t.id === teamId);
+    if (!team) {
+      playerMsg.textContent = 'Nie znaleziono drużyny!';
+      playerMsg.className = 'msg error';
+      return;
+    }
+
+    // Jeśli nie wybrano zawodnika - dodaj nowego (z pustą nazwą i dodaj potem)
+    let player;
+    if (!playerId) {
+      // Prompt na nazwę nowego zawodnika (można rozbudować o formularz)
+      const playerName = prompt('Podaj nazwę nowego zawodnika:');
+      if (!playerName) {
+        playerMsg.textContent = 'Musisz podać nazwę zawodnika!';
+        playerMsg.className = 'msg error';
+        return;
+      }
+      player = { id: Date.now(), name: playerName, ratings: [] };
+      team.players.push(player);
+      updateTeamSelects();
+      teamSelect.value = teamId;
+      // Zaznacz nowego zawodnika w select
+      setTimeout(() => {
+        playerSelect.value = player.id;
+      }, 100);
+    } else {
+      player = team.players.find(p => p.id === playerId);
+    }
+
+    if (!player) {
+      playerMsg.textContent = 'Nie znaleziono zawodnika!';
+      playerMsg.className = 'msg error';
+      return;
+    }
+
+    // Dodaj ocenę
+    player.ratings.push({
+      id: Date.now(),
+      trainingRating: trainingRating ? +trainingRating : null,
+      matchRating: matchRating ? +matchRating : null,
+      playTime: playTime ? +playTime : null,
+      date: ratingDate
+    });
+
+    playerMsg.textContent = 'Ocena dodana!';
+    playerMsg.className = 'msg success';
+
+    // Resetuj formularz
+    playerForm.reset();
+    playerSelect.innerHTML = '<option value="">-- Wybierz zawodnika --</option>';
+    // Wyczyść wykresy
+    clearCharts();
+    updateChartPlayerSelect();
+  });
+
+  // Aktualizuj select zawodników dla wykresów (wszystkich)
+  function updateChartPlayerSelect() {
+    const allPlayers = teams.flatMap(t => t.players.map(p => ({...p, teamName: t.name})));
+    const prevVal = chartPlayerSelect.value;
+    chartPlayerSelect.innerHTML = '<option value="">-- Wybierz zawodnika --</option>';
+    allPlayers.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.teamName + ' - ' + p.name;
+      chartPlayerSelect.appendChild(opt);
+    });
+    chartPlayerSelect.value = prevVal;
+  }
+
+  // Rysuj wykresy
+  function drawCharts(player) {
+    clearCharts();
+    if (!player || !player.ratings.length) return;
+
+    // Sortuj po dacie
+    player.ratings.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+    // Dane do wykresów
+    const labels = player.ratings.map(r => r.date);
+    const trainingData = player.ratings.map(r => r.trainingRating || null);
+    const matchData = player.ratings.map(r => r.matchRating || null);
+
+    trainingChart = new Chart(trainingChartCtx, {
       type: 'line',
       data: {
         labels,
         datasets: [{
           label: 'Ocena treningu',
           data: trainingData,
-          borderColor: '#007acc',
-          backgroundColor: 'rgba(0,122,204,0.2)',
+          borderColor: '#1e88e5',
+          backgroundColor: 'rgba(30,136,229,0.3)',
           spanGaps: true,
           tension: 0.3,
           fill: true,
@@ -787,24 +562,20 @@
       options: {
         responsive: true,
         scales: {
-          y: {
-            min: 0,
-            max: 5,
-            ticks: { stepSize: 1 }
-          }
+          y: { min: 0, max: 5, ticks: { stepSize: 1 } }
         }
       }
     });
 
-    chartMatch = new Chart(matchChartCtx, {
+    matchChart = new Chart(matchChartCtx, {
       type: 'line',
       data: {
         labels,
         datasets: [{
           label: 'Ocena meczu',
           data: matchData,
-          borderColor: '#e63946',
-          backgroundColor: 'rgba(230,57,70,0.2)',
+          borderColor: '#e53935',
+          backgroundColor: 'rgba(229,57,53,0.3)',
           spanGaps: true,
           tension: 0.3,
           fill: true,
@@ -813,47 +584,73 @@
       options: {
         responsive: true,
         scales: {
-          y: {
-            min: 0,
-            max: 5,
-            ticks: { stepSize: 1 }
-          }
+          y: { min: 0, max: 5, ticks: { stepSize: 1 } }
         }
       }
     });
   }
 
+  // Czyść wykresy
   function clearCharts() {
-    if (chartTraining) chartTraining.destroy();
-    if (chartMatch) chartMatch.destroy();
+    if (trainingChart) trainingChart.destroy();
+    if (matchChart) matchChart.destroy();
   }
 
-  // Inicjalizacja
-  (async function init() {
-    await loadTeams();
-    await loadPlayers();
-    await loadMatches();
-    await loadRatings();
-    populatePlayersSelectForChart();
-
-    // Przełącz na zakładkę z meczami domyślnie
-    switchTab('matches');
-  })();
-
-  // Zmiana drużyny w formularzu oceny zawodnika
-  selectTeamForPlayer.addEventListener('change', async e => {
-    await loadPlayersByTeam(e.target.value);
+  // Po zmianie zawodnika do wykresu
+  chartPlayerSelect.addEventListener('change', () => {
+    const playerId = +chartPlayerSelect.value;
+    if (!playerId) {
+      clearCharts();
+      return;
+    }
+    // Znajdź zawodnika
+    let player = null;
+    for (const team of teams) {
+      player = team.players.find(p => p.id === playerId);
+      if (player) break;
+    }
+    drawCharts(player);
   });
 
-  // Zakładki - obsługa kliknięć
-  Object.entries(tabs).forEach(([key, tab]) => {
-    tab.addEventListener('click', () => switchTab(key));
-  });
+  // Na start - dodaj przykładowe dane
+  function addSampleData() {
+    const t1 = { id: 1, name: 'Jaguar A', players: [] };
+    const t2 = { id: 2, name: 'Jaguar B', players: [] };
+    teams.push(t1, t2);
 
-  // Eksport funkcji globalnych dla przycisków w tabelach
-  window.deleteTeam = deleteTeam;
-  window.deleteMatch = deleteMatch;
+    const p1 = { id: 101, name: 'Kowalski', ratings: [] };
+    const p2 = { id: 102, name: 'Nowak', ratings: [] };
+    const p3 = { id: 103, name: 'Wiśniewski', ratings: [] };
+
+    t1.players.push(p1, p2);
+    t2.players.push(p3);
+
+    matches.push({
+      id: 1001,
+      date: '2025-07-18',
+      rating: 4,
+      result: '3-1',
+      goalScorers: 'Kowalski, Nowak',
+      bestPlayer: 'Kowalski',
+      topJaguar: 'Kowalski, Nowak, Wiśniewski',
+      topOpponents: 'Zieliński, Lewandowski, Kamiński'
+    });
+
+    p1.ratings.push({ id: 5001, trainingRating: 4, matchRating: 5, playTime: 90, date: '2025-07-15' });
+    p1.ratings.push({ id: 5002, trainingRating: 3, matchRating: 4, playTime: 85, date: '2025-07-16' });
+    p2.ratings.push({ id: 5003, trainingRating: 5, matchRating: 4, playTime: 90, date: '2025-07-15' });
+    p3.ratings.push({ id: 5004, trainingRating: 4, matchRating: 3, playTime: 70, date: '2025-07-16' });
+
+    renderMatches();
+    renderTeams();
+    updateTeamSelects();
+    updateChartPlayerSelect();
+  }
+
+  // Inicjuj wszystko na start
+  addSampleData();
 
 </script>
+
 </body>
 </html>
