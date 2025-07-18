@@ -1,315 +1,145 @@
 // script.js
 
-// Prosty system zakładek
-const tabs = {
-  tabMatches: document.getElementById('matchesSection'),
-  tabTeams: document.getElementById('teamsSection'),
-  tabPlayers: document.getElementById('playersSection')
-};
-const tabButtons = {
-  tabMatches: document.getElementById('tabMatches'),
-  tabTeams: document.getElementById('tabTeams'),
-  tabPlayers: document.getElementById('tabPlayers')
-};
+document.addEventListener('DOMContentLoaded', () => {
+  // Zmiana zakładek
+  const tabs = document.querySelectorAll('.tab-btn');
+  const sections = document.querySelectorAll('.tab-content');
 
-for (const btnId in tabButtons) {
-  tabButtons[btnId].addEventListener('click', () => {
-    // Aktywuj przycisk
-    Object.values(tabButtons).forEach(b => b.classList.remove('active'));
-    tabButtons[btnId].classList.add('active');
-    // Pokaż sekcję
-    Object.values(tabs).forEach(s => s.classList.remove('active'));
-    tabs[btnId].classList.add('active');
-  });
-}
+  function showSection(id) {
+    sections.forEach(sec => {
+      sec.classList.toggle('hidden', sec.id !== id);
+    });
+    tabs.forEach(tab => {
+      tab.classList.toggle('bg-blue-800', tab.dataset.target === id);
+      tab.classList.toggle('bg-blue-600', tab.dataset.target !== id);
+    });
+  }
 
-// Dane w pamięci (można potem rozszerzyć o localStorage)
-const data = {
-  teams: [],
-  players: [],
-  matches: []
-};
-
-// === FUNKCJE DO DRUŻYN ===
-
-const teamForm = document.getElementById('teamForm');
-const teamNameInput = document.getElementById('teamName');
-const teamsTableBody = document.querySelector('#teamsTable tbody');
-
-function renderTeams() {
-  teamsTableBody.innerHTML = '';
-  data.teams.forEach((team, i) => {
-    const playersCount = data.players.filter(p => p.team === team).length;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${team}</td>
-      <td>${playersCount}</td>
-      <td><button data-index="${i}" class="deleteTeamBtn">Usuń</button></td>
-    `;
-    teamsTableBody.appendChild(tr);
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => showSection(tab.dataset.target));
   });
 
-  // Obsługa usuwania drużyny
-  document.querySelectorAll('.deleteTeamBtn').forEach(btn => {
-    btn.onclick = () => {
-      const idx = +btn.getAttribute('data-index');
-      const teamToDelete = data.teams[idx];
-      // Usuwamy zawodników z tej drużyny też
-      data.players = data.players.filter(p => p.team !== teamToDelete);
-      // Usuwamy drużynę
-      data.teams.splice(idx, 1);
-      renderTeams();
-      renderPlayers();
-      updateTeamSelect();
-    };
-  });
-}
+  // Pokaż domyślnie pierwszą zakładkę
+  showSection('matchesSection');
 
-teamForm.addEventListener('submit', e => {
-  e.preventDefault();
-  const newTeam = teamNameInput.value.trim();
-  if (newTeam && !data.teams.includes(newTeam)) {
-    data.teams.push(newTeam);
+  // Dane drużyn i zawodników
+  let teams = [];
+  let players = [];
+
+  // Elementy
+  const teamForm = document.getElementById('teamForm');
+  const teamNameInput = document.getElementById('teamName');
+  const teamsTableBody = document.getElementById('teamsTableBody');
+  const selectTeamForPlayer = document.getElementById('selectTeamForPlayer');
+  const playerForm = document.getElementById('playerForm');
+  const playerNameInput = document.getElementById('playerName');
+  const playersTableBody = document.getElementById('playersTableBody');
+
+  // Dodawanie drużyny
+  teamForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = teamNameInput.value.trim();
+    if (!name) return alert('Podaj nazwę drużyny!');
+
+    if (teams.find(t => t.name.toLowerCase() === name.toLowerCase())) {
+      alert('Taka drużyna już istnieje!');
+      return;
+    }
+
+    teams.push({ name, players: [] });
     teamNameInput.value = '';
     renderTeams();
     updateTeamSelect();
-  } else {
-    alert('Podaj unikalną nazwę drużyny!');
-  }
-});
-
-// === FUNKCJE DO ZAWODNIKÓW ===
-
-const playerForm = document.getElementById('playerForm');
-const selectTeamForPlayer = document.getElementById('selectTeamForPlayer');
-const playerNameInput = document.getElementById('playerName');
-const playersTableBody = document.querySelector('#playersTable tbody');
-
-function renderPlayers() {
-  playersTableBody.innerHTML = '';
-  data.players.forEach((player, i) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${player.name}</td>
-      <td>${player.team}</td>
-      <td><button data-index="${i}" class="deletePlayerBtn">Usuń</button></td>
-    `;
-    playersTableBody.appendChild(tr);
   });
+
+  // Dodawanie zawodnika do drużyny
+  playerForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const playerName = playerNameInput.value.trim();
+    const teamName = selectTeamForPlayer.value;
+    if (!playerName || !teamName) return alert('Wybierz drużynę i podaj nazwisko zawodnika!');
+
+    // Znajdź drużynę
+    const team = teams.find(t => t.name === teamName);
+    if (!team) return alert('Wybrana drużyna nie istnieje!');
+
+    // Sprawdź, czy zawodnik już w tej drużynie
+    if (team.players.find(p => p.toLowerCase() === playerName.toLowerCase())) {
+      alert('Taki zawodnik już jest w drużynie!');
+      return;
+    }
+
+    team.players.push(playerName);
+    playerNameInput.value = '';
+    renderTeams();
+    renderPlayers();
+  });
+
+  // Usuwanie drużyny
+  function deleteTeam(name) {
+    if (!confirm(`Na pewno usunąć drużynę "${name}"? Usunięcie drużyny usunie też wszystkich zawodników.`)) return;
+    teams = teams.filter(t => t.name !== name);
+    renderTeams();
+    renderPlayers();
+    updateTeamSelect();
+  }
 
   // Usuwanie zawodnika
-  document.querySelectorAll('.deletePlayerBtn').forEach(btn => {
-    btn.onclick = () => {
-      const idx = +btn.getAttribute('data-index');
-      data.players.splice(idx, 1);
-      renderPlayers();
-      updatePlayerSelect();
-    };
-  });
-}
-
-playerForm.addEventListener('submit', e => {
-  e.preventDefault();
-  const team = selectTeamForPlayer.value;
-  const name = playerNameInput.value.trim();
-  if (team && name && !data.players.some(p => p.name === name && p.team === team)) {
-    data.players.push({ name, team, ratings: [] });
-    playerNameInput.value = '';
+  function deletePlayer(teamName, playerName) {
+    if (!confirm(`Na pewno usunąć zawodnika "${playerName}" z drużyny "${teamName}"?`)) return;
+    const team = teams.find(t => t.name === teamName);
+    if (!team) return;
+    team.players = team.players.filter(p => p !== playerName);
+    renderTeams();
     renderPlayers();
-    updatePlayerSelect();
-  } else {
-    alert('Wybierz drużynę i podaj unikalną nazwę zawodnika!');
   }
+
+  // Renderowanie tabeli drużyn
+  function renderTeams() {
+    teamsTableBody.innerHTML = '';
+    teams.forEach(team => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="py-2 px-4">${team.name}</td>
+        <td class="py-2 px-4">${team.players.length}</td>
+        <td class="py-2 px-4">
+          <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700" onclick="deleteTeam('${team.name}')">Usuń</button>
+        </td>
+      `;
+      teamsTableBody.appendChild(tr);
+    });
+  }
+
+  // Renderowanie tabeli zawodników
+  function renderPlayers() {
+    playersTableBody.innerHTML = '';
+    teams.forEach(team => {
+      team.players.forEach(player => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="py-2 px-4">${player}</td>
+          <td class="py-2 px-4">${team.name}</td>
+          <td class="py-2 px-4">
+            <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700" onclick="deletePlayer('${team.name}', '${player}')">Usuń</button>
+          </td>
+        `;
+        playersTableBody.appendChild(tr);
+      });
+    });
+  }
+
+  // Aktualizacja select drużyn w formularzu zawodników
+  function updateTeamSelect() {
+    selectTeamForPlayer.innerHTML = '<option value="" disabled selected>Wybierz drużynę</option>';
+    teams.forEach(team => {
+      const option = document.createElement('option');
+      option.value = team.name;
+      option.textContent = team.name;
+      selectTeamForPlayer.appendChild(option);
+    });
+  }
+
+  // Żeby funkcje usuwania działały z onclick z stringami
+  window.deleteTeam = deleteTeam;
+  window.deletePlayer = deletePlayer;
 });
-
-// Aktualizacja selectów
-
-function updateTeamSelect() {
-  selectTeamForPlayer.innerHTML = '<option value="">-- Wybierz drużynę --</option>';
-  data.teams.forEach(t => {
-    const option = document.createElement('option');
-    option.value = t;
-    option.textContent = t;
-    selectTeamForPlayer.appendChild(option);
-  });
-  updatePlayerSelect();
-}
-
-const selectPlayerForRating = document.getElementById('selectPlayerForRating');
-
-function updatePlayerSelect() {
-  selectPlayerForRating.innerHTML = '<option value="">-- Wybierz zawodnika --</option>';
-  data.players.forEach(p => {
-    const option = document.createElement('option');
-    option.value = p.name + '|' + p.team; // klucz do identyfikacji
-    option.textContent = p.name + ' (' + p.team + ')';
-    selectPlayerForRating.appendChild(option);
-  });
-}
-
-// === FUNKCJE DO OCENIANIA ZAWODNIKÓW ===
-
-const ratingForm = document.getElementById('ratingForm');
-const ratingDateInput = document.getElementById('ratingDate');
-const trainingRatingInput = document.getElementById('trainingRating');
-const matchRatingPlayerInput = document.getElementById('matchRatingPlayer');
-const timeOnFieldInput = document.getElementById('timeOnField');
-
-ratingForm.addEventListener('submit', e => {
-  e.preventDefault();
-  const selected = selectPlayerForRating.value;
-  if (!selected) {
-    alert('Wybierz zawodnika!');
-    return;
-  }
-  const [name, team] = selected.split('|');
-  const date = ratingDateInput.value;
-  const trainingRating = parseInt(trainingRatingInput.value);
-  const matchRating = parseInt(matchRatingPlayerInput.value);
-  const timeOnField = parseInt(timeOnFieldInput.value);
-
-  if (!date || trainingRating < 1 || trainingRating > 5 || matchRating < 1 || matchRating > 5 || timeOnField < 0) {
-    alert('Wprowadź poprawne dane!');
-    return;
-  }
-
-  // Znajdź zawodnika i dodaj ocenę
-  const player = data.players.find(p => p.name === name && p.team === team);
-  if (!player) {
-    alert('Nie znaleziono zawodnika!');
-    return;
-  }
-  player.ratings.push({ date, trainingRating, matchRating, timeOnField });
-  ratingForm.reset();
-  drawCharts(player);
-});
-
-// === FUNKCJE DO ANALIZ MECZÓW ===
-
-const matchForm = document.getElementById('matchForm');
-const matchesTableBody = document.querySelector('#matchesTable tbody');
-
-matchForm.addEventListener('submit', e => {
-  e.preventDefault();
-
-  const date = document.getElementById('matchDate').value;
-  const result = document.getElementById('matchResult').value.trim();
-  const matchRating = parseInt(document.getElementById('matchRating').value);
-  const goalScorers = document.getElementById('goalScorers').value.trim();
-  const bestPlayer = document.getElementById('bestPlayer').value.trim();
-  const topJaguarPlayers = document.getElementById('topJaguarPlayers').value.trim();
-  const topOpponentsPlayers = document.getElementById('topOpponentsPlayers').value.trim();
-  const playerDescriptions = document.getElementById('playerDescriptions').value.trim();
-
-  if (!date || !result || matchRating < 1 || matchRating > 5) {
-    alert('Proszę uzupełnić wymagane pola!');
-    return;
-  }
-
-  data.matches.push({
-    date,
-    result,
-    matchRating,
-    goalScorers,
-    bestPlayer,
-    topJaguarPlayers,
-    topOpponentsPlayers,
-    playerDescriptions
-  });
-
-  matchForm.reset();
-  renderMatches();
-});
-
-function renderMatches() {
-  matchesTableBody.innerHTML = '';
-  data.matches.forEach(m => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${m.date}</td>
-      <td>${m.result}</td>
-      <td>${m.matchRating}</td>
-      <td>${m.goalScorers}</td>
-      <td>${m.bestPlayer}</td>
-      <td>${m.topJaguarPlayers}</td>
-      <td>${m.topOpponentsPlayers}</td>
-      <td>${m.playerDescriptions}</td>
-    `;
-    matchesTableBody.appendChild(tr);
-  });
-}
-
-// === WYKRESY ===
-
-const trainingChartCtx = document.getElementById('trainingChart').getContext('2d');
-const matchChartCtx = document.getElementById('matchChart').getContext('2d');
-let trainingChart = null;
-let matchChart = null;
-
-function drawCharts(player) {
-  if (!player || !player.ratings.length) {
-    clearCharts();
-    return;
-  }
-  // Sortujemy wg daty rosnąco
-  const ratingsSorted = player.ratings.slice().sort((a,b) => new Date(a.date) - new Date(b.date));
-  const labels = ratingsSorted.map(r => r.date);
-  const trainingData = ratingsSorted.map(r => r.trainingRating);
-  const matchData = ratingsSorted.map(r => r.matchRating);
-
-  if (trainingChart) trainingChart.destroy();
-  trainingChart = new Chart(trainingChartCtx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: `Ocena treningu - ${player.name}`,
-        data: trainingData,
-        borderColor: 'rgba(13, 110, 253, 0.8)',
-        backgroundColor: 'rgba(13, 110, 253, 0.3)',
-        fill: true,
-        tension: 0.2,
-        pointRadius: 5,
-      }]
-    },
-    options: {
-      scales: {
-        y: { min: 1, max: 5, ticks: { stepSize: 1 } }
-      }
-    }
-  });
-
-  if (matchChart) matchChart.destroy();
-  matchChart = new Chart(matchChartCtx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: `Ocena meczu - ${player.name}`,
-        data: matchData,
-        borderColor: 'rgba(220,53,69,0.8)',
-        backgroundColor: 'rgba(220,53,69,0.3)',
-        fill: true,
-        tension: 0.2,
-        pointRadius: 5,
-      }]
-    },
-    options: {
-      scales: {
-        y: { min: 1, max: 5, ticks: { stepSize: 1 } }
-      }
-    }
-  });
-}
-
-function clearCharts() {
-  if (trainingChart) trainingChart.destroy();
-  if (matchChart) matchChart.destroy();
-}
-
-// Inicjalizacja selectów
-updateTeamSelect();
-updatePlayerSelect();
-renderTeams();
-renderPlayers();
-renderMatches();
