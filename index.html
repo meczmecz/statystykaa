@@ -1,286 +1,107 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Trenerzy Jaguara - Panel</title>
-
-  <!-- Podstawowy CSS dla ładnej strony -->
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f9f9f9;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      color: #007bff;
-      margin-bottom: 30px;
-    }
-    nav {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 30px;
-    }
-    nav button {
-      background: #007bff;
-      border: none;
-      color: white;
-      padding: 12px 25px;
-      margin: 0 10px;
-      font-size: 16px;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: background-color 0.3s ease;
-    }
-    nav button.active,
-    nav button:hover {
-      background: #0056b3;
-    }
-    section {
-      display: none;
-      max-width: 900px;
-      margin: auto;
-      background: white;
-      border-radius: 10px;
-      padding: 20px 30px;
-      box-shadow: 0 4px 15px rgb(0 0 0 / 0.1);
-    }
-    section.active {
-      display: block;
-    }
-    form {
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin: 10px 0 5px;
-      font-weight: 600;
-    }
-    input[type="text"],
-    input[type="date"],
-    input[type="number"],
-    select,
-    textarea {
-      width: 100%;
-      padding: 8px 10px;
-      font-size: 15px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      resize: vertical;
-    }
-    textarea {
-      min-height: 60px;
-    }
-    button[type="submit"] {
-      background: #28a745;
-      color: white;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 700;
-      margin-top: 15px;
-      transition: background-color 0.3s ease;
-    }
-    button[type="submit"]:hover {
-      background: #1e7e34;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-    th, td {
-      padding: 8px 12px;
-      border-bottom: 1px solid #ddd;
-      text-align: left;
-    }
-    th {
-      background: #007bff;
-      color: white;
-    }
-    button.deleteTeamBtn,
-    button.deletePlayerBtn {
-      background: #dc3545;
-      color: white;
-      border: none;
-      padding: 5px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background-color 0.3s ease;
-    }
-    button.deleteTeamBtn:hover,
-    button.deletePlayerBtn:hover {
-      background: #a71d2a;
-    }
-    .charts-container {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 30px;
-    }
-    canvas {
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      max-width: 100%;
-      width: 400px;
-      height: 250px;
-    }
-  </style>
-
-  <!-- Chart.js z CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gradient-to-r from-blue-100 via-blue-200 to-blue-300 min-h-screen flex flex-col">
 
-  <h1>Panel dla Trenerów Jaguara</h1>
+  <header class="bg-blue-700 text-white py-5 shadow-md">
+    <h1 class="text-3xl font-bold text-center">Panel Trenerów Jaguara</h1>
+  </header>
 
-  <nav>
-    <button id="tabMatches" class="active">Analiza meczy</button>
-    <button id="tabTeams">Drużyny</button>
-    <button id="tabPlayers">Zawodnicy</button>
+  <nav class="flex justify-center gap-6 mt-6">
+    <button class="tab-btn bg-blue-600 text-white py-2 px-6 rounded-lg shadow hover:bg-blue-800 transition" data-target="matchesSection">Analiza meczy</button>
+    <button class="tab-btn bg-blue-600 text-white py-2 px-6 rounded-lg shadow hover:bg-blue-800 transition" data-target="teamsSection">Drużyny</button>
+    <button class="tab-btn bg-blue-600 text-white py-2 px-6 rounded-lg shadow hover:bg-blue-800 transition" data-target="playersSection">Zawodnicy</button>
   </nav>
 
-  <!-- Zakładka 1: Analiza meczy -->
-  <section id="matchesSection" class="active">
-    <h2>Analiza meczy</h2>
-    <form id="matchForm">
-      <label for="matchDate">Data meczu</label>
-      <input type="date" id="matchDate" required />
+  <main class="flex-grow max-w-5xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-10 mb-10">
 
-      <label for="matchResult">Wynik meczu</label>
-      <input type="text" id="matchResult" placeholder="np. 3:1" required />
+    <!-- Analiza meczy -->
+    <section id="matchesSection" class="tab-content hidden">
+      <h2 class="text-2xl font-semibold mb-6 text-center text-blue-700">Analiza meczy</h2>
+      <p class="text-center text-gray-600">Tu będzie formularz i tabela meczów (na razie w przygotowaniu)</p>
+    </section>
 
-      <label for="matchRating">Ocena meczu (1-5)</label>
-      <input type="number" id="matchRating" min="1" max="5" required />
+    <!-- Drużyny -->
+    <section id="teamsSection" class="tab-content hidden">
+      <h2 class="text-2xl font-semibold mb-6 text-blue-700">Drużyny</h2>
 
-      <label for="goalScorers">Kto strzelił bramkę</label>
-      <textarea id="goalScorers" placeholder="np. Jan Kowalski, Adam Nowak"></textarea>
+      <form id="teamForm" class="flex flex-col gap-4 max-w-md mx-auto">
+        <input
+          type="text"
+          id="teamName"
+          placeholder="Nazwa drużyny"
+          required
+          class="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button
+          type="submit"
+          class="bg-blue-600 text-white rounded-lg py-3 font-semibold hover:bg-blue-800 transition"
+        >
+          Dodaj drużynę
+        </button>
+      </form>
 
-      <label for="bestPlayer">Najlepszy zawodnik</label>
-      <input type="text" id="bestPlayer" placeholder="Imię i nazwisko" />
+      <table class="table-auto w-full mt-10 text-left text-gray-700">
+        <thead class="bg-blue-100 rounded-t-lg">
+          <tr>
+            <th class="py-3 px-6 rounded-tl-lg">Nazwa drużyny</th>
+            <th class="py-3 px-6">Liczba zawodników</th>
+            <th class="py-3 px-6 rounded-tr-lg">Akcje</th>
+          </tr>
+        </thead>
+        <tbody id="teamsTableBody"></tbody>
+      </table>
+    </section>
 
-      <label for="topJaguarPlayers">3 najlepszych zawodników Jaguara</label>
-      <textarea id="topJaguarPlayers" placeholder="Oddziel przecinkiem"></textarea>
+    <!-- Zawodnicy -->
+    <section id="playersSection" class="tab-content hidden">
+      <h2 class="text-2xl font-semibold mb-6 text-blue-700">Zawodnicy</h2>
 
-      <label for="topOpponentsPlayers">3 najlepszych zawodników przeciwnika</label>
-      <textarea id="topOpponentsPlayers" placeholder="Oddziel przecinkiem"></textarea>
+      <form id="playerForm" class="flex flex-col gap-4 max-w-md mx-auto">
+        <select
+          id="selectTeamForPlayer"
+          required
+          class="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="" disabled selected>Wybierz drużynę</option>
+        </select>
 
-      <label for="playerDescriptions">Opis zawodników (opcjonalnie)</label>
-      <textarea id="playerDescriptions" placeholder="Opis, indywidualna ocena"></textarea>
+        <input
+          type="text"
+          id="playerName"
+          placeholder="Imię i nazwisko zawodnika"
+          required
+          class="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
 
-      <button type="submit">Dodaj mecz</button>
-    </form>
+        <button
+          type="submit"
+          class="bg-blue-600 text-white rounded-lg py-3 font-semibold hover:bg-blue-800 transition"
+        >
+          Dodaj zawodnika
+        </button>
+      </form>
 
-    <table id="matchesTable">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Wynik</th>
-          <th>Ocena</th>
-          <th>Strzelcy</th>
-          <th>Najlepszy</th>
-          <th>Top Jaguar</th>
-          <th>Top przeciwnik</th>
-          <th>Opis</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Tu będą dodawane mecze -->
-      </tbody>
-    </table>
-  </section>
+      <table class="table-auto w-full mt-10 text-left text-gray-700">
+        <thead class="bg-blue-100 rounded-t-lg">
+          <tr>
+            <th class="py-3 px-6 rounded-tl-lg">Imię i nazwisko</th>
+            <th class="py-3 px-6">Drużyna</th>
+            <th class="py-3 px-6 rounded-tr-lg">Akcje</th>
+          </tr>
+        </thead>
+        <tbody id="playersTableBody"></tbody>
+      </table>
+    </section>
+  </main>
 
-  <!-- Zakładka 2: Drużyny -->
-  <section id="teamsSection">
-    <h2>Drużyny</h2>
-    <form id="teamForm">
-      <label for="teamName">Dodaj drużynę</label>
-      <input type="text" id="teamName" placeholder="Nazwa drużyny" required />
-      <button type="submit">Dodaj drużynę</button>
-    </form>
-    <table id="teamsTable">
-      <thead>
-        <tr>
-          <th>Nazwa drużyny</th>
-          <th>Liczba zawodników</th>
-          <th>Akcje</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Tu będą dodawane drużyny -->
-      </tbody>
-    </table>
-  </section>
+  <footer class="text-center p-4 text-gray-600 border-t mt-auto">© 2025 Jaguar Trenerzy</footer>
 
-  <!-- Zakładka 3: Zawodnicy -->
-  <section id="playersSection">
-    <h2>Zawodnicy</h2>
-
-    <form id="playerForm">
-      <label for="selectTeamForPlayer">Wybierz drużynę</label>
-      <select id="selectTeamForPlayer" required>
-        <option value="">-- Wybierz drużynę --</option>
-      </select>
-
-      <label for="playerName">Nazwa zawodnika</label>
-      <input type="text" id="playerName" placeholder="Imię i nazwisko" required />
-
-      <button type="submit">Dodaj zawodnika</button>
-    </form>
-
-    <table id="playersTable">
-      <thead>
-        <tr>
-          <th>Imię i nazwisko</th>
-          <th>Drużyna</th>
-          <th>Akcje</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Tu będą dodawani zawodnicy -->
-      </tbody>
-    </table>
-
-    <hr />
-
-    <h3>Dodaj ocenę zawodnikowi</h3>
-    <form id="ratingForm">
-      <label for="selectPlayerForRating">Wybierz zawodnika</label>
-      <select id="selectPlayerForRating" required>
-        <option value="">-- Wybierz zawodnika --</option>
-      </select>
-
-      <label for="ratingDate">Data oceny</label>
-      <input type="date" id="ratingDate" required />
-
-      <label for="trainingRating">Ocena treningu (1-5)</label>
-      <input type="number" id="trainingRating" min="1" max="5" required />
-
-      <label for="matchRatingPlayer">Ocena meczu (1-5)</label>
-      <input type="number" id="matchRatingPlayer" min="1" max="5" required />
-
-      <label for="timeOnField">Czas na boisku (minuty)</label>
-      <input type="number" id="timeOnField" min="0" required />
-
-      <button type="submit">Dodaj ocenę</button>
-    </form>
-
-    <div class="charts-container">
-      <canvas id="trainingChart"></canvas>
-      <canvas id="matchChart"></canvas>
-    </div>
-  </section>
-
-  <!-- Podłącz skrypt -->
   <script src="script.js"></script>
-
 </body>
 </html>
