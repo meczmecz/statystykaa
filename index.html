@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Strona Trenera Jaguara</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f4f7fa;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #0a6aa6;
+    }
+    nav {
+      text-align: center;
+      margin: 20px 0;
+    }
+    nav button {
+      background: #0a6aa6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    nav button:hover {
+      background: #084d7c;
+    }
+    .tab {
+      display: none;
+    }
+    .active {
+      display: block;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      margin: 20px auto;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      max-width: 600px;
+    }
+    input, textarea, select, button[type="submit"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+    }
+    button[type="submit"] {
+      background-color: #28a745;
+      color: white;
+      font-weight: bold;
+      border: none;
+    }
+    button[type="submit"]:hover {
+      background-color: #218838;
+    }
+    .box {
+      background: white;
+      padding: 15px;
+      margin: 10px auto;
+      border-left: 5px solid #0a6aa6;
+      border-radius: 6px;
+      max-width: 600px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    ul {
+      padding-left: 20px;
+    }
+    canvas {
+      background: white;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+      display: block;
+      border-radius: 8px;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>📋 Strona Trenera Jaguara</h1>
+
+  <nav>
+    <button onclick="showTab('matches')">1️⃣ Analiza Meczów</button>
+    <button onclick="showTab('teams')">2️⃣ Drużyny i Zawodnicy</button>
+    <button onclick="showTab('stats')">3️⃣ Statystyki Zawodnika</button>
+  </nav>
+
+  <div id="matches" class="tab active">
+    <h2>Analiza Meczów</h2>
+    <form id="matchForm">
+      <input type="date" id="matchDate" required />
+      <input type="text" id="opponents" placeholder="Przeciwnicy (np. Jaguar vs XYZ)" required />
+      <input type="text" id="score" placeholder="Wynik (np. 3:1)" required />
+      <select id="matchRating" required>
+        <option value="">Ocena meczu (1–5)</option>
+        <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+      </select>
+      <input type="text" id="scorers" placeholder="Kto strzelił gole?" />
+      <input type="text" id="bestPlayer" placeholder="Najlepszy gracz meczu" />
+      <input type="text" id="top3Jaguar" placeholder="Top 3 Jaguar (np. Janek, Marek, Kuba)" />
+      <input type="text" id="top3Opponents" placeholder="Top 3 przeciwnika" />
+      <textarea id="matchDescription" placeholder="Opis meczu (opcjonalny)"></textarea>
+      <button type="submit">Zapisz mecz</button>
+    </form>
+    <div id="matchList"></div>
+  </div>
+
+  <div id="teams" class="tab">
+    <h2>Drużyny i Zawodnicy</h2>
+    <form id="teamForm">
+      <input type="text" id="teamName" placeholder="Nazwa drużyny" required />
+      <button type="submit">Dodaj drużynę</button>
+    </form>
+    <div id="teamList"></div>
+  </div>
+
+  <div id="stats" class="tab">
+    <h2>Statystyki Zawodnika</h2>
+    <select id="playerSelect"></select>
+    <form id="ratingForm">
+      <input type="date" id="ratingDate" required />
+      <select id="ratingType" required>
+        <option value="">Typ oceny</option>
+        <option value="mecz">Po meczu</option>
+        <option value="trening">Po treningu</option>
+      </select>
+      <input type="number" id="ratingValue" placeholder="Ocena 1–5" min="1" max="5" required />
+      <input type="number" id="minutesPlayed" placeholder="Minuty (jeśli mecz)" />
+      <button type="submit">Dodaj ocenę</button>
+    </form>
+    <div id="ratingOutput"></div>
+    <button onclick="drawChart()">📈 Zobacz wykres postępu</button>
+    <canvas id="chartCanvas" width="600" height="300"></canvas>
+  </div>
+
+  <script>
+    function showTab(id) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    const matchForm = document.getElementById('matchForm');
+    const matchList = document.getElementById('matchList');
+
+    matchForm.onsubmit = function (e) {
+      e.preventDefault();
+      const match = {
+        date: matchDate.value,
+        opponents: opponents.value,
+        score: score.value,
+        rating: matchRating.value,
+        scorers: scorers.value,
+        bestPlayer: bestPlayer.value,
+        top3Jaguar: top3Jaguar.value,
+        top3Opponents: top3Opponents.value,
+        description: matchDescription.value
+      };
+      const matches = JSON.parse(localStorage.getItem('matches') || '[]');
+      matches.push(match);
+      localStorage.setItem('matches', JSON.stringify(matches));
+      renderMatches();
+      matchForm.reset();
+    }
+
+    function renderMatches() {
+      const matches = JSON.parse(localStorage.getItem('matches') || '[]');
+      matchList.innerHTML = '';
+      matches.forEach(m => {
+        const div = document.createElement('div');
+        div.className = 'box';
+        div.innerHTML = `
+          <strong>${m.date}</strong> – ${m.opponents} (${m.score})<br>
+          Ocena: ${m.rating}/5<br>
+          Strzelcy: ${m.scorers}<br>
+          MVP: ${m.bestPlayer}<br>
+          Top 3 Jaguar: ${m.top3Jaguar}<br>
+          Top 3 Przeciwnik: ${m.top3Opponents}<br>
+          Opis: ${m.description || '-'}
+        `;
+        matchList.appendChild(div);
+      });
+    }
+
+    renderMatches();
+
+    const teamForm = document.getElementById('teamForm');
+    const teamList = document.getElementById('teamList');
+    const playerSelect = document.getElementById('playerSelect');
+
+    teamForm.onsubmit = function (e) {
+      e.preventDefault();
+      const name = teamName.value;
+      const teams = JSON.parse(localStorage.getItem('teams') || '[]');
+      teams.push({ name, players: [] });
+      localStorage.setItem('teams', JSON.stringify(teams));
+      teamForm.reset();
+      renderTeams();
+    }
+
+    function renderTeams() {
+      const teams = JSON.parse(localStorage.getItem('teams') || '[]');
+      teamList.innerHTML = '';
+      playerSelect.innerHTML = '';
+      teams.forEach((t, i) => {
+        const div = document.createElement('div');
+        div.className = 'box';
+        div.innerHTML = `
+          <strong>${t.name}</strong><br>
+          <input type="text" id="p-${i}" placeholder="Dodaj zawodnika" />
+          <button onclick="addPlayer(${i})">Dodaj</button>
+          <ul id="players-${i}"></ul>
+        `;
+        teamList.appendChild(div);
+
+        const playerList = document.getElementById(`players-${i}`);
+        t.players.forEach(p => {
+          const li = document.createElement('li');
+          li.textContent = p;
+          playerList.appendChild(li);
+
+          const option = document.createElement('option');
+          option.value = p;
+          option.text = p;
+          playerSelect.appendChild(option);
+        });
+      });
+    }
+
+    function addPlayer(teamIndex) {
+      const teams = JSON.parse(localStorage.getItem('teams') || '[]');
+      const input = document.getElementById(`p-${teamIndex}`);
+      const name = input.value;
+      if (!name) return;
+      teams[teamIndex].players.push(name);
+      localStorage.setItem('teams', JSON.stringify(teams));
+      renderTeams();
+    }
+
+    renderTeams();
+
+    const ratingForm = document.getElementById('ratingForm');
+    const ratingOutput = document.getElementById('ratingOutput');
+    const chartCanvas = document.getElementById('chartCanvas');
+    const ctx = chartCanvas.getContext('2d');
+
+    ratingForm.onsubmit = function (e) {
+      e.preventDefault();
+      const player = playerSelect.value;
+      const data = {
+        date: ratingDate.value,
+        type: ratingType.value,
+        rating: Number(ratingValue.value),
+        minutes: Number(minutesPlayed.value) || 0
+      };
+      const all = JSON.parse(localStorage.getItem('ratings') || '{}');
+      if (!all[player]) all[player] = [];
+      all[player].push(data);
+      localStorage.setItem('ratings', JSON.stringify(all));
+      ratingForm.reset();
+      showStats(player);
+    }
+
+    function showStats(player) {
+      const all = JSON.parse(localStorage.getItem('ratings') || '{}');
+      const data = all[player] || [];
+      let avg = 0;
+      if (data.length) {
+        avg = data.reduce((sum, d) => sum + d.rating, 0) / data.length;
+      }
+      ratingOutput.innerHTML = `Średnia ocen ${player}: ${avg.toFixed(2)}`;
+    }
+
+    function drawChart() {
+      const player = playerSelect.value;
+      const all = JSON.parse(localStorage.getItem('ratings') || '{}');
+      const data = all[player] || [];
+
+      ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+      if (data.length === 0) return;
+
+      const maxRating = 5;
+      const spacing = 600 / (data.length + 1);
+
+      ctx.beginPath();
+      ctx.moveTo(0, 300 - (data[0].rating / maxRating * 300));
+      data.forEach((d, i) => {
+        const x = (i + 1) * spacing;
+        const y = 300 - (d.rating / maxRating * 300);
+        ctx.lineTo(x, y);
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+      });
+      ctx.stroke();
+    }
+  </script>
+</body>
+</html>
+
