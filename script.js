@@ -1,145 +1,163 @@
 // script.js
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Zmiana zakładek
-  const tabs = document.querySelectorAll('.tab-btn');
-  const sections = document.querySelectorAll('.tab-content');
 
-  function showSection(id) {
-    sections.forEach(sec => {
-      sec.classList.toggle('hidden', sec.id !== id);
-    });
-    tabs.forEach(tab => {
-      tab.classList.toggle('bg-blue-800', tab.dataset.target === id);
-      tab.classList.toggle('bg-blue-600', tab.dataset.target !== id);
-    });
-  }
-
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => showSection(tab.dataset.target));
-  });
-
-  // Pokaż domyślnie pierwszą zakładkę
-  showSection('matchesSection');
-
-  // Dane drużyn i zawodników
+  // Dane — na razie w pamięci (możesz potem rozbudować o storage)
   let teams = [];
   let players = [];
 
-  // Elementy
+  // Elementy DOM
+  const tabs = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  const teamsList = document.getElementById('teamsList');
+  const playersList = document.getElementById('playersList');
+
   const teamForm = document.getElementById('teamForm');
   const teamNameInput = document.getElementById('teamName');
-  const teamsTableBody = document.getElementById('teamsTableBody');
-  const selectTeamForPlayer = document.getElementById('selectTeamForPlayer');
+
   const playerForm = document.getElementById('playerForm');
+  const playerTeamSelect = document.getElementById('playerTeamSelect');
   const playerNameInput = document.getElementById('playerName');
-  const playersTableBody = document.getElementById('playersTableBody');
+
+  // FUNKCJA: Zmiana zakładek
+  function switchTab(tabName) {
+    tabContents.forEach(tc => {
+      tc.classList.toggle('hidden', tc.id !== tabName);
+    });
+
+    tabs.forEach(tab => {
+      if(tab.dataset.tab === tabName) {
+        tab.classList.add('bg-blue-600', 'text-white');
+        tab.classList.remove('bg-white', 'text-blue-800');
+      } else {
+        tab.classList.remove('bg-blue-600', 'text-white');
+        tab.classList.add('bg-white', 'text-blue-800');
+      }
+    });
+  }
+
+  // Obsługa kliknięcia w zakładkę
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      switchTab(tab.dataset.tab);
+    });
+  });
+
+  // Domyślnie pokaż Drużyny
+  switchTab('teams');
 
   // Dodawanie drużyny
   teamForm.addEventListener('submit', e => {
     e.preventDefault();
     const name = teamNameInput.value.trim();
-    if (!name) return alert('Podaj nazwę drużyny!');
-
-    if (teams.find(t => t.name.toLowerCase() === name.toLowerCase())) {
+    if (!name) {
+      alert('Podaj nazwę drużyny!');
+      return;
+    }
+    if (teams.some(t => t.name.toLowerCase() === name.toLowerCase())) {
       alert('Taka drużyna już istnieje!');
       return;
     }
-
-    teams.push({ name, players: [] });
+    teams.push({ name, id: Date.now().toString() });
     teamNameInput.value = '';
     renderTeams();
     updateTeamSelect();
   });
 
-  // Dodawanie zawodnika do drużyny
+  // Dodawanie zawodnika
   playerForm.addEventListener('submit', e => {
     e.preventDefault();
-    const playerName = playerNameInput.value.trim();
-    const teamName = selectTeamForPlayer.value;
-    if (!playerName || !teamName) return alert('Wybierz drużynę i podaj nazwisko zawodnika!');
-
-    // Znajdź drużynę
-    const team = teams.find(t => t.name === teamName);
-    if (!team) return alert('Wybrana drużyna nie istnieje!');
-
-    // Sprawdź, czy zawodnik już w tej drużynie
-    if (team.players.find(p => p.toLowerCase() === playerName.toLowerCase())) {
-      alert('Taki zawodnik już jest w drużynie!');
+    const name = playerNameInput.value.trim();
+    const teamId = playerTeamSelect.value;
+    if (!name || !teamId) {
+      alert('Wybierz drużynę i podaj nazwisko zawodnika!');
       return;
     }
-
-    team.players.push(playerName);
+    if (players.some(p => p.name.toLowerCase() === name.toLowerCase() && p.teamId === teamId)) {
+      alert('Taki zawodnik już jest w tej drużynie!');
+      return;
+    }
+    players.push({ name, id: Date.now().toString(), teamId });
     playerNameInput.value = '';
-    renderTeams();
     renderPlayers();
   });
 
   // Usuwanie drużyny
-  function deleteTeam(name) {
-    if (!confirm(`Na pewno usunąć drużynę "${name}"? Usunięcie drużyny usunie też wszystkich zawodników.`)) return;
-    teams = teams.filter(t => t.name !== name);
+  function deleteTeam(id) {
+    if (!confirm('Na pewno chcesz usunąć tę drużynę i wszystkich jej zawodników?')) return;
+    teams = teams.filter(t => t.id !== id);
+    players = players.filter(p => p.teamId !== id);
     renderTeams();
     renderPlayers();
     updateTeamSelect();
   }
 
   // Usuwanie zawodnika
-  function deletePlayer(teamName, playerName) {
-    if (!confirm(`Na pewno usunąć zawodnika "${playerName}" z drużyny "${teamName}"?`)) return;
-    const team = teams.find(t => t.name === teamName);
-    if (!team) return;
-    team.players = team.players.filter(p => p !== playerName);
-    renderTeams();
+  function deletePlayer(id) {
+    if (!confirm('Na pewno chcesz usunąć tego zawodnika?')) return;
+    players = players.filter(p => p.id !== id);
     renderPlayers();
   }
 
-  // Renderowanie tabeli drużyn
+  // Renderowanie drużyn jako kafelki
   function renderTeams() {
-    teamsTableBody.innerHTML = '';
+    if(teams.length === 0) {
+      teamsList.innerHTML = `<p class="col-span-full text-center text-gray-500">Brak drużyn. Dodaj nową drużynę powyżej.</p>`;
+      return;
+    }
+    teamsList.innerHTML = '';
     teams.forEach(team => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="py-2 px-4">${team.name}</td>
-        <td class="py-2 px-4">${team.players.length}</td>
-        <td class="py-2 px-4">
-          <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700" onclick="deleteTeam('${team.name}')">Usuń</button>
-        </td>
+      const teamPlayers = players.filter(p => p.teamId === team.id);
+      const div = document.createElement('div');
+      div.className = 'bg-white rounded-xl shadow-lg p-6 flex flex-col justify-between hover:shadow-xl transition relative';
+      div.innerHTML = `
+        <h3 class="text-xl font-semibold mb-2 text-blue-700">${team.name}</h3>
+        <p class="text-gray-600 mb-4">Liczba zawodników: <span class="font-bold">${teamPlayers.length}</span></p>
+        <button class="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-800 transition" title="Usuń drużynę">Usuń</button>
       `;
-      teamsTableBody.appendChild(tr);
+      const btn = div.querySelector('button');
+      btn.addEventListener('click', () => deleteTeam(team.id));
+      teamsList.appendChild(div);
     });
   }
 
-  // Renderowanie tabeli zawodników
+  // Renderowanie zawodników jako kafelki
   function renderPlayers() {
-    playersTableBody.innerHTML = '';
-    teams.forEach(team => {
-      team.players.forEach(player => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="py-2 px-4">${player}</td>
-          <td class="py-2 px-4">${team.name}</td>
-          <td class="py-2 px-4">
-            <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700" onclick="deletePlayer('${team.name}', '${player}')">Usuń</button>
-          </td>
-        `;
-        playersTableBody.appendChild(tr);
-      });
+    if(players.length === 0) {
+      playersList.innerHTML = `<p class="col-span-full text-center text-gray-500">Brak zawodników. Dodaj zawodnika powyżej.</p>`;
+      return;
+    }
+    playersList.innerHTML = '';
+    players.forEach(player => {
+      const team = teams.find(t => t.id === player.teamId);
+      const div = document.createElement('div');
+      div.className = 'bg-white rounded-xl shadow-lg p-6 flex flex-col justify-between hover:shadow-xl transition relative';
+      div.innerHTML = `
+        <h3 class="text-xl font-semibold mb-2 text-blue-700">${player.name}</h3>
+        <p class="text-gray-600 mb-4">Drużyna: <span class="font-bold">${team ? team.name : 'Nieznana'}</span></p>
+        <button class="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-800 transition" title="Usuń zawodnika">Usuń</button>
+      `;
+      const btn = div.querySelector('button');
+      btn.addEventListener('click', () => deletePlayer(player.id));
+      playersList.appendChild(div);
     });
   }
 
-  // Aktualizacja select drużyn w formularzu zawodników
+  // Aktualizacja selecta drużyn w formularzu zawodnika
   function updateTeamSelect() {
-    selectTeamForPlayer.innerHTML = '<option value="" disabled selected>Wybierz drużynę</option>';
+    playerTeamSelect.innerHTML = `<option value="" disabled selected>Wybierz drużynę</option>`;
     teams.forEach(team => {
-      const option = document.createElement('option');
-      option.value = team.name;
-      option.textContent = team.name;
-      selectTeamForPlayer.appendChild(option);
+      const opt = document.createElement('option');
+      opt.value = team.id;
+      opt.textContent = team.name;
+      playerTeamSelect.appendChild(opt);
     });
   }
 
-  // Żeby funkcje usuwania działały z onclick z stringami
-  window.deleteTeam = deleteTeam;
-  window.deletePlayer = deletePlayer;
+  // Initial render
+  renderTeams();
+  renderPlayers();
+  updateTeamSelect();
+
 });
