@@ -1,107 +1,98 @@
 <!DOCTYPE html>
-<html lang="pl" class="scroll-smooth">
+<html lang="pl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Trenerzy Jaguara - Panel</title>
+  <title>Trenerzy Jaguara - Pinterest Style</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Scrollbar ładniejszy */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #2563eb;
+      border-radius: 4px;
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-r from-blue-100 via-blue-200 to-blue-300 min-h-screen flex flex-col">
+<body class="bg-gradient-to-tr from-blue-100 via-blue-200 to-blue-400 min-h-screen flex flex-col">
 
-  <header class="bg-blue-700 text-white py-5 shadow-md">
-    <h1 class="text-3xl font-bold text-center">Panel Trenerów Jaguara</h1>
-  </header>
+<header class="bg-blue-800 text-white p-6 shadow-lg">
+  <h1 class="text-4xl font-extrabold text-center tracking-wide">Panel Trenerów Jaguara</h1>
+</header>
 
-  <nav class="flex justify-center gap-6 mt-6">
-    <button class="tab-btn bg-blue-600 text-white py-2 px-6 rounded-lg shadow hover:bg-blue-800 transition" data-target="matchesSection">Analiza meczy</button>
-    <button class="tab-btn bg-blue-600 text-white py-2 px-6 rounded-lg shadow hover:bg-blue-800 transition" data-target="teamsSection">Drużyny</button>
-    <button class="tab-btn bg-blue-600 text-white py-2 px-6 rounded-lg shadow hover:bg-blue-800 transition" data-target="playersSection">Zawodnicy</button>
-  </nav>
+<nav class="flex justify-center gap-8 mt-6">
+  <button data-tab="teams" class="tab-btn bg-white text-blue-800 font-semibold px-6 py-2 rounded-xl shadow hover:bg-blue-100 transition">Drużyny</button>
+  <button data-tab="players" class="tab-btn bg-white text-blue-800 font-semibold px-6 py-2 rounded-xl shadow hover:bg-blue-100 transition">Zawodnicy</button>
+</nav>
 
-  <main class="flex-grow max-w-5xl mx-auto p-6 bg-white rounded-xl shadow-lg mt-10 mb-10">
+<main class="flex-grow max-w-7xl mx-auto px-4 py-8">
 
-    <!-- Analiza meczy -->
-    <section id="matchesSection" class="tab-content hidden">
-      <h2 class="text-2xl font-semibold mb-6 text-center text-blue-700">Analiza meczy</h2>
-      <p class="text-center text-gray-600">Tu będzie formularz i tabela meczów (na razie w przygotowaniu)</p>
-    </section>
+  <!-- Drużyny -->
+  <section id="teams" class="tab-content grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
 
-    <!-- Drużyny -->
-    <section id="teamsSection" class="tab-content hidden">
-      <h2 class="text-2xl font-semibold mb-6 text-blue-700">Drużyny</h2>
-
-      <form id="teamForm" class="flex flex-col gap-4 max-w-md mx-auto">
+    <div class="col-span-full bg-white rounded-xl shadow p-6">
+      <h2 class="text-2xl font-bold mb-4 text-blue-800">Dodaj nową drużynę</h2>
+      <form id="teamForm" class="flex gap-4 flex-wrap">
         <input
           type="text"
           id="teamName"
           placeholder="Nazwa drużyny"
           required
-          class="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
         <button
           type="submit"
-          class="bg-blue-600 text-white rounded-lg py-3 font-semibold hover:bg-blue-800 transition"
+          class="bg-blue-600 text-white px-6 rounded-lg font-semibold hover:bg-blue-800 transition"
         >
           Dodaj drużynę
         </button>
       </form>
+    </div>
 
-      <table class="table-auto w-full mt-10 text-left text-gray-700">
-        <thead class="bg-blue-100 rounded-t-lg">
-          <tr>
-            <th class="py-3 px-6 rounded-tl-lg">Nazwa drużyny</th>
-            <th class="py-3 px-6">Liczba zawodników</th>
-            <th class="py-3 px-6 rounded-tr-lg">Akcje</th>
-          </tr>
-        </thead>
-        <tbody id="teamsTableBody"></tbody>
-      </table>
-    </section>
+    <div id="teamsList" class="col-span-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+  </section>
 
-    <!-- Zawodnicy -->
-    <section id="playersSection" class="tab-content hidden">
-      <h2 class="text-2xl font-semibold mb-6 text-blue-700">Zawodnicy</h2>
+  <!-- Zawodnicy -->
+  <section id="players" class="tab-content hidden mt-6">
 
-      <form id="playerForm" class="flex flex-col gap-4 max-w-md mx-auto">
+    <div class="bg-white rounded-xl shadow p-6 max-w-lg mx-auto">
+      <h2 class="text-2xl font-bold mb-4 text-blue-800 text-center">Dodaj zawodnika</h2>
+      <form id="playerForm" class="flex flex-col gap-4">
         <select
-          id="selectTeamForPlayer"
+          id="playerTeamSelect"
           required
-          class="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
         >
           <option value="" disabled selected>Wybierz drużynę</option>
         </select>
-
         <input
           type="text"
           id="playerName"
           placeholder="Imię i nazwisko zawodnika"
           required
-          class="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
-
         <button
           type="submit"
-          class="bg-blue-600 text-white rounded-lg py-3 font-semibold hover:bg-blue-800 transition"
+          class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800 transition"
         >
           Dodaj zawodnika
         </button>
       </form>
+    </div>
 
-      <table class="table-auto w-full mt-10 text-left text-gray-700">
-        <thead class="bg-blue-100 rounded-t-lg">
-          <tr>
-            <th class="py-3 px-6 rounded-tl-lg">Imię i nazwisko</th>
-            <th class="py-3 px-6">Drużyna</th>
-            <th class="py-3 px-6 rounded-tr-lg">Akcje</th>
-          </tr>
-        </thead>
-        <tbody id="playersTableBody"></tbody>
-      </table>
-    </section>
-  </main>
+    <div id="playersList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10"></div>
+  </section>
+</main>
 
-  <footer class="text-center p-4 text-gray-600 border-t mt-auto">© 2025 Jaguar Trenerzy</footer>
+<footer class="bg-blue-800 text-white p-4 text-center font-light">
+  © 2025 Jaguar Trenerzy — Strona wykonana przez Ciebie i ChatGPT
+</footer>
 
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
+
