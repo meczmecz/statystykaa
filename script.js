@@ -1,395 +1,335 @@
-(() => {
-  const STORAGE_KEYS = {
-    matches: 'matches',
-    teams: 'teams',
-    players: 'players',
-    ratings: 'ratings'
+// --- Dane przechowywane w localStorage ---
+let teams = JSON.parse(localStorage.getItem('teams')) || [];
+let players = JSON.parse(localStorage.getItem('players')) || []; // wszyscy zawodnicy, powiązani z drużynami
+let matches = JSON.parse(localStorage.getItem('matches')) || [];
+let ratings = JSON.parse(localStorage.getItem('ratings')) || [];
+
+// --- Zapis do localStorage ---
+function saveData() {
+  localStorage.setItem('teams', JSON.stringify(teams));
+  localStorage.setItem('players', JSON.stringify(players));
+  localStorage.setItem('matches', JSON.stringify(matches));
+  localStorage.setItem('ratings', JSON.stringify(ratings));
+}
+
+// --- Render drużyn i zawodników w zakładce Drużyny ---
+function renderTeams() {
+  const container = document.getElementById('teamsContainer');
+  container.innerHTML = '';
+  if (teams.length === 0) {
+    container.innerHTML = '<p>Brak drużyn. Dodaj nową drużynę.</p>';
+    return;
+  }
+  teams.forEach(team => {
+    // Znajdź zawodników tej drużyny
+    const teamPlayers = players.filter(p => p.teamId === team.id);
+
+    const teamDiv = document.createElement('div');
+    teamDiv.className = 'card';
+    teamDiv.innerHTML = `
+      <h3>${team.name} 
+        <button class="btn-red" onclick="deleteTeam(${team.id})">Usuń drużynę</button>
+      </h3>
+      <p><b>Zawodnicy:</b></p>
+      <ul id="playersList_${team.id}">
+        ${teamPlayers.map(p => 
+          `<li>${p.name} 
+            <button class="btn-red" onclick="deletePlayer(${team.id},${p.id})">Usuń</button>
+          </li>`).join('')}
+      </ul>
+      <input type="text" id="newPlayerName_${team.id}" placeholder="Dodaj zawodnika">
+      <button onclick="addPlayer(${team.id})">Dodaj zawodnika</button>
+    `;
+    container.appendChild(teamDiv);
+  });
+  updateTeamSelects();
+}
+
+// --- Dodawanie drużyny ---
+function addTeam() {
+  const input = document.getElementById('teamNameInput');
+  const name = input.value.trim();
+  if (!name) {
+    alert('Podaj nazwę drużyny!');
+    return;
+  }
+  if (teams.find(t => t.name.toLowerCase() === name.toLowerCase())) {
+    alert('Taka drużyna już istnieje!');
+    return;
+  }
+  const newTeam = { id: Date.now(), name };
+  teams.push(newTeam);
+  saveData();
+  input.value = '';
+  renderTeams();
+}
+
+// --- Usuwanie drużyny ---
+function deleteTeam(id) {
+  if (!confirm('Usunąć drużynę i wszystkich jej zawodników?')) return;
+  teams = teams.filter(t => t.id !== id);
+  players = players.filter(p => p.teamId !== id);
+  ratings = ratings.filter(r => {
+    const player = players.find(p => p.id === r.playerId);
+    return player !== undefined;
+  });
+  saveData();
+  renderTeams();
+  renderRatings();
+}
+
+// --- Dodawanie zawodnika ---
+function addPlayer(teamId) {
+  const input = document.getElementById(`newPlayerName_${teamId}`);
+  const name = input.value.trim();
+  if (!name) {
+    alert('Podaj nazwę zawodnika!');
+    return;
+  }
+  if (players.find(p => p.name.toLowerCase() === name.toLowerCase() && p.teamId === teamId)) {
+    alert('Taki zawodnik już jest w tej drużynie!');
+    return;
+  }
+  const newPlayer = { id: Date.now(), teamId, name };
+  players.push(newPlayer);
+  saveData();
+  input.value = '';
+  renderTeams();
+}
+
+// --- Usuwanie zawodnika ---
+function deletePlayer(teamId, playerId) {
+  if (!confirm('Usunąć zawodnika?')) return;
+  players = players.filter(p => p.id !== playerId);
+  ratings = ratings.filter(r => r.playerId !== playerId);
+  saveData();
+  renderTeams();
+  renderRatings();
+}
+
+// --- Render meczów ---
+function renderMatches() {
+  const container = document.getElementById('matchesContainer');
+  container.innerHTML = '';
+  if (matches.length === 0) {
+    container.innerHTML = '<p>Brak dodanych meczów.</p>';
+    return;
+  }
+  matches.forEach(match => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <p><b>Data:</b> ${match.date}</p>
+      <p><b>Przeciwnik:</b> ${match.opponent}</p>
+      <p><b>Wynik:</b> ${match.result}</p>
+      <p><b>Strzelcy:</b> ${match.scorers || '-'}</p>
+      <p><b>Najlepszy zawodnik:</b> ${match.bestPlayer || '-'}</p>
+      <p><b>3 najlepsi z Jaguara:</b> ${match.best3Jaguar || '-'}</p>
+      <p><b>3 najlepsi przeciwnicy:</b> ${match.best3Opponent || '-'}</p>
+      <p><b>Opis:</b> ${match.descriptions || '-'}</p>
+      <button class="btn-red" onclick="deleteMatch(${match.id})">Usuń mecz</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// --- Dodawanie meczu ---
+function addMatch(event) {
+  event.preventDefault();
+  const date = document.getElementById('matchDate').value;
+  const opponent = document.getElementById('matchOpponent').value.trim();
+  const result = document.getElementById('matchResult').value.trim();
+  const scorers = document.getElementById('matchScorers').value.trim();
+  const bestPlayer = document.getElementById('matchBestPlayer').value.trim();
+  const best3Jaguar = document.getElementById('matchBest3Jaguar').value.trim();
+  const best3Opponent = document.getElementById('matchBest3Opponent').value.trim();
+  const descriptions = document.getElementById('matchDescriptions').value.trim();
+
+  if (!date || !opponent || !result) {
+    alert('Wypełnij wymagane pola: data, przeciwnik, wynik');
+    return;
+  }
+  const newMatch = {
+    id: Date.now(),
+    date, opponent, result,
+    scorers, bestPlayer,
+    best3Jaguar, best3Opponent,
+    descriptions
+  };
+  matches.push(newMatch);
+  saveData();
+  renderMatches();
+  event.target.reset();
+}
+
+// --- Usuwanie meczu ---
+function deleteMatch(id) {
+  if (!confirm('Usunąć mecz?')) return;
+  matches = matches.filter(m => m.id !== id);
+  saveData();
+  renderMatches();
+}
+
+// --- Render ocen ---
+function renderRatings() {
+  const container = document.getElementById('ratingsContainer');
+  container.innerHTML = '';
+  if (ratings.length === 0) {
+    container.innerHTML = '<p>Brak dodanych ocen.</p>';
+    return;
+  }
+  ratings.forEach(r => {
+    const team = teams.find(t => t.id === r.teamId);
+    const player = players.find(p => p.id === r.playerId);
+    if (!team || !player) return;
+
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <p><b>${team.name} - ${player.name}</b></p>
+      <p>Typ: ${r.type}, Data: ${r.date}, Ocena: ${r.score}, Czas na boisku: ${r.timeOnField || '-'}</p>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// --- Dodawanie oceny ---
+function addRating() {
+  const teamId = Number(document.getElementById('ratingTeamSelect').value);
+  const playerId = Number(document.getElementById('ratingPlayerSelect').value);
+  const type = document.getElementById('ratingType').value;
+  const date = document.getElementById('ratingDate').value;
+  const score = Number(document.getElementById('ratingScore').value);
+  const timeOnField = document.getElementById('ratingTime').value.trim();
+
+  if (!teamId || !playerId || !type || !date || !score) {
+    alert('Wypełnij wszystkie pola oceny!');
+    return;
+  }
+  if (score < 1 || score > 5) {
+    alert('Ocena musi być od 1 do 5!');
+    return;
+  }
+
+  const newRating = { id: Date.now(), teamId, playerId, type, date, score, timeOnField };
+  ratings.push(newRating);
+  saveData();
+  renderRatings();
+  updateCharts();
+
+  // Resetuj formularz
+  document.getElementById('ratingForm').reset();
+}
+
+// --- Aktualizacja selectów drużyn i zawodników ---
+function updateTeamSelects() {
+  const selects = document.querySelectorAll('.teamSelect');
+  selects.forEach(select => {
+    const prevValue = select.value;
+    select.innerHTML = '<option value="">Wybierz drużynę</option>';
+    teams.forEach(team => {
+      const option = document.createElement('option');
+      option.value = team.id;
+      option.textContent = team.name;
+      select.appendChild(option);
+    });
+    select.value = prevValue;
+  });
+  updatePlayerSelect();
+}
+
+function updatePlayerSelect() {
+  const teamSelect = document.getElementById('ratingTeamSelect');
+  const playerSelect = document.getElementById('ratingPlayerSelect');
+  playerSelect.innerHTML = '<option value="">Wybierz zawodnika</option>';
+  const teamId = Number(teamSelect.value);
+  if (!teamId) return;
+  players.filter(p => p.teamId === teamId).forEach(player => {
+    const option = document.createElement('option');
+    option.value = player.id;
+    option.textContent = player.name;
+    playerSelect.appendChild(option);
+  });
+}
+
+// --- Wykresy Chart.js ---
+let chart1, chart2;
+const ctx1 = document.getElementById('chart1').getContext('2d');
+const ctx2 = document.getElementById('chart2').getContext('2d');
+
+function updateCharts() {
+  // Średnia ocena zawodników w drużynach
+  const teamScores = {};
+  ratings.forEach(r => {
+    if (!teamScores[r.teamId]) teamScores[r.teamId] = { sum: 0, count: 0 };
+    teamScores[r.teamId].sum += r.score;
+    teamScores[r.teamId].count++;
+  });
+  const labels = teams.map(t => t.name);
+  const data = teams.map(t => {
+    if (teamScores[t.id]) return (teamScores[t.id].sum / teamScores[t.id].count).toFixed(2);
+    return 0;
+  });
+
+  if (chart1) chart1.destroy();
+  chart1 = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Średnia ocena zawodników',
+        data,
+        backgroundColor: '#1e40af',
+      }]
+    },
+    options: {
+      scales: { y: { beginAtZero: true, max: 5 }},
+      plugins: { legend: { display: false }}
+    }
+  });
+
+  // Porównanie ocen trening vs mecz
+  const typeScores = { trening: [], mecz: [] };
+  ratings.forEach(r => {
+    if (typeScores[r.type]) typeScores[r.type].push(r.score);
+  });
+  const avgTrening = typeScores.trening.length ? (typeScores.trening.reduce((a,b)=>a+b,0)/typeScores.trening.length).toFixed(2) : 0;
+  const avgMecz = typeScores.mecz.length ? (typeScores.mecz.reduce((a,b)=>a+b,0)/typeScores.mecz.length).toFixed(2) : 0;
+
+  if (chart2) chart2.destroy();
+  chart2 = new Chart(ctx2, {
+    type: 'pie',
+    data: {
+      labels: ['Ocena treningu', 'Ocena meczu'],
+      datasets: [{
+        data: [avgTrening, avgMecz],
+        backgroundColor: ['#2563eb', '#ef4444']
+      }]
+    },
+    options: {
+      plugins: { legend: { position: 'bottom' }}
+    }
+  });
+}
+
+// --- Inicjalizacja i podpięcie zdarzeń ---
+function init() {
+  renderTeams();
+  renderMatches();
+  renderRatings();
+  updateTeamSelects();
+  updateCharts();
+
+  document.getElementById('addTeamBtn').onclick = addTeam;
+  document.getElementById('matchForm').onsubmit = addMatch;
+  document.getElementById('ratingForm').onsubmit = e => {
+    e.preventDefault();
+    addRating();
   };
 
-  let matches = JSON.parse(localStorage.getItem(STORAGE_KEYS.matches)) || [];
-  let teams = JSON.parse(localStorage.getItem(STORAGE_KEYS.teams)) || [];
-  let players = JSON.parse(localStorage.getItem(STORAGE_KEYS.players)) || [];
-  let ratings = JSON.parse(localStorage.getItem(STORAGE_KEYS.ratings)) || [];
+  // Aktualizuj listę zawodników po wyborze drużyny
+  document.getElementById('ratingTeamSelect').onchange = updatePlayerSelect;
+}
 
-  // --- TABY ---
-  const tabs = document.querySelectorAll('.tab');
-  const tabContents = document.querySelectorAll('.tab-content');
-
-  function activateTab(tabName) {
-    tabs.forEach(t => {
-      if (t.dataset.tab === tabName) t.classList.add('active');
-      else t.classList.remove('active');
-    });
-    tabContents.forEach(tc => {
-      if (tc.id === tabName) tc.classList.add('active');
-      else tc.classList.remove('active');
-    });
-  }
-
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => activateTab(tab.dataset.tab));
-  });
-
-  // --- MECZE ---
-  const matchForm = document.getElementById('matchForm');
-  const matchDateInput = document.getElementById('matchDate');
-  const homeTeamSelect = document.getElementById('homeTeam');
-  const awayTeamSelect = document.getElementById('awayTeam');
-  const homeScoreInput = document.getElementById('homeScore');
-  const awayScoreInput = document.getElementById('awayScore');
-  const matchesList = document.getElementById('matchesList');
-
-  function renderMatches() {
-    matchesList.innerHTML = '';
-    matches.forEach((m, i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${m.date}</td>
-        <td>${m.homeTeam}</td>
-        <td>${m.awayTeam}</td>
-        <td style="text-align:center;">${m.homeScore}</td>
-        <td style="text-align:center;">${m.awayScore}</td>
-        <td style="text-align:center;">
-          <button class="edit-match btn" data-index="${i}">✏️</button>
-          <button class="delete-match btn bg-red-600" data-index="${i}">🗑️</button>
-        </td>
-      `;
-      matchesList.appendChild(tr);
-    });
-
-    document.querySelectorAll('.edit-match').forEach(btn => {
-      btn.onclick = () => {
-        const idx = +btn.dataset.index;
-        const m = matches[idx];
-        matchDateInput.value = m.date;
-        homeTeamSelect.value = m.homeTeam;
-        awayTeamSelect.value = m.awayTeam;
-        homeScoreInput.value = m.homeScore;
-        awayScoreInput.value = m.awayScore;
-        matchForm.dataset.editIndex = idx;
-        activateTab('matches');
-      };
-    });
-
-    document.querySelectorAll('.delete-match').forEach(btn => {
-      btn.onclick = () => {
-        const idx = +btn.dataset.index;
-        if (confirm('Na pewno usunąć ten mecz?')) {
-          matches.splice(idx, 1);
-          saveData();
-          renderMatches();
-        }
-      };
-    });
-  }
-
-  matchForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const newMatch = {
-      date: matchDateInput.value,
-      homeTeam: homeTeamSelect.value,
-      awayTeam: awayTeamSelect.value,
-      homeScore: +homeScoreInput.value,
-      awayScore: +awayScoreInput.value
-    };
-
-    if(newMatch.homeTeam === newMatch.awayTeam) {
-      return alert('Drużyny muszą być różne');
-    }
-    if(!newMatch.date) return alert('Data jest wymagana');
-
-    if(matchForm.dataset.editIndex !== undefined) {
-      matches[+matchForm.dataset.editIndex] = newMatch;
-      delete matchForm.dataset.editIndex;
-    } else {
-      matches.push(newMatch);
-    }
-    saveData();
-    renderMatches();
-    matchForm.reset();
-  });
-
-  // --- DRUŻYNY ---
-  const teamForm = document.getElementById('teamForm');
-  const teamNameInput = document.getElementById('teamName');
-  const teamsListDiv = document.getElementById('teamsList');
-
-  function renderTeams() {
-    teamsListDiv.innerHTML = '';
-    teams.forEach((t, i) => {
-      const div = document.createElement('div');
-      div.className = 'mb-4 border p-2 rounded';
-
-      const teamHeader = document.createElement('h4');
-      teamHeader.textContent = t.name;
-      teamHeader.className = 'text-lg font-semibold mb-2';
-      div.appendChild(teamHeader);
-
-      const btnEdit = document.createElement('button');
-      btnEdit.textContent = '✏️ Edytuj';
-      btnEdit.className = 'btn mr-2';
-      btnEdit.onclick = () => {
-        teamNameInput.value = t.name;
-        teamForm.dataset.editIndex = i;
-        activateTab('teams');
-      };
-      div.appendChild(btnEdit);
-
-      const btnDelete = document.createElement('button');
-      btnDelete.textContent = '🗑️ Usuń';
-      btnDelete.className = 'btn bg-red-600';
-      btnDelete.onclick = () => {
-        if(confirm('Na pewno usunąć tę drużynę?')) {
-          teams.splice(i, 1);
-          // Usunięcie powiązanych zawodników
-          players = players.filter(p => p.team !== t.name);
-          saveData();
-          renderTeams();
-          renderPlayers();
-          populateTeamsDropdown();
-          populatePlayersDropdown();
-        }
-      };
-      div.appendChild(btnDelete);
-
-      // Lista zawodników drużyny
-      const playersInTeam = players.filter(p => p.team === t.name);
-      if(playersInTeam.length > 0) {
-        const ul = document.createElement('ul');
-        ul.style.cssText = 'margin:0; padding-left:1.25rem;';
-        playersInTeam.forEach(p => {
-          const li = document.createElement('li');
-          li.textContent = p.name;
-          ul.appendChild(li);
-        });
-        div.appendChild(ul);
-      }
-
-      teamsListDiv.appendChild(div);
-    });
-  }
-
-  teamForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const name = teamNameInput.value.trim();
-    if(!name) return alert('Nazwa drużyny jest wymagana');
-
-    const newTeam = { name };
-
-    if(teamForm.dataset.editIndex !== undefined) {
-      teams[+teamForm.dataset.editIndex] = newTeam;
-      delete teamForm.dataset.editIndex;
-    } else {
-      if(teams.some(t => t.name.toLowerCase() === name.toLowerCase())) {
-        return alert('Drużyna o takiej nazwie już istnieje');
-      }
-      teams.push(newTeam);
-    }
-    saveData();
-    renderTeams();
-    populateTeamsDropdown();
-    populateTeamSelectForRating();
-    teamForm.reset();
-  });
-
-  // --- ZAWODNICY ---
-  const playerForm = document.getElementById('playerForm');
-  const playerNameInput = document.getElementById('playerName');
-  const playerTeamSelect = document.getElementById('playerTeam');
-  const playersList = document.getElementById('playersList');
-
-  function renderPlayers() {
-    playersList.innerHTML = '';
-    players.forEach((p, i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${p.name}</td>
-        <td>${p.team}</td>
-        <td style="text-align:center;">
-          <button class="edit-player btn" data-index="${i}">✏️</button>
-          <button class="delete-player btn bg-red-600" data-index="${i}">🗑️</button>
-        </td>
-      `;
-      playersList.appendChild(tr);
-    });
-
-    document.querySelectorAll('.edit-player').forEach(btn => {
-      btn.onclick = () => {
-        const idx = +btn.dataset.index;
-        const p = players[idx];
-        playerNameInput.value = p.name;
-        playerTeamSelect.value = p.team;
-        playerForm.dataset.editIndex = idx;
-        activateTab('players');
-      };
-    });
-
-    document.querySelectorAll('.delete-player').forEach(btn => {
-      btn.onclick = () => {
-        const idx = +btn.dataset.index;
-        if(confirm('Na pewno usunąć tego zawodnika?')) {
-          players.splice(idx, 1);
-          saveData();
-          renderPlayers();
-          populatePlayersDropdown(playerTeamSelect.value);
-          populatePlayersDropdown(ratingTeamSelect.value);
-        }
-      };
-    });
-  }
-
-  playerForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const name = playerNameInput.value.trim();
-    const team = playerTeamSelect.value;
-    if(!name) return alert('Imię zawodnika jest wymagane');
-    if(!team) return alert('Drużyna jest wymagana');
-
-    const newPlayer = { name, team };
-
-    if(playerForm.dataset.editIndex !== undefined) {
-      players[+playerForm.dataset.editIndex] = newPlayer;
-      delete playerForm.dataset.editIndex;
-    } else {
-      players.push(newPlayer);
-    }
-    saveData();
-    renderPlayers();
-    populatePlayersDropdown(ratingTeamSelect.value);
-    playerForm.reset();
-  });
-
-  // --- OCENY ZAWODNIKÓW ---
-  const ratingForm = document.getElementById('ratingForm');
-  const ratingPlayerSelect = document.getElementById('ratingPlayer');
-  const ratingTeamSelect = document.getElementById('ratingTeam');
-  const ratingScoreInput = document.getElementById('ratingScore');
-  const ratingDateInput = document.getElementById('ratingDate');
-  const ratingTypeSelect = document.getElementById('ratingType');
-  const ratingNotesInput = document.getElementById('ratingNotes');
-  const ratingsList = document.getElementById('ratingsList');
-
-  function populateTeamsDropdown() {
-    [playerTeamSelect, ratingTeamSelect].forEach(select => {
-      const current = select.value;
-      select.innerHTML = '<option value="">-- wybierz drużynę --</option>';
-      teams.forEach(t => {
-        const option = document.createElement('option');
-        option.value = t.name;
-        option.textContent = t.name;
-        select.appendChild(option);
-      });
-      if (teams.some(t => t.name === current)) select.value = current;
-      else select.value = '';
-    });
-  }
-
-  function populatePlayersDropdown(teamName = '') {
-    ratingPlayerSelect.innerHTML = '<option value="">-- wybierz zawodnika --</option>';
-    players
-      .filter(p => !teamName || p.team === teamName)
-      .forEach(p => {
-        const option = document.createElement('option');
-        option.value = p.name;
-        option.textContent = p.name;
-        ratingPlayerSelect.appendChild(option);
-      });
-  }
-
-  ratingTeamSelect.addEventListener('change', () => {
-    populatePlayersDropdown(ratingTeamSelect.value);
-  });
-
-  function renderRatings() {
-    ratingsList.innerHTML = '';
-    ratings.forEach((r, i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${r.date}</td>
-        <td>${r.team}</td>
-        <td>${r.player}</td>
-        <td>${r.type}</td>
-        <td>${r.score}</td>
-        <td>${r.notes || ''}</td>
-        <td style="text-align:center;">
-          <button class="edit-rating btn" data-index="${i}">✏️</button>
-          <button class="delete-rating btn bg-red-600" data-index="${i}">🗑️</button>
-        </td>
-      `;
-      ratingsList.appendChild(tr);
-    });
-
-    document.querySelectorAll('.edit-rating').forEach(btn => {
-      btn.onclick = () => {
-        const idx = +btn.dataset.index;
-        const r = ratings[idx];
-        ratingDateInput.value = r.date;
-        ratingTeamSelect.value = r.team;
-        populatePlayersDropdown(r.team);
-        ratingPlayerSelect.value = r.player;
-        ratingTypeSelect.value = r.type;
-        ratingScoreInput.value = r.score;
-        ratingNotesInput.value = r.notes || '';
-        ratingForm.dataset.editIndex = idx;
-        activateTab('ratings');
-      };
-    });
-
-    document.querySelectorAll('.delete-rating').forEach(btn => {
-      btn.onclick = () => {
-        const idx = +btn.dataset.index;
-        if(confirm('Na pewno usunąć tę ocenę?')) {
-          ratings.splice(idx, 1);
-          saveData();
-          renderRatings();
-        }
-      };
-    });
-  }
-
-  ratingForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const newRating = {
-      date: ratingDateInput.value,
-      team: ratingTeamSelect.value,
-      player: ratingPlayerSelect.value,
-      type: ratingTypeSelect.value,
-      score: +ratingScoreInput.value,
-      notes: ratingNotesInput.value.trim()
-    };
-
-    if(ratingForm.dataset.editIndex !== undefined) {
-      ratings[+ratingForm.dataset.editIndex] = newRating;
-      delete ratingForm.dataset.editIndex;
-    } else {
-      ratings.push(newRating);
-    }
-    saveData();
-    renderRatings();
-    ratingForm.reset();
-  });
-
-  function saveData() {
-    localStorage.setItem(STORAGE_KEYS.matches, JSON.stringify(matches));
-    localStorage.setItem(STORAGE_KEYS.teams, JSON.stringify(teams));
-    localStorage.setItem(STORAGE_KEYS.players, JSON.stringify(players));
-    localStorage.setItem(STORAGE_KEYS.ratings, JSON.stringify(ratings));
-  }
-
-  function populateTeamSelectForRating() {
-    populateTeamsDropdown();
-    populatePlayersDropdown(ratingTeamSelect.value);
-  }
-
-  function init() {
-    renderMatches();
-    renderTeams();
-    renderPlayers();
-    renderRatings();
-    populateTeamsDropdown();
-  }
-
-  init();
-
-})();
+init();
 
