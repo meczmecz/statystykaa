@@ -1,4 +1,8 @@
 <!-- Firebase biblioteki -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<!-- Konfiguracja Firebase -->
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBTXrsGNfnrDEuDd7_jyxTpPpL6KngEkWY",
@@ -9,31 +13,11 @@
     appId: "1:611361484628:web:ecd28f6351aaf8000562c1",
     measurementId: "G-6HH4MHQ21H"
   };
-
-  // Inicjalizacja Firebase
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 </script>
 
-<!-- Konfiguracja Twojej aplikacji Firebase -->
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBTXrsGNfnrDEuDd7_jyxTpPpL6KngEkWY",
-    authDomain: "jaguarstrona.firebaseapp.com",
-    projectId: "jaguarstrona",
-    storageBucket: "jaguarstrona.firebasestorage.app",
-    messagingSenderId: "611361484628",
-    appId: "1:611361484628:web:ecd28f6351aaf8000562c1",
-    measurementId: "G-6HH4MHQ21H"
-  };
-
-  // Inicjalizacja Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-</script>
-
-<!-- Twój własny kod -->
+<!-- Twój kod JS -->
 <script src="script.js"></script>
 </body>
 </html>
-
