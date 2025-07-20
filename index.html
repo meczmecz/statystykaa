@@ -3,132 +3,202 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Jaguar Analityka - Zarządzanie drużynami i meczami</title>
-<link rel="stylesheet" href="styles.css" />
+<title>Jaguar Analityka - Zarządzanie Drużynami i Meczami</title>
 <style>
-  /* Podstawowe style, możesz później rozbudować */
-  body { font-family: Arial, sans-serif; background: #fafafa; margin: 0; padding: 0;}
-  header { background: #222; color: white; padding: 1rem; }
-  nav { background: #3498db; display: flex; }
-  nav button { flex: 1; padding: 10px; border: none; background: #2980b9; color: white; cursor: pointer; font-weight: bold; }
-  nav button.active { background: #1c5980; }
-  section { display: none; padding: 20px; background: white; margin: 10px; border-radius: 5px; }
-  section.active { display: block; }
-  label { display: block; margin-top: 10px; }
-  input, select, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
-  button.btn { margin-top: 15px; background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 3px; cursor: pointer;}
-  button.btn:hover { background: #2980b9; }
-  table { width: 100%; border-collapse: collapse; margin-top: 15px;}
-  th, td { border: 1px solid #ddd; padding: 8px; }
-  th { background: #3498db; color: white; }
-  .error { color: red; }
-  .success { color: green; }
+  /* --- Prosty i czytelny styl --- */
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 0;
+    background: #f0f2f5;
+    color: #333;
+  }
+  header {
+    background: #004aad;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+  }
+  main {
+    max-width: 900px;
+    margin: 1rem auto;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+  }
+  h2 {
+    margin-top: 0;
+    color: #004aad;
+  }
+  section {
+    margin-bottom: 2rem;
+  }
+  label {
+    display: block;
+    margin: 0.5rem 0 0.2rem;
+    font-weight: 600;
+  }
+  input[type=text], input[type=date], input[type=number], select {
+    width: 100%;
+    padding: 6px 10px;
+    box-sizing: border-box;
+    border: 1.5px solid #aaa;
+    border-radius: 4px;
+    transition: border-color 0.3s ease;
+  }
+  input[type=text]:focus, input[type=date]:focus, input[type=number]:focus, select:focus {
+    border-color: #004aad;
+    outline: none;
+  }
+  button {
+    margin-top: 0.8rem;
+    padding: 10px 18px;
+    background: #004aad;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button:hover {
+    background: #003377;
+  }
+  ul {
+    padding-left: 1.2rem;
+  }
+  .teams-list, .players-list {
+    list-style: none;
+    padding-left: 0;
+  }
+  .teams-list li, .players-list li {
+    padding: 6px 8px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .teams-list li:hover, .players-list li:hover {
+    background-color: #e3e9ff;
+  }
+  .players-list li.selected {
+    background-color: #bdd1ff;
+  }
+  .flex-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .flex-col {
+    flex: 1 1 300px;
+  }
+  .chart-container {
+    max-width: 600px;
+    margin-top: 1rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.5rem;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    text-align: left;
+  }
+  th {
+    background-color: #004aad;
+    color: white;
+  }
+  .error {
+    color: red;
+    font-weight: 600;
+    margin-top: 0.5rem;
+  }
+  .success {
+    color: green;
+    font-weight: 600;
+    margin-top: 0.5rem;
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Jaguar Analityka</h1>
-  <div id="authMessage"></div>
-  <form id="loginForm">
-    <label>Email:<input type="email" name="email" required></label>
-    <label>Hasło:<input type="password" name="password" required></label>
-    <button type="submit" class="btn">Zaloguj się</button>
-  </form>
-  <button id="logoutBtn" class="btn" style="display:none;">Wyloguj się</button>
+  <h1>Jaguar Analityka - Zarządzanie Drużynami i Meczami</h1>
 </header>
 
-<nav>
-  <button data-tab="teams" class="active">Drużyny</button>
-  <button data-tab="players">Zawodnicy</button>
-  <button data-tab="ratings">Oceny</button>
-  <button data-tab="matches">Mecze</button>
-  <button data-tab="analysis">Analiza</button>
-</nav>
+<main>
 
-<section id="teams" class="active">
+<section id="teamSection">
   <h2>Drużyny</h2>
   <form id="teamForm">
-    <label>Nazwa drużyny:<input type="text" name="teamName" required></label>
-    <button type="submit" class="btn">Dodaj drużynę</button>
+    <label for="teamNameInput">Dodaj nową drużynę:</label>
+    <input type="text" id="teamNameInput" placeholder="Nazwa drużyny" required />
+    <button type="submit">Dodaj drużynę</button>
   </form>
-  <table id="teamsTable">
-    <thead><tr><th>ID</th><th>Nazwa</th><th>Akcje</th></tr></thead>
-    <tbody></tbody>
-  </table>
+
+  <h3>Lista drużyn (kliknij, aby zobaczyć skład):</h3>
+  <ul id="teamsList" class="teams-list"></ul>
 </section>
 
-<section id="players">
-  <h2>Zawodnicy</h2>
+<section id="playerSection" style="display:none;">
+  <h2>Zawodnicy drużyny: <span id="currentTeamName"></span></h2>
   <form id="playerForm">
-    <label>Imię i nazwisko:<input type="text" name="playerName" required></label>
-    <label>Wybierz drużynę:
-      <select name="teamId" required></select>
-    </label>
-    <button type="submit" class="btn">Dodaj zawodnika</button>
+    <label for="playerNameInput">Dodaj zawodnika:</label>
+    <input type="text" id="playerNameInput" placeholder="Imię i nazwisko zawodnika" required />
+    <button type="submit">Dodaj zawodnika</button>
   </form>
-  <table id="playersTable">
-    <thead><tr><th>ID</th><th>Imię i nazwisko</th><th>Drużyna</th><th>Akcje</th></tr></thead>
-    <tbody></tbody>
-  </table>
+  
+  <h3>Skład drużyny:</h3>
+  <ul id="playersList" class="players-list"></ul>
+
+  <button id="backToTeamsBtn" style="margin-top:10px;">Wróć do drużyn</button>
 </section>
 
-<section id="ratings">
-  <h2>Oceny zawodników</h2>
-  <form id="ratingForm">
-    <label>Wybierz zawodnika:
-      <select name="playerId" required></select>
-    </label>
-    <label>Data oceny:<input type="date" name="date" required></label>
-    <label>Typ oceny:
-      <select name="ratingType" required>
-        <option value="training">Trening</option>
-        <option value="match">Mecz</option>
-      </select>
-    </label>
-    <label>Ocena (0-10):<input type="number" name="ratingValue" min="0" max="10" required></label>
-    <label>Czas gry (minuty):<input type="number" name="playTime" min="0" required></label>
-    <button type="submit" class="btn">Dodaj ocenę</button>
-  </form>
-  <table id="ratingsTable">
-    <thead><tr><th>Zawodnik</th><th>Data</th><th>Typ</th><th>Ocena</th><th>Czas gry</th></tr></thead>
-    <tbody></tbody>
-  </table>
-</section>
-
-<section id="matches">
-  <h2>Mecze</h2>
+<section id="matchSection">
+  <h2>Dodaj mecz</h2>
   <form id="matchForm">
-    <label>Data meczu:<input type="date" name="date" required></label>
-    <label>Przeciwnik:<input type="text" name="opponent" required></label>
-    <button type="submit" class="btn">Dodaj mecz</button>
+    <label for="matchDate">Data meczu:</label>
+    <input type="date" id="matchDate" required />
+
+    <label for="matchTeamSelect">Wybierz drużynę Jaguar:</label>
+    <select id="matchTeamSelect" required></select>
+
+    <label for="matchOpponentInput">Przeciwnik (nazwa):</label>
+    <input type="text" id="matchOpponentInput" placeholder="Nazwa drużyny przeciwnika" required />
+
+    <label for="matchScoreInput">Wynik meczu (np. 3:2):</label>
+    <input type="text" id="matchScoreInput" placeholder="Wynik meczu" required />
+
+    <button type="submit">Dodaj mecz</button>
   </form>
+
+  <h3>Lista meczów:</h3>
   <table id="matchesTable">
-    <thead><tr><th>Data</th><th>Przeciwnik</th><th>Akcje</th></tr></thead>
+    <thead>
+      <tr>
+        <th>Data</th><th>Drużyna Jaguar</th><th>Przeciwnik</th><th>Wynik</th><th>Akcje</th>
+      </tr>
+    </thead>
     <tbody></tbody>
   </table>
 </section>
 
-<section id="analysis">
-  <h2>Analiza</h2>
-  <p>Wybierz drużynę i zawodnika aby zobaczyć wykresy i statystyki.</p>
-  <select id="analysisTeamSelect">
-    <option value="">-- Wybierz drużynę --</option>
-  </select>
-  <select id="analysisPlayerSelect" disabled>
-    <option value="">-- Wybierz zawodnika --</option>
-  </select>
-  <canvas id="chartTraining" width="600" height="300" style="margin-top:20px;"></canvas>
-  <canvas id="chartMatch" width="600" height="300" style="margin-top:20px;"></canvas>
+<section id="chartsSection">
+  <h2>Wykresy postępów zawodników</h2>
+  <label for="chartTeamSelect">Wybierz drużynę:</label>
+  <select id="chartTeamSelect"></select>
+  <div class="chart-container">
+    <canvas id="progressChart" width="600" height="300"></canvas>
+  </div>
 </section>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="script.js"></script>
 
+</main>
+
 </body>
 </html>
+
