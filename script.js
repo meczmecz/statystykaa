@@ -12,24 +12,23 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 // DOM
-const teamsContainer = document.getElementById('teamsContainer'); // Sekcja do wyświetlania drużyn i zawodników
-const playerStatsContainer = document.getElementById('playerStats'); // Sekcja do wyświetlania średnich ocen zawodnika
+const teamsContainer = document.getElementById('teamsContainer');
+const playerStatsContainer = document.getElementById('playerStats');
 const ratingForm = document.getElementById('ratingForm');
-const ratingTypeSelect = document.getElementById('ratingType'); // select trening/mecz
+const ratingTypeSelect = document.getElementById('ratingType');
 const trainingRatingInput = document.getElementById('trainingRating');
 const matchRatingInput = document.getElementById('matchRating');
-const playTimeInput = document.getElementById('playTime');
-const ratingMessage = document.getElementById('ratingsMessage');
+const ratingsMessage = document.getElementById('ratingsMessage');
 
 const matchForm = document.getElementById('matchForm');
 const matchesTableBody = document.querySelector('#matchesTable tbody');
 const matchesMessage = document.getElementById('matchesMessage');
 
 let teams = [];
-let selectedTeamId = null;
-let selectedPlayerId = null;
+let selectedTeam = null;
+let selectedPlayer = null;
 
-// Wczytaj drużyny z bazy i wyświetl
+// --- Ładowanie i wyświetlanie drużyn ---
 function loadTeams() {
   db.ref('teams').on('value', snapshot => {
     const data = snapshot.val() || {};
@@ -44,20 +43,18 @@ function renderTeams() {
     const teamDiv = document.createElement('div');
     teamDiv.classList.add('team');
     teamDiv.textContent = team.name;
-    teamDiv.style.cursor = 'pointer';
-    teamDiv.addEventListener('click', () => {
-      selectedTeamId = team.id;
-      selectedPlayerId = null;
-      showPlayersForTeam(team);
-      playerStatsContainer.innerHTML = '';
+    teamDiv.onclick = () => {
+      selectedTeam = team;
+      selectedPlayer = null;
+      showPlayers(team);
+      playerStatsContainer.innerHTML = 'Wybierz zawodnika, aby zobaczyć statystyki';
       clearRatingForm();
-    });
+    };
     teamsContainer.appendChild(teamDiv);
   });
 }
 
-function showPlayersForTeam(team) {
-  // Wyświetl listę zawodników pod nazwą drużyny
+function showPlayers(team) {
   let playersList = document.getElementById('playersList');
   if(!playersList) {
     playersList = document.createElement('ul');
@@ -67,33 +64,29 @@ function showPlayersForTeam(team) {
   playersList.innerHTML = '';
 
   if(!team.players || team.players.length === 0) {
-    const li = document.createElement('li');
-    li.textContent = 'Brak zawodników w drużynie';
-    playersList.appendChild(li);
+    playersList.innerHTML = '<li>Brak zawodników w drużynie</li>';
     return;
   }
 
   team.players.forEach(player => {
     const li = document.createElement('li');
     li.textContent = player.name;
-    li.style.cursor = 'pointer';
-    li.addEventListener('click', () => {
-      selectedPlayerId = player.id;
+    li.onclick = () => {
+      selectedPlayer = player;
       showPlayerStats(player);
-      prefillRatingForm(player);
-    });
+      prefillRatingForm(team.id, player.id);
+    };
     playersList.appendChild(li);
   });
 }
 
+// --- Pokaż statystyki zawodnika ---
 function showPlayerStats(player) {
-  playerStatsContainer.innerHTML = '<h3>Średnie oceny dla: ' + player.name + '</h3><p>Ładuję dane...</p>';
-
-  // Pobierz oceny z bazy dla tego zawodnika
+  playerStatsContainer.innerHTML = `<h3>Ładowanie statystyk dla ${player.name}...</h3>`;
   db.ref('ratings').orderByChild('playerId').equalTo(player.id).once('value').then(snapshot => {
     const ratings = snapshot.val();
     if(!ratings) {
-      playerStatsContainer.innerHTML = '<h3>Średnie oceny dla: ' + player.name + '</h3><p>Brak ocen dla tego zawodnika.</p>';
+      playerStatsContainer.innerHTML = `<h3>${player.name}</h3><p>Brak ocen</p>`;
       return;
     }
 
@@ -101,46 +94,45 @@ function showPlayerStats(player) {
     let matchSum = 0, matchCount = 0;
 
     Object.values(ratings).forEach(r => {
-      if(r.trainingRating !== undefined && r.trainingRating !== null) {
+      if(r.trainingRating !== null && r.trainingRating !== undefined) {
         trainingSum += r.trainingRating;
         trainingCount++;
       }
-      if(r.matchRating !== undefined && r.matchRating !== null) {
+      if(r.matchRating !== null && r.matchRating !== undefined) {
         matchSum += r.matchRating;
         matchCount++;
       }
     });
 
-    const avgTraining = trainingCount > 0 ? (trainingSum / trainingCount).toFixed(2) : 'Brak';
-    const avgMatch = matchCount > 0 ? (matchSum / matchCount).toFixed(2) : 'Brak';
+    const avgTraining = trainingCount ? (trainingSum / trainingCount).toFixed(2) : 'Brak';
+    const avgMatch = matchCount ? (matchSum / matchCount).toFixed(2) : 'Brak';
 
     playerStatsContainer.innerHTML = `
-      <h3>Średnie oceny dla: ${player.name}</h3>
-      <p>Trening: ${avgTraining}</p>
-      <p>Mecz: ${avgMatch}</p>
+      <h3>${player.name}</h3>
+      <p>Średnia ocena treningu: ${avgTraining}</p>
+      <p>Średnia ocena meczu: ${avgMatch}</p>
     `;
   });
 }
 
-function prefillRatingForm(player) {
-  // Ustaw w formularzu hidden teamId i playerId jeśli masz
-  ratingForm.elements['teamId'].value = selectedTeamId;
-  ratingForm.elements['playerId'].value = player.id;
-
+function prefillRatingForm(teamId, playerId) {
+  ratingForm.elements['teamId'].value = teamId;
+  ratingForm.elements['playerId'].value = playerId;
   clearRatingForm();
 }
 
 function clearRatingForm() {
   ratingTypeSelect.value = 'training';
+  trainingRatingInput.disabled = false;
+  matchRatingInput.disabled = true;
   trainingRatingInput.value = '';
   matchRatingInput.value = '';
-  matchRatingInput.disabled = true;
-  trainingRatingInput.disabled = false;
-  playTimeInput.value = '';
-  ratingMessage.textContent = '';
+  ratingForm.elements['date'].value = '';
+  ratingForm.elements['playTime'].value = '';
+  ratingsMessage.textContent = '';
 }
 
-// Zmiana typu oceny - trening czy mecz
+// --- Przełączanie inputów ocen ---
 ratingTypeSelect.addEventListener('change', () => {
   if(ratingTypeSelect.value === 'training') {
     trainingRatingInput.disabled = false;
@@ -153,34 +145,34 @@ ratingTypeSelect.addEventListener('change', () => {
   }
 });
 
-// Dodawanie oceny
+// --- Dodawanie ocen ---
 ratingForm.addEventListener('submit', e => {
   e.preventDefault();
-  ratingMessage.textContent = '';
+  ratingsMessage.textContent = '';
 
   const teamId = ratingForm.elements['teamId'].value;
   const playerId = ratingForm.elements['playerId'].value;
   const date = ratingForm.elements['date'].value;
   const ratingType = ratingTypeSelect.value;
-  const trainingRating = parseInt(trainingRatingInput.value);
-  const matchRating = parseInt(matchRatingInput.value);
-  const playTime = parseInt(playTimeInput.value);
+  const trainingRating = parseFloat(trainingRatingInput.value);
+  const matchRating = parseFloat(matchRatingInput.value);
+  const playTime = parseInt(ratingForm.elements['playTime'].value);
 
-  if(!teamId || !playerId || !date || !playTime) {
-    ratingMessage.textContent = 'Wypełnij wszystkie wymagane pola.';
-    ratingMessage.className = 'error';
+  if(!teamId || !playerId || !date || isNaN(playTime)) {
+    ratingsMessage.textContent = 'Wypełnij wszystkie wymagane pola.';
+    ratingsMessage.className = 'error';
     return;
   }
 
   if(ratingType === 'training' && (isNaN(trainingRating) || trainingRating < 0 || trainingRating > 10)) {
-    ratingMessage.textContent = 'Podaj ocenę treningu od 0 do 10.';
-    ratingMessage.className = 'error';
+    ratingsMessage.textContent = 'Podaj ocenę treningu od 0 do 10.';
+    ratingsMessage.className = 'error';
     return;
   }
 
   if(ratingType === 'match' && (isNaN(matchRating) || matchRating < 0 || matchRating > 10)) {
-    ratingMessage.textContent = 'Podaj ocenę meczu od 0 do 10.';
-    ratingMessage.className = 'error';
+    ratingsMessage.textContent = 'Podaj ocenę meczu od 0 do 10.';
+    ratingsMessage.className = 'error';
     return;
   }
 
@@ -196,27 +188,26 @@ ratingForm.addEventListener('submit', e => {
   const newKey = db.ref().child('ratings').push().key;
   db.ref('ratings/' + newKey).set(newRating)
     .then(() => {
-      ratingMessage.textContent = 'Ocena została dodana!';
-      ratingMessage.className = 'success';
+      ratingsMessage.textContent = 'Ocena dodana.';
+      ratingsMessage.className = 'success';
       ratingForm.reset();
       clearRatingForm();
-      if(selectedPlayerId === playerId) {
-        // Odśwież statystyki jeśli dodaliśmy ocenę dla wybranego zawodnika
-        showPlayerStats({id: playerId, name: ratingForm.elements['playerName'] ? ratingForm.elements['playerName'].value : ''});
+      if(selectedPlayer && selectedPlayer.id === playerId) {
+        showPlayerStats(selectedPlayer);
       }
     })
     .catch(err => {
-      ratingMessage.textContent = 'Błąd podczas dodawania oceny: ' + err.message;
-      ratingMessage.className = 'error';
+      ratingsMessage.textContent = 'Błąd: ' + err.message;
+      ratingsMessage.className = 'error';
     });
 });
 
 // --- Zarządzanie meczami ---
-// Wczytaj mecze
 function loadMatches() {
   db.ref('matches').on('value', snapshot => {
     const data = snapshot.val() || {};
-    renderMatches(Object.entries(data).map(([id, match]) => ({ id, ...match })));
+    const matches = Object.entries(data).map(([id, m]) => ({ id, ...m }));
+    renderMatches(matches);
   });
 }
 
@@ -235,30 +226,28 @@ function renderMatches(matches) {
     matchesTableBody.appendChild(tr);
   });
 
-  // Edycja
   document.querySelectorAll('.editMatchBtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const matchId = btn.dataset.id;
-      db.ref('matches/' + matchId).once('value').then(snapshot => {
-        const match = snapshot.val();
+    btn.onclick = () => {
+      const id = btn.dataset.id;
+      db.ref('matches/' + id).once('value').then(snap => {
+        const match = snap.val();
         if(match) {
           matchForm.elements['date'].value = match.date;
           matchForm.elements['opponent'].value = match.opponent;
-          matchForm.dataset.editId = matchId;
+          matchForm.dataset.editId = id;
           matchesMessage.textContent = 'Edytujesz mecz';
+          matchesMessage.className = '';
         }
       });
-    });
+    };
   });
 
-  // Usuwanie
   document.querySelectorAll('.deleteMatchBtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if(confirm('Na pewno chcesz usunąć ten mecz?')) {
-        const matchId = btn.dataset.id;
-        db.ref('matches/' + matchId).remove();
+    btn.onclick = () => {
+      if(confirm('Na pewno usunąć ten mecz?')) {
+        db.ref('matches/' + btn.dataset.id).remove();
       }
-    });
+    };
   });
 }
 
@@ -284,20 +273,20 @@ matchForm.addEventListener('submit', e => {
         matchForm.reset();
         delete matchForm.dataset.editId;
       })
-      .catch(e => {
-        matchesMessage.textContent = 'Błąd: ' + e.message;
+      .catch(err => {
+        matchesMessage.textContent = 'Błąd: ' + err.message;
         matchesMessage.className = 'error';
       });
   } else {
-    const newMatchRef = db.ref('matches').push();
-    newMatchRef.set({ date, opponent })
+    const newRef = db.ref('matches').push();
+    newRef.set({ date, opponent })
       .then(() => {
         matchesMessage.textContent = 'Mecz dodany.';
         matchesMessage.className = 'success';
         matchForm.reset();
       })
-      .catch(e => {
-        matchesMessage.textContent = 'Błąd: ' + e.message;
+      .catch(err => {
+        matchesMessage.textContent = 'Błąd: ' + err.message;
         matchesMessage.className = 'error';
       });
   }
