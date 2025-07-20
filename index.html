@@ -1,251 +1,441 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jaguar Panel Trenerski</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
-    }
-    header {
-      background-color: #003366;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-    }
-    nav {
-      background-color: #0055aa;
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      padding: 0.5rem;
-    }
-    nav button {
-      background-color: white;
-      color: #0055aa;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    nav button:hover {
-      background-color: #ddd;
-    }
-    section {
-      display: none;
-      padding: 1rem;
-      max-width: 900px;
-      margin: auto;
-    }
-    section.active {
-      display: block;
-    }
-    form input, form select, form textarea, form button {
-      width: 100%;
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    form button {
-      background-color: #0055aa;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .team-item, .player-item {
-      background-color: white;
-      padding: 1rem;
-      margin: 0.5rem 0;
-      border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      cursor: pointer;
-    }
-    .team-item:hover, .player-item:hover {
-      background-color: #f0f0f0;
-    }
-    .player-list {
-      margin-top: 0.5rem;
-      padding-left: 1rem;
-    }
-    canvas {
-      margin-top: 1rem;
-      max-width: 100%;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jaguar Panel Trenerski</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 0; }
+  header { background: #003366; color: white; padding: 1rem; text-align: center; }
+  nav { display: flex; gap: 1rem; padding: 0.5rem; background: #0055aa; justify-content: center; }
+  nav button { padding: 0.5rem 1rem; border: none; border-radius: 5px; background: white; color: #0055aa; cursor: pointer; font-weight: bold; }
+  nav button:hover { background: #ddd; }
+  section { max-width: 900px; margin: 1rem auto; background: white; padding: 1rem; border-radius: 8px; display: none; }
+  section.active { display: block; }
+  input, select, textarea, button { width: 100%; margin: 0.5rem 0; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+  button { background: #0055aa; color: white; font-weight: bold; cursor: pointer; }
+  #logoutBtn { background: #cc3300; margin-top: 1rem; }
+  .error { color: red; }
+</style>
 </head>
 <body>
-  <header>Jaguar Panel Trenerski</header>
-  <nav>
-    <button onclick="showTab('analiza')">Analiza</button>
-    <button onclick="showTab('druzyny')">Drużyny</button>
-    <button onclick="showTab('zawodnicy')">Zawodnicy</button>
-  </nav>
 
-  <section id="analiza" class="active">
-    <h2>Analiza meczu</h2>
-    <form id="formAnaliza">
-      <input type="date" placeholder="Data meczu" required>
-      <input type="text" placeholder="Wynik meczu" required>
-      <input type="text" placeholder="Strzelcy bramek">
-      <input type="text" placeholder="Najlepszy zawodnik">
-      <textarea placeholder="Opis meczu"></textarea>
-      <button type="submit">Zapisz mecz</button>
-    </form>
-  </section>
+<header><h1>Jaguar Panel Trenerski</h1></header>
 
-  <section id="druzyny">
-    <h2>Dodaj drużynę</h2>
-    <form id="formDruzyny">
-      <input type="text" id="teamName" placeholder="Nazwa drużyny" required>
-      <input type="text" id="playersList" placeholder="Zawodnicy (oddzieleni przecinkami)">
-      <button type="submit">Dodaj drużynę</button>
-    </form>
-    <div id="teamContainer"></div>
-  </section>
+<div id="authSection">
+  <h2>Zaloguj się</h2>
+  <input type="email" id="email" placeholder="Email" required />
+  <input type="password" id="password" placeholder="Hasło" required />
+  <button id="loginBtn">Zaloguj</button>
+  <p>Nie masz konta? <button id="registerBtn" style="background:#28a745;">Zarejestruj się</button></p>
+  <p class="error" id="authError"></p>
+</div>
 
-  <section id="zawodnicy">
-    <h2>Zawodnicy i oceny</h2>
-    <form id="formZawodnik">
-      <select id="selectTeam" required></select>
-      <select id="selectPlayer" required></select>
-      <input type="date" required>
-      <input type="number" min="1" max="5" placeholder="Ocena z treningu">
-      <input type="number" min="1" max="5" placeholder="Ocena z meczu">
-      <input type="number" placeholder="Czas gry (minuty)">
-      <button type="submit">Zapisz ocenę</button>
-    </form>
-    <div id="playerStats">
-      <canvas id="trainingChart"></canvas>
-      <canvas id="matchChart"></canvas>
-    </div>
-  </section>
+<nav id="mainNav" style="display:none;">
+  <button onclick="showTab('analiza')">Analiza</button>
+  <button onclick="showTab('druzyny')">Drużyny</button>
+  <button onclick="showTab('zawodnicy')">Zawodnicy</button>
+  <button id="logoutBtn">Wyloguj</button>
+</nav>
 
-  <script>
-    const tabs = document.querySelectorAll('section');
-    function showTab(id) {
-      tabs.forEach(tab => tab.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+<!-- ANALIZA -->
+<section id="analiza" class="active">
+  <h2>Analiza meczu</h2>
+  <form id="matchForm">
+    <input type="date" id="matchDate" required />
+    <input type="text" id="matchOpponent" placeholder="Przeciwnik (np. FC Rywale)" required />
+    <input type="text" id="matchResult" placeholder="Wynik meczu (np. 3-1)" required />
+    <input type="text" id="scorers" placeholder="Strzelcy (oddziel przecinkami)" />
+    <input type="text" id="bestPlayer" placeholder="Najlepszy zawodnik" />
+    <textarea id="matchDescription" placeholder="Opis meczu"></textarea>
+
+    <label>3 najlepszych zawodników Jag:</label>
+    <input type="text" id="topJag1" placeholder="1. zawodnik" required />
+    <input type="text" id="topJag2" placeholder="2. zawodnik" required />
+    <input type="text" id="topJag3" placeholder="3. zawodnik" required />
+
+    <label>3 najlepszych zawodników drużyny przeciwnika:</label>
+    <input type="text" id="topOpp1" placeholder="1. zawodnik" required />
+    <input type="text" id="topOpp2" placeholder="2. zawodnik" required />
+    <input type="text" id="topOpp3" placeholder="3. zawodnik" required />
+
+    <button type="submit">Zapisz mecz</button>
+  </form>
+  <div id="matchesList"></div>
+</section>
+
+<!-- DRUZYNY -->
+<section id="druzyny">
+  <h2>Drużyny</h2>
+  <form id="teamForm">
+    <input type="text" id="teamName" placeholder="Nazwa drużyny" required />
+    <input type="text" id="teamPlayers" placeholder="Zawodnicy (oddzieleni przecinkami)" />
+    <button type="submit">Dodaj drużynę</button>
+  </form>
+  <div id="teamsList"></div>
+</section>
+
+<!-- ZAWODNICY -->
+<section id="zawodnicy">
+  <h2>Zawodnicy i oceny</h2>
+  <form id="playerRatingForm">
+    <select id="selectTeam" required>
+      <option value="">Wybierz drużynę</option>
+    </select>
+    <select id="selectPlayer" required>
+      <option value="">Wybierz zawodnika</option>
+    </select>
+    <input type="date" id="ratingDate" required />
+    <input type="number" id="trainingRating" min="1" max="5" placeholder="Ocena z treningu (1-5)" required />
+    <input type="number" id="matchRating" min="1" max="5" placeholder="Ocena z meczu (1-5)" required />
+    <input type="number" id="playTime" min="0" placeholder="Czas gry (minuty)" />
+    <button type="submit">Zapisz ocenę</button>
+  </form>
+  <canvas id="chartTraining" width="400" height="150"></canvas>
+  <canvas id="chartMatch" width="400" height="150"></canvas>
+</section>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Initialize Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyAWXiBO5-woCCEqCBc2rfOIo1RhUUtevzU",
+    authDomain: "jaguar-analityka.firebaseapp.com",
+    databaseURL: "https://jaguar-analityka-default-rtdb.firebaseio.com",
+    projectId: "jaguar-analityka",
+    storageBucket: "jaguar-analityka.firebasestorage.app",
+    messagingSenderId: "163915747034",
+    appId: "1:163915747034:web:8c0311eaaa4ed792b25fe3",
+    measurementId: "G-T3C1M10SM6"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+
+  // UI elements
+  const authSection = document.getElementById('authSection');
+  const mainNav = document.getElementById('mainNav');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const authError = document.getElementById('authError');
+
+  const matchForm = document.getElementById('matchForm');
+  const matchesList = document.getElementById('matchesList');
+
+  const teamForm = document.getElementById('teamForm');
+  const teamsList = document.getElementById('teamsList');
+
+  const playerRatingForm = document.getElementById('playerRatingForm');
+  const selectTeam = document.getElementById('selectTeam');
+  const selectPlayer = document.getElementById('selectPlayer');
+
+  let currentUser = null;
+
+  // Pokazuje sekcje (zakładki)
+  function showTab(id) {
+    document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // Logowanie i rejestracja
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    auth.signInWithEmailAndPassword(email, password)
+      .catch(err => authError.textContent = err.message);
+  });
+  document.getElementById('registerBtn').addEventListener('click', () => {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    auth.createUserWithEmailAndPassword(email, password)
+      .catch(err => authError.textContent = err.message);
+  });
+  logoutBtn.addEventListener('click', () => auth.signOut());
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      authSection.style.display = 'none';
+      mainNav.style.display = 'flex';
+      showTab('analiza');
+      loadTeams();
+      loadMatches();
+    } else {
+      currentUser = null;
+      authSection.style.display = 'block';
+      mainNav.style.display = 'none';
+      matchesList.innerHTML = '';
+      teamsList.innerHTML = '';
+      selectTeam.innerHTML = '<option value="">Wybierz drużynę</option>';
+      selectPlayer.innerHTML = '<option value="">Wybierz zawodnika</option>';
     }
+  });
 
-    const formDruzyny = document.getElementById('formDruzyny');
-    const teamContainer = document.getElementById('teamContainer');
-    const selectTeam = document.getElementById('selectTeam');
-    const selectPlayer = document.getElementById('selectPlayer');
-    const playerStats = document.getElementById('playerStats');
+  // ZAPIS MECZU
+  matchForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!currentUser) return alert('Musisz być zalogowany!');
 
-    const teams = {};
+    const matchData = {
+      date: document.getElementById('matchDate').value,
+      opponent: document.getElementById('matchOpponent').value.trim(),
+      result: document.getElementById('matchResult').value.trim(),
+      scorers: document.getElementById('scorers').value.trim(),
+      bestPlayer: document.getElementById('bestPlayer').value.trim(),
+      description: document.getElementById('matchDescription').value.trim(),
+      topJag: [
+        document.getElementById('topJag1').value.trim(),
+        document.getElementById('topJag2').value.trim(),
+        document.getElementById('topJag3').value.trim()
+      ],
+      topOpp: [
+        document.getElementById('topOpp1').value.trim(),
+        document.getElementById('topOpp2').value.trim(),
+        document.getElementById('topOpp3').value.trim()
+      ],
+      createdBy: currentUser.uid,
+      timestamp: Date.now()
+    };
 
-    formDruzyny.addEventListener('submit', e => {
-      e.preventDefault();
-      const teamName = document.getElementById('teamName').value.trim();
-      const players = document.getElementById('playersList').value.split(',').map(p => p.trim()).filter(p => p);
+    // Zapis do bazy
+    db.ref('matches').push(matchData)
+      .then(() => {
+        alert('Mecz zapisany!');
+        matchForm.reset();
+        loadMatches();
+      })
+      .catch(err => alert('Błąd zapisu: ' + err.message));
+  });
 
-      if (!teams[teamName]) {
-        teams[teamName] = [];
-        const teamEl = document.createElement('div');
-        teamEl.className = 'team-item';
-        teamEl.innerHTML = `<strong>${teamName}</strong>`;
-        const playerListEl = document.createElement('div');
-        playerListEl.className = 'player-list';
+  // Wczytanie meczów i pokazanie w tabeli
+  function loadMatches() {
+    matchesList.innerHTML = '<h3>Lista meczów</h3>';
+    const table = document.createElement('table');
+    table.border = '1';
+    table.style.width = '100%';
+    const header = table.insertRow();
+    ['Data', 'Przeciwnik', 'Wynik', 'Strzelcy', 'Najlepszy', 'Top 3 Jaguar', 'Top 3 Przeciwnik'].forEach(text => {
+      const th = document.createElement('th');
+      th.textContent = text;
+      header.appendChild(th);
+    });
 
-        players.forEach(player => {
-          teams[teamName].push({ name: player, stats: [] });
-          const playerEl = document.createElement('div');
-          playerEl.className = 'player-item';
-          playerEl.textContent = player;
-          playerEl.onclick = () => showPlayerStats(teamName, player);
-          playerListEl.appendChild(playerEl);
-        });
+    db.ref('matches').orderByChild('timestamp').limitToLast(50).once('value', snapshot => {
+      if (!snapshot.exists()) {
+        matchesList.innerHTML += '<p>Brak zapisanych meczów.</p>';
+        return;
+      }
+      snapshot.forEach(child => {
+        const m = child.val();
+        const row = table.insertRow();
+        row.insertCell().textContent = m.date;
+        row.insertCell().textContent = m.opponent;
+        row.insertCell().textContent = m.result;
+        row.insertCell().textContent = m.scorers;
+        row.insertCell().textContent = m.bestPlayer;
+        row.insertCell().textContent = m.topJag.join(', ');
+        row.insertCell().textContent = m.topOpp.join(', ');
+      });
+      matchesList.appendChild(table);
+    });
+  }
 
-        teamEl.appendChild(playerListEl);
-        teamContainer.appendChild(teamEl);
+  // ZARZĄDZANIE DRUŻYNAMI
+  teamForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!currentUser) return alert('Musisz być zalogowany!');
 
+    const name = document.getElementById('teamName').value.trim();
+    const playersRaw = document.getElementById('teamPlayers').value.trim();
+    const players = playersRaw ? playersRaw.split(',').map(p => p.trim()) : [];
+
+    // dodaj do bazy drużynę z zawodnikami
+    db.ref('teams').push({ name, players })
+      .then(() => {
+        alert('Drużyna dodana!');
+        teamForm.reset();
+        loadTeams();
+      })
+      .catch(err => alert('Błąd: ' + err.message));
+  });
+
+  // Wczytaj drużyny i uzupełnij selecty
+  function loadTeams() {
+    selectTeam.innerHTML = '<option value="">Wybierz drużynę</option>';
+    teamsList.innerHTML = '<h3>Lista drużyn</h3>';
+    db.ref('teams').once('value', snapshot => {
+      if (!snapshot.exists()) {
+        teamsList.innerHTML += '<p>Brak drużyn.</p>';
+        return;
+      }
+      const table = document.createElement('table');
+      table.border = '1';
+      table.style.width = '100%';
+      const header = table.insertRow();
+      ['Nazwa drużyny', 'Zawodnicy'].forEach(text => {
+        const th = document.createElement('th');
+        th.textContent = text;
+        header.appendChild(th);
+      });
+
+      selectTeam.innerHTML = '<option value="">Wybierz drużynę</option>';
+
+      snapshot.forEach(child => {
+        const t = child.val();
+        const id = child.key;
+        // tabela
+        const row = table.insertRow();
+        row.insertCell().textContent = t.name;
+        row.insertCell().textContent = t.players.join(', ');
+        // select
         const option = document.createElement('option');
-        option.value = teamName;
-        option.textContent = teamName;
+        option.value = id;
+        option.textContent = t.name;
         selectTeam.appendChild(option);
-      }
-
-      document.getElementById('teamName').value = '';
-      document.getElementById('playersList').value = '';
+      });
+      teamsList.appendChild(table);
     });
+  }
 
-    selectTeam.addEventListener('change', () => {
-      const teamName = selectTeam.value;
-      selectPlayer.innerHTML = '';
-      if (teams[teamName]) {
-        teams[teamName].forEach(player => {
-          const option = document.createElement('option');
-          option.value = player.name;
-          option.textContent = player.name;
-          selectPlayer.appendChild(option);
-        });
-      }
+  // Po wyborze drużyny pokaż zawodników w selectPlayer
+  selectTeam.addEventListener('change', () => {
+    selectPlayer.innerHTML = '<option value="">Wybierz zawodnika</option>';
+    const teamId = selectTeam.value;
+    if (!teamId) return;
+    db.ref('teams/' + teamId).once('value', snapshot => {
+      if (!snapshot.exists()) return;
+      const t = snapshot.val();
+      t.players.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        selectPlayer.appendChild(opt);
+      });
     });
+  });
 
-    document.getElementById('formZawodnik').addEventListener('submit', e => {
-      e.preventDefault();
-      const team = selectTeam.value;
-      const playerName = selectPlayer.value;
-      const date = e.target[2].value;
-      const training = Number(e.target[3].value);
-      const match = Number(e.target[4].value);
-      const minutes = Number(e.target[5].value);
+  // DODAWANIE OCEN
+  playerRatingForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!currentUser) return alert('Musisz być zalogowany!');
 
-      const player = teams[team].find(p => p.name === playerName);
-      if (player) {
-        player.stats.push({ date, training, match, minutes });
-        showPlayerStats(team, playerName);
+    const teamId = selectTeam.value;
+    const playerName = selectPlayer.value;
+    const date = document.getElementById('ratingDate').value;
+    const trainingRating = Number(document.getElementById('trainingRating').value);
+    const matchRating = Number(document.getElementById('matchRating').value);
+    const playTime = Number(document.getElementById('playTime').value);
+
+    if (!teamId || !playerName || !date) return alert('Wypełnij wszystkie pola!');
+
+    const ratingData = {
+      teamId,
+      playerName,
+      date,
+      trainingRating,
+      matchRating,
+      playTime,
+      createdBy: currentUser.uid,
+      timestamp: Date.now()
+    };
+
+    db.ref('ratings').push(ratingData)
+      .then(() => {
+        alert('Ocena zapisana!');
+        playerRatingForm.reset();
+        loadCharts(teamId, playerName);
+      })
+      .catch(err => alert('Błąd zapisu oceny: ' + err.message));
+  });
+
+  // Ładuj wykresy ocen zawodnika
+  const ctxTraining = document.getElementById('chartTraining').getContext('2d');
+  const ctxMatch = document.getElementById('chartMatch').getContext('2d');
+  let chartTraining = null;
+  let chartMatch = null;
+
+  function loadCharts(teamId, playerName) {
+    db.ref('ratings').orderByChild('timestamp').once('value', snapshot => {
+      if (!snapshot.exists()) {
+        clearCharts();
+        return;
       }
-    });
-
-    function showPlayerStats(team, playerName) {
-      const player = teams[team].find(p => p.name === playerName);
-      if (!player) return;
-
-      const dates = player.stats.map(s => s.date);
-      const trainingScores = player.stats.map(s => s.training);
-      const matchScores = player.stats.map(s => s.match);
-
-      const trainingCtx = document.getElementById('trainingChart').getContext('2d');
-      const matchCtx = document.getElementById('matchChart').getContext('2d');
-
-      if (window.trainingChart) window.trainingChart.destroy();
-      if (window.matchChart) window.matchChart.destroy();
-
-      window.trainingChart = new Chart(trainingCtx, {
-        type: 'line',
-        data: {
-          labels: dates,
-          datasets: [{
-            label: 'Ocena z treningu',
-            data: trainingScores,
-            borderColor: 'green',
-            fill: false
-          }]
+      const dataTraining = [];
+      const dataMatch = [];
+      snapshot.forEach(child => {
+        const r = child.val();
+        if (r.teamId === teamId && r.playerName === playerName) {
+          dataTraining.push({ x: r.date, y: r.trainingRating });
+          dataMatch.push({ x: r.date, y: r.matchRating });
         }
       });
 
-      window.matchChart = new Chart(matchCtx, {
+      dataTraining.sort((a,b) => new Date(a.x) - new Date(b.x));
+      dataMatch.sort((a,b) => new Date(a.x) - new Date(b.x));
+
+      // Zniszcz stare wykresy jeśli istnieją
+      if (chartTraining) chartTraining.destroy();
+      if (chartMatch) chartMatch.destroy();
+
+      chartTraining = new Chart(ctxTraining, {
         type: 'line',
         data: {
-          labels: dates,
           datasets: [{
-            label: 'Ocena z meczu',
-            data: matchScores,
+            label: 'Ocena trening',
+            data: dataTraining,
             borderColor: 'blue',
-            fill: false
+            backgroundColor: 'rgba(0,0,255,0.1)',
+            fill: true,
+            tension: 0.3,
+            parsing: {
+              xAxisKey: 'x',
+              yAxisKey: 'y'
+            }
           }]
+        },
+        options: {
+          scales: {
+            x: { type: 'time', time: { unit: 'day' }, title: { display: true, text: 'Data' } },
+            y: { min: 1, max: 5, title: { display: true, text: 'Ocena' } }
+          }
         }
       });
-    }
-  </script>
+
+      chartMatch = new Chart(ctxMatch, {
+        type: 'line',
+        data: {
+          datasets: [{
+            label: 'Ocena mecz',
+            data: dataMatch,
+            borderColor: 'green',
+            backgroundColor: 'rgba(0,255,0,0.1)',
+            fill: true,
+            tension: 0.3,
+            parsing: {
+              xAxisKey: 'x',
+              yAxisKey: 'y'
+            }
+          }]
+        },
+        options: {
+          scales: {
+            x: { type: 'time', time: { unit: 'day' }, title: { display: true, text: 'Data' } },
+            y: { min: 1, max: 5, title: { display: true, text: 'Ocena' } }
+          }
+        }
+      });
+    });
+  }
+
+  function clearCharts() {
+    if (chartTraining) chartTraining.destroy();
+    if (chartMatch) chartMatch.destroy();
+  }
+
+</script>
+
 </body>
 </html>
