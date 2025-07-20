@@ -1,244 +1,290 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // TABY
-  const tabs = document.querySelectorAll("nav button");
-  const sections = document.querySelectorAll("section");
-  tabs.forEach((tab) =>
+  // Zakładki
+  const tabs = document.querySelectorAll(".tab");
+  const contents = document.querySelectorAll(".tab-content");
+  tabs.forEach((tab, i) => {
     tab.addEventListener("click", () => {
-      const target = tab.dataset.tab;
-      sections.forEach((sec) => (sec.style.display = sec.id === target ? "block" : "none"));
-    })
-  );
-  tabs[0].click();
+      tabs.forEach(t => t.classList.remove("active"));
+      contents.forEach(c => c.classList.remove("active"));
+      tab.classList.add("active");
+      contents[i].classList.add("active");
+    });
+  });
 
-  // MODELE DANYCH
-  let teams = [];
-  let players = [];
-  let matches = [];
+  // Dane
+  const teams = [];
+  const players = [];
+  const matches = [];
 
-  // ELEMENTY DRUŻYN
+  // Formularze
   const teamForm = document.getElementById("teamForm");
-  const teamNameInput = document.getElementById("teamName");
-  const teamList = document.getElementById("teamList");
-
-  // ELEMENTY ZAWODNIKÓW
   const playerForm = document.getElementById("playerForm");
-  const teamSelect = document.getElementById("teamSelect");
-  const playerNameInput = document.getElementById("playerName");
-  const playerList = document.getElementById("playerList");
-
-  // ELEMENTY MECZÓW
   const matchForm = document.getElementById("matchForm");
-  const matchTeamASelect = document.getElementById("matchTeamA");
-  const matchTeamBInput = document.getElementById("matchTeamB");
-  const matchDateInput = document.getElementById("matchDate");
-  const matchScoreInput = document.getElementById("matchScore");
-  const bestPlayerInput = document.getElementById("bestPlayer");
-  const topPlayersAInput = document.getElementById("topPlayersA");
-  const topPlayersBInput = document.getElementById("topPlayersB");
+
+  // Listy wyświetlania
+  const teamList = document.getElementById("teamList");
+  const playerList = document.getElementById("playerList");
   const matchList = document.getElementById("matchList");
 
-  // ANALIZA
-  const analysisTeamSelect = document.getElementById("analysisTeamSelect");
-  const analysisPlayerList = document.getElementById("analysisPlayerList");
-  const trainingChart = document.getElementById("trainingChart").getContext("2d");
-  const matchChart = document.getElementById("matchChart").getContext("2d");
-  let trainingChartInstance = null;
-  let matchChartInstance = null;
+  // Selecty w formularzu meczu
+  const matchTeam1 = document.getElementById("matchTeam1");
+  const matchTeam2 = document.getElementById("matchTeam2");
+  const matchBestPlayer = document.getElementById("matchBestPlayer");
+  const matchTop3Player1 = document.getElementById("matchTop3Player1");
+  const matchTop3Player2 = document.getElementById("matchTop3Player2");
+  const matchTop3Player3 = document.getElementById("matchTop3Player3");
 
-  // FUNKCJE POMOCNICZE
+  // Aktualizacja selectów drużyn w formularzu meczu
   function updateTeamSelects() {
-    // Opróżnij wszystkie selecty drużyn
-    [teamSelect, matchTeamASelect, analysisTeamSelect].forEach((select) => {
-      select.innerHTML = "";
-      teams.forEach((team) => {
-        const opt = document.createElement("option");
-        opt.value = team;
-        opt.textContent = team;
-        select.appendChild(opt);
+    [matchTeam1, matchTeam2].forEach(select => {
+      select.innerHTML = '<option value="">-- Wybierz drużynę --</option>';
+      teams.forEach(t => {
+        const option = document.createElement("option");
+        option.value = t.id;
+        option.textContent = t.name;
+        select.appendChild(option);
       });
     });
   }
 
+  // Aktualizacja selectów zawodników w formularzu meczu (zawodnicy z wybranej drużyny)
+  function updatePlayerSelects() {
+    // Funkcja pomocnicza, aby podmienić opcje selecta dla zawodników z wybranej drużyny
+    function updatePlayerSelect(select, teamId) {
+      select.innerHTML = '<option value="">-- Wybierz zawodnika --</option>';
+      if (!teamId) return;
+      players.filter(p => p.teamId === teamId).forEach(p => {
+        const option = document.createElement("option");
+        option.value = p.id;
+        option.textContent = p.name;
+        select.appendChild(option);
+      });
+    }
+
+    updatePlayerSelect(matchBestPlayer, matchTeam1.value);
+    updatePlayerSelect(matchTop3Player1, matchTeam1.value);
+    updatePlayerSelect(matchTop3Player2, matchTeam1.value);
+    updatePlayerSelect(matchTop3Player3, matchTeam1.value);
+  }
+
+  // Po wybraniu drużyny 1 aktualizuj zawodników
+  matchTeam1.addEventListener("change", () => {
+    updatePlayerSelects();
+  });
+
+  // Dodaj drużynę
+  teamForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const name = teamForm.elements["teamName"].value.trim();
+    if (!name) return alert("Podaj nazwę drużyny");
+    if (teams.find(t => t.name.toLowerCase() === name.toLowerCase())) {
+      return alert("Drużyna o takiej nazwie już istnieje");
+    }
+    const id = `team${Date.now()}`;
+    teams.push({ id, name });
+    renderTeams();
+    updateTeamSelects();
+    teamForm.reset();
+  });
+
   function renderTeams() {
     teamList.innerHTML = "";
-    teams.forEach((team) => {
+    teams.forEach(t => {
       const li = document.createElement("li");
-      li.textContent = team;
+      li.textContent = t.name;
       teamList.appendChild(li);
     });
   }
 
+  // Dodaj zawodnika
+  playerForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const name = playerForm.elements["playerName"].value.trim();
+    const teamId = playerForm.elements["playerTeam"].value;
+    if (!name || !teamId) return alert("Podaj nazwę zawodnika i wybierz drużynę");
+    if (players.find(p => p.name.toLowerCase() === name.toLowerCase() && p.teamId === teamId)) {
+      return alert("Ten zawodnik już istnieje w tej drużynie");
+    }
+    const id = `player${Date.now()}`;
+    players.push({ id, name, teamId });
+    renderPlayers();
+    playerForm.reset();
+  });
+
   function renderPlayers() {
     playerList.innerHTML = "";
-    players.forEach(({name, team}) => {
+    players.forEach(p => {
+      const teamName = teams.find(t => t.id === p.teamId)?.name || "Brak drużyny";
       const li = document.createElement("li");
-      li.textContent = `${name} (${team})`;
+      li.textContent = `${p.name} (${teamName})`;
       playerList.appendChild(li);
     });
+
+    // Aktualizacja selecta drużyn w formularzu dodawania zawodnika
+    const playerTeamSelect = playerForm.elements["playerTeam"];
+    playerTeamSelect.innerHTML = '<option value="">-- Wybierz drużynę --</option>';
+    teams.forEach(t => {
+      const option = document.createElement("option");
+      option.value = t.id;
+      option.textContent = t.name;
+      playerTeamSelect.appendChild(option);
+    });
+
+    // Aktualizacja selectów w formularzu meczu
+    updateTeamSelects();
   }
+
+  // Dodaj mecz
+  matchForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const team1 = matchTeam1.value;
+    const team2 = matchTeam2.value;
+    const bestPlayerId = matchBestPlayer.value;
+    const top3Ids = [
+      matchTop3Player1.value,
+      matchTop3Player2.value,
+      matchTop3Player3.value,
+    ].filter(v => v !== "");
+
+    if (!team1 || !team2 || team1 === team2) return alert("Wybierz dwie różne drużyny");
+    if (!bestPlayerId) return alert("Wybierz najlepszego zawodnika");
+    if (top3Ids.length < 3) return alert("Wybierz trzech zawodników do top 3");
+
+    const id = `match${Date.now()}`;
+    matches.push({
+      id,
+      team1,
+      team2,
+      bestPlayerId,
+      top3Ids,
+      date: new Date().toISOString(),
+    });
+
+    renderMatches();
+    matchForm.reset();
+  });
 
   function renderMatches() {
     matchList.innerHTML = "";
-    matches.forEach(({teamA, teamB, date, score, bestPlayer, topPlayersA, topPlayersB}, i) => {
+    matches.forEach(m => {
+      const team1Name = teams.find(t => t.id === m.team1)?.name || "";
+      const team2Name = teams.find(t => t.id === m.team2)?.name || "";
+      const bestPlayerName = players.find(p => p.id === m.bestPlayerId)?.name || "";
+      const top3Names = m.top3Ids
+        .map(id => players.find(p => p.id === id)?.name || "")
+        .join(", ");
+
       const li = document.createElement("li");
-      li.innerHTML = `<strong>${teamA}</strong> vs <strong>${teamB}</strong> - ${date} - wynik: ${score}<br>Najlepszy: ${bestPlayer || "-"}<br>Top 3 ${teamA}: ${topPlayersA || "-"}<br>Top 3 ${teamB}: ${topPlayersB || "-"}`;
+      li.textContent = `Mecz: ${team1Name} vs ${team2Name} | Najlepszy zawodnik: ${bestPlayerName} | Top 3: ${top3Names}`;
       matchList.appendChild(li);
     });
+
+    updateAnalysis();
   }
 
-  // DODAJ DRUŻYNĘ
-  teamForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const newTeam = teamNameInput.value.trim();
-    if (newTeam && !teams.includes(newTeam)) {
-      teams.push(newTeam);
-      updateTeamSelects();
-      renderTeams();
-      teamNameInput.value = "";
-    }
-  });
+  // Analiza zawodników - ile razy najlepszy i w top 3
+  const analysisBest = document.getElementById("analysisBest");
+  const analysisTop3 = document.getElementById("analysisTop3");
+  const ctxBest = document.getElementById("chartBest").getContext("2d");
+  const ctxTop3 = document.getElementById("chartTop3").getContext("2d");
 
-  // DODAJ ZAWODNIKA
-  playerForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const team = teamSelect.value;
-    const name = playerNameInput.value.trim();
-    if (team && name) {
-      players.push({ team, name });
-      renderPlayers();
-      playerNameInput.value = "";
-    }
-  });
+  let chartBest, chartTop3;
 
-  // DODAJ MECZ
-  matchForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const teamA = matchTeamASelect.value;
-    const teamB = matchTeamBInput.value.trim();
-    const date = matchDateInput.value;
-    const score = matchScoreInput.value.trim();
-    const bestPlayer = bestPlayerInput.value.trim();
-    const topPlayersA = topPlayersAInput.value.trim();
-    const topPlayersB = topPlayersBInput.value.trim();
+  function updateAnalysis() {
+    const bestCounts = {};
+    const top3Counts = {};
 
-    if (teamA && teamB && date && score) {
-      matches.push({ teamA, teamB, date, score, bestPlayer, topPlayersA, topPlayersB });
-      renderMatches();
-
-      // Resetuj formularz
-      matchTeamBInput.value = "";
-      matchDateInput.value = "";
-      matchScoreInput.value = "";
-      bestPlayerInput.value = "";
-      topPlayersAInput.value = "";
-      topPlayersBInput.value = "";
-    }
-  });
-
-  // ANALIZA ZAWODNIKÓW (prosta średnia wystąpień w meczach i top3)
-  function analyzePlayers(team) {
-    const teamPlayers = players.filter((p) => p.team === team);
-    // Liczymy wystąpienia każdego zawodnika jako najlepszy, lub w top 3
-    const stats = {};
-    teamPlayers.forEach(({ name }) => {
-      stats[name] = { bestPlayerCount: 0, topAppearances: 0 };
+    players.forEach(p => {
+      bestCounts[p.name] = 0;
+      top3Counts[p.name] = 0;
     });
 
-    matches.forEach(({ bestPlayer, topPlayersA, topPlayersB, teamA }) => {
-      // bestPlayer
-      if (bestPlayer && stats[bestPlayer]) {
-        stats[bestPlayer].bestPlayerCount++;
-      }
-      // topPlayersA i topPlayersB (lista rozdzielona przecinkami)
-      if (teamA === team && topPlayersA) {
-        topPlayersA.split(",").map(s => s.trim()).forEach(p => {
-          if (stats[p]) stats[p].topAppearances++;
-        });
-      }
-      if (teamA !== team && topPlayersB) {
-        topPlayersB.split(",").map(s => s.trim()).forEach(p => {
-          if (stats[p]) stats[p].topAppearances++;
-        });
-      }
+    matches.forEach(m => {
+      const bestPlayer = players.find(p => p.id === m.bestPlayerId);
+      if (bestPlayer) bestCounts[bestPlayer.name]++;
+
+      m.top3Ids.forEach(id => {
+        const p = players.find(pl => pl.id === id);
+        if (p) top3Counts[p.name]++;
+      });
     });
 
-    return stats;
-  }
-
-  function renderAnalysis() {
-    const team = analysisTeamSelect.value;
-    if (!team) {
-      analysisPlayerList.innerHTML = "";
-      if (trainingChartInstance) trainingChartInstance.clear();
-      if (matchChartInstance) matchChartInstance.clear();
-      return;
+    // Najlepszy zawodnik (max)
+    let maxBest = 0;
+    let maxBestPlayer = null;
+    for (const [name, count] of Object.entries(bestCounts)) {
+      if (count > maxBest) {
+        maxBest = count;
+        maxBestPlayer = name;
+      }
     }
 
-    const stats = analyzePlayers(team);
-    analysisPlayerList.innerHTML = "";
-    Object.entries(stats).forEach(([name, { bestPlayerCount, topAppearances }]) => {
-      const li = document.createElement("li");
-      li.textContent = `${name} - Najlepszy zawodnik: ${bestPlayerCount}, Top wystąpienia: ${topAppearances}`;
-      analysisPlayerList.appendChild(li);
-    });
+    // Top 3 - zawodnik z max wystąpień
+    let maxTop3 = 0;
+    let maxTop3Player = null;
+    for (const [name, count] of Object.entries(top3Counts)) {
+      if (count > maxTop3) {
+        maxTop3 = count;
+        maxTop3Player = name;
+      }
+    }
+
+    analysisBest.textContent = maxBestPlayer
+      ? `Najlepszy zawodnik (najwięcej razy w meczu najlepszy): ${maxBestPlayer} (${maxBest} razy)`
+      : "Brak danych";
+
+    analysisTop3.textContent = maxTop3Player
+      ? `Najlepszy zawodnik (najwięcej razy w top 3): ${maxTop3Player} (${maxTop3} razy)`
+      : "Brak danych";
 
     // Wykresy
-    const names = Object.keys(stats);
-    const bestCounts = names.map((n) => stats[n].bestPlayerCount);
-    const topCounts = names.map((n) => stats[n].topAppearances);
+    const names = Object.keys(bestCounts);
+    const bestData = Object.values(bestCounts);
+    const top3Data = Object.values(top3Counts);
 
-    // Usuwamy stare wykresy
-    if (trainingChartInstance) trainingChartInstance.destroy();
-    if (matchChartInstance) matchChartInstance.destroy();
+    if (chartBest) chartBest.destroy();
+    if (chartTop3) chartTop3.destroy();
 
-    trainingChartInstance = new Chart(trainingChart, {
+    chartBest = new Chart(ctxBest, {
       type: "bar",
       data: {
         labels: names,
         datasets: [{
-          label: "Najlepszy zawodnik",
-          data: bestCounts,
-          backgroundColor: "rgba(75, 192, 192, 0.6)"
+          label: "Liczba razy najlepszy",
+          data: bestData,
+          backgroundColor: "rgba(54, 162, 235, 0.7)"
         }]
       },
       options: {
         responsive: true,
-        plugins: {
-          legend: { display: true }
-        },
         scales: {
-          y: { beginAtZero: true }
+          y: { beginAtZero: true, precision:0 }
         }
       }
     });
 
-    matchChartInstance = new Chart(matchChart, {
+    chartTop3 = new Chart(ctxTop3, {
       type: "bar",
       data: {
         labels: names,
         datasets: [{
-          label: "Top 3 wystąpienia",
-          data: topCounts,
-          backgroundColor: "rgba(153, 102, 255, 0.6)"
+          label: "Liczba razy w top 3",
+          data: top3Data,
+          backgroundColor: "rgba(255, 159, 64, 0.7)"
         }]
       },
       options: {
         responsive: true,
-        plugins: {
-          legend: { display: true }
-        },
         scales: {
-          y: { beginAtZero: true }
+          y: { beginAtZero: true, precision:0 }
         }
       }
     });
   }
 
-  analysisTeamSelect.addEventListener("change", renderAnalysis);
-
   // Inicjalizacja
-  updateTeamSelects();
   renderTeams();
   renderPlayers();
   renderMatches();
+  updateTeamSelects();
 });
