@@ -3,23 +3,24 @@ const selectTeamForPlayer = document.getElementById('selectTeamForPlayer');
 const playerNameInput = document.getElementById('playerName');
 const addPlayerMessage = document.getElementById('addPlayerMessage');
 
-// Funkcja do wypełniania listy drużyn w formularzu
-function populateTeamsForPlayer() {
+function populateTeamsSelect() {
+  // Czyścimy listę
   selectTeamForPlayer.innerHTML = '<option value="">-- wybierz --</option>';
+
   teams.forEach(team => {
+    // zakładam, że team ma pole id i name
     const option = document.createElement('option');
-    option.value = team.id || team.name; // ważne, żeby była unikalna wartość (np. id)
+    option.value = team.id || team.name;
     option.textContent = team.name;
     selectTeamForPlayer.appendChild(option);
   });
 }
 
-// Wołaj po załadowaniu drużyn
-populateTeamsForPlayer();
+// Wywołaj tę funkcję po załadowaniu teams
+populateTeamsSelect();
 
 addPlayerForm.addEventListener('submit', e => {
   e.preventDefault();
-  addPlayerMessage.textContent = '';
 
   const teamId = selectTeamForPlayer.value;
   const playerName = playerNameInput.value.trim();
@@ -30,45 +31,34 @@ addPlayerForm.addEventListener('submit', e => {
     return;
   }
 
-  // Znajdź drużynę w teams po ID
-  const team = teams.find(t => (t.id || t.name) === teamId);
-  if (!team) {
-    addPlayerMessage.style.color = 'red';
-    addPlayerMessage.textContent = 'Wybrana drużyna nie istnieje.';
-    return;
-  }
-
-  // Pobierz aktualną listę zawodników z Firebase (bezpośrednio z bazy)
   const teamRef = db.ref('teams/' + teamId);
 
-  teamRef.once('value')
-    .then(snapshot => {
-      const teamData = snapshot.val();
-      let players = teamData.players || [];
+  teamRef.once('value').then(snapshot => {
+    const teamData = snapshot.val();
+    if (!teamData) {
+      throw new Error('Drużyna nie istnieje w bazie.');
+    }
 
-      // Sprawdź, czy zawodnik już jest na liście
-      if (players.some(p => p.name.toLowerCase() === playerName.toLowerCase())) {
-        addPlayerMessage.style.color = 'red';
-        addPlayerMessage.textContent = 'Zawodnik o tym nazwisku już jest w drużynie.';
-        throw new Error('Duplikat zawodnika');
-      }
+    const players = teamData.players || [];
 
-      // Dodaj zawodnika
-      players.push({ name: playerName });
+    // Sprawdź czy zawodnik już jest
+    if (players.some(p => p.name.toLowerCase() === playerName.toLowerCase())) {
+      throw new Error('Taki zawodnik już jest w drużynie.');
+    }
 
-      // Zapisz zaktualizowaną listę
-      return teamRef.update({ players });
-    })
-    .then(() => {
-      addPlayerMessage.style.color = 'green';
-      addPlayerMessage.textContent = 'Zawodnik dodany do drużyny!';
-      addPlayerForm.reset();
-      loadData();  // odśwież dane i listy
-    })
-    .catch(err => {
-      if (err.message !== 'Duplikat zawodnika') {
-        addPlayerMessage.style.color = 'red';
-        addPlayerMessage.textContent = 'Błąd dodawania zawodnika: ' + err.message;
-      }
-    });
+    players.push({ name: playerName });
+
+    return teamRef.update({ players });
+  })
+  .then(() => {
+    addPlayerMessage.style.color = 'green';
+    addPlayerMessage.textContent = 'Zawodnik został dodany.';
+    addPlayerForm.reset();
+    loadData(); // odśwież dane w UI, jeśli masz taką funkcję
+  })
+  .catch(err => {
+    addPlayerMessage.style.color = 'red';
+    addPlayerMessage.textContent = 'Błąd: ' + err.message;
+  });
 });
+
