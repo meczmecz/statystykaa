@@ -3,722 +3,132 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Jaguar Analityka - Kompletny Projekt</title>
+<title>Jaguar Analityka - Zarządzanie drużynami i meczami</title>
+<link rel="stylesheet" href="styles.css" />
 <style>
-  body { font-family: Arial, sans-serif; margin: 0; background: #f0f2f5; }
-  nav { background: #004d99; padding: 10px; display: flex; gap: 10px; }
-  nav button { background: #007bff; border: none; color: white; padding: 10px 15px; cursor: pointer; border-radius: 4px; }
-  nav button.active, nav button:hover { background: #0056b3; }
-  section { display: none; padding: 20px; max-width: 900px; margin: 20px auto; background: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);}
+  /* Podstawowe style, możesz później rozbudować */
+  body { font-family: Arial, sans-serif; background: #fafafa; margin: 0; padding: 0;}
+  header { background: #222; color: white; padding: 1rem; }
+  nav { background: #3498db; display: flex; }
+  nav button { flex: 1; padding: 10px; border: none; background: #2980b9; color: white; cursor: pointer; font-weight: bold; }
+  nav button.active { background: #1c5980; }
+  section { display: none; padding: 20px; background: white; margin: 10px; border-radius: 5px; }
   section.active { display: block; }
-  h1, h2 { color: #004d99; }
   label { display: block; margin-top: 10px; }
-  input, select, textarea, button { margin-top: 5px; padding: 8px; width: 100%; max-width: 300px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-  th { background: #007bff; color: white; }
-  button.btn-edit, button.btn-delete { width: auto; margin: 0 5px; padding: 5px 10px; }
-  button.btn-edit { background: #ffc107; color: black; border: none; cursor: pointer; border-radius: 3px;}
-  button.btn-delete { background: #dc3545; color: white; border: none; cursor: pointer; border-radius: 3px;}
-  .error { color: #dc3545; }
-  .success { color: #28a745; }
-  #chartsContainer { display: flex; gap: 20px; flex-wrap: wrap; }
-  canvas { background: #fff; border: 1px solid #ccc; border-radius: 4px; }
+  input, select, textarea { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+  button.btn { margin-top: 15px; background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 3px; cursor: pointer;}
+  button.btn:hover { background: #2980b9; }
+  table { width: 100%; border-collapse: collapse; margin-top: 15px;}
+  th, td { border: 1px solid #ddd; padding: 8px; }
+  th { background: #3498db; color: white; }
+  .error { color: red; }
+  .success { color: green; }
 </style>
 </head>
 <body>
 
+<header>
+  <h1>Jaguar Analityka</h1>
+  <div id="authMessage"></div>
+  <form id="loginForm">
+    <label>Email:<input type="email" name="email" required></label>
+    <label>Hasło:<input type="password" name="password" required></label>
+    <button type="submit" class="btn">Zaloguj się</button>
+  </form>
+  <button id="logoutBtn" class="btn" style="display:none;">Wyloguj się</button>
+</header>
+
 <nav>
-  <button data-tab="login" class="active">Logowanie</button>
-  <button data-tab="teams" disabled>Drużyny</button>
-  <button data-tab="players" disabled>Zawodnicy i oceny</button>
-  <button data-tab="matches" disabled>Analiza meczy</button>
-  <button id="logoutBtn" style="margin-left:auto; display:none;">Wyloguj</button>
+  <button data-tab="teams" class="active">Drużyny</button>
+  <button data-tab="players">Zawodnicy</button>
+  <button data-tab="ratings">Oceny</button>
+  <button data-tab="matches">Mecze</button>
+  <button data-tab="analysis">Analiza</button>
 </nav>
 
-<section id="login" class="active">
-  <h1>Logowanie do Jaguar Analityka</h1>
-  <form id="loginForm">
-    <label>Email:
-      <input type="email" id="loginEmail" required />
-    </label>
-    <label>Hasło:
-      <input type="password" id="loginPassword" required />
-    </label>
-    <button type="submit">Zaloguj się</button>
-  </form>
-  <p id="loginMessage"></p>
-</section>
-
-<section id="teams">
-  <h2>Zarządzanie drużynami</h2>
+<section id="teams" class="active">
+  <h2>Drużyny</h2>
   <form id="teamForm">
-    <input type="hidden" id="teamId" />
-    <label>Nazwa drużyny:
-      <input type="text" id="teamName" required />
-    </label>
-    <button type="submit">Dodaj / Zaktualizuj drużynę</button>
-    <button type="button" id="teamFormClearBtn">Wyczyść</button>
+    <label>Nazwa drużyny:<input type="text" name="teamName" required></label>
+    <button type="submit" class="btn">Dodaj drużynę</button>
   </form>
-
   <table id="teamsTable">
-    <thead>
-      <tr><th>Nazwa drużyny</th><th>Zawodnicy</th><th>Akcje</th></tr>
-    </thead>
+    <thead><tr><th>ID</th><th>Nazwa</th><th>Akcje</th></tr></thead>
     <tbody></tbody>
   </table>
-  <p id="teamsMessage"></p>
 </section>
 
 <section id="players">
-  <h2>Zarządzanie zawodnikami i ocenami</h2>
-
-  <form id="addPlayerForm">
+  <h2>Zawodnicy</h2>
+  <form id="playerForm">
+    <label>Imię i nazwisko:<input type="text" name="playerName" required></label>
     <label>Wybierz drużynę:
-      <select id="selectTeamForPlayer" required>
-        <option value="">-- wybierz --</option>
-      </select>
+      <select name="teamId" required></select>
     </label>
-    <label>Imię i nazwisko zawodnika:
-      <input type="text" id="playerName" required />
-    </label>
-    <button type="submit">Dodaj zawodnika do drużyny</button>
+    <button type="submit" class="btn">Dodaj zawodnika</button>
   </form>
-  <p id="addPlayerMessage"></p>
+  <table id="playersTable">
+    <thead><tr><th>ID</th><th>Imię i nazwisko</th><th>Drużyna</th><th>Akcje</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
 
-  <hr />
-
-  <form id="ratingForm" style="margin-top:20px;">
-    <h3>Dodaj ocenę zawodnikowi</h3>
-    <label>Wybierz drużynę:
-      <select id="ratingTeam" required>
-        <option value="">-- wybierz --</option>
-      </select>
-    </label>
+<section id="ratings">
+  <h2>Oceny zawodników</h2>
+  <form id="ratingForm">
     <label>Wybierz zawodnika:
-      <select id="ratingPlayer" required>
-        <option value="">-- wybierz --</option>
+      <select name="playerId" required></select>
+    </label>
+    <label>Data oceny:<input type="date" name="date" required></label>
+    <label>Typ oceny:
+      <select name="ratingType" required>
+        <option value="training">Trening</option>
+        <option value="match">Mecz</option>
       </select>
     </label>
-    <label>Data oceny:
-      <input type="date" id="ratingDate" required />
-    </label>
-    <label>Ocena treningu (1-5):
-      <input type="number" id="trainingRating" min="1" max="5" required />
-    </label>
-    <label>Ocena meczu (1-5):
-      <input type="number" id="matchRating" min="1" max="5" required />
-    </label>
-    <label>Czas na boisku (minuty):
-      <input type="number" id="playTime" min="0" required />
-    </label>
-    <button type="submit">Dodaj ocenę</button>
+    <label>Ocena (0-10):<input type="number" name="ratingValue" min="0" max="10" required></label>
+    <label>Czas gry (minuty):<input type="number" name="playTime" min="0" required></label>
+    <button type="submit" class="btn">Dodaj ocenę</button>
   </form>
-
-  <button id="showChartsBtn" disabled style="margin-top: 15px;">Pokaż wykresy ocen</button>
-
-  <div id="chartsContainer" style="margin-top:20px;">
-    <canvas id="chartTraining" width="400" height="200"></canvas>
-    <canvas id="chartMatch" width="400" height="200"></canvas>
-  </div>
-
-  <p id="ratingsMessage"></p>
+  <table id="ratingsTable">
+    <thead><tr><th>Zawodnik</th><th>Data</th><th>Typ</th><th>Ocena</th><th>Czas gry</th></tr></thead>
+    <tbody></tbody>
+  </table>
 </section>
 
 <section id="matches">
-  <h2>Analiza meczy</h2>
-
+  <h2>Mecze</h2>
   <form id="matchForm">
-    <input type="hidden" id="matchId" />
-    <label>Data meczu:
-      <input type="date" id="matchDate" required />
-    </label>
-    <label>Wynik:
-      <input type="text" id="matchScore" placeholder="np. 3:2" required />
-    </label>
-    <label>Strzelcy Jaguar (oddziel przecinkami):
-      <input type="text" id="scorersJaguar" />
-    </label>
-    <label>Strzelcy przeciwnika (oddziel przecinkami):
-      <input type="text" id="scorersOpponent" />
-    </label>
-    <label>Najlepszy zawodnik meczu:
-      <input type="text" id="bestPlayer" />
-    </label>
-    <label>Top zawodnicy Jaguar (oddziel przecinkami):
-      <input type="text" id="topPlayersJaguar" />
-    </label>
-    <label>Top zawodnicy przeciwnika (oddziel przecinkami):
-      <input type="text" id="topPlayersOpponent" />
-    </label>
-    <button type="submit">Dodaj / Zaktualizuj mecz</button>
-    <button type="button" id="matchFormClearBtn">Wyczyść</button>
+    <label>Data meczu:<input type="date" name="date" required></label>
+    <label>Przeciwnik:<input type="text" name="opponent" required></label>
+    <button type="submit" class="btn">Dodaj mecz</button>
   </form>
-
-  <input type="text" id="searchMatchInput" placeholder="Szukaj meczów po dacie, wyniku..." style="margin-top: 15px; width: 300px;" />
-
   <table id="matchesTable">
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Wynik</th>
-        <th>Strzelcy Jaguar</th>
-        <th>Strzelcy przeciwnika</th>
-        <th>Najlepszy zawodnik</th>
-        <th>Akcje</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Data</th><th>Przeciwnik</th><th>Akcje</th></tr></thead>
     <tbody></tbody>
   </table>
-
-  <p id="matchesMessage"></p>
 </section>
 
-<!-- Firebase i Chart.js -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<section id="analysis">
+  <h2>Analiza</h2>
+  <p>Wybierz drużynę i zawodnika aby zobaczyć wykresy i statystyki.</p>
+  <select id="analysisTeamSelect">
+    <option value="">-- Wybierz drużynę --</option>
+  </select>
+  <select id="analysisPlayerSelect" disabled>
+    <option value="">-- Wybierz zawodnika --</option>
+  </select>
+  <canvas id="chartTraining" width="600" height="300" style="margin-top:20px;"></canvas>
+  <canvas id="chartMatch" width="600" height="300" style="margin-top:20px;"></canvas>
+</section>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-  // Podstawowa konfiguracja Firebase - podmień na swoje
-  const firebaseConfig = {
-    apiKey: "AIzaSyAWXiBO5-woCCEqCBc2rfOIo1RhUUtevzU",
-    authDomain: "jaguar-analityka.firebaseapp.com",
-    databaseURL: "https://jaguar-analityka-default-rtdb.firebaseio.com",
-    projectId: "jaguar-analityka",
-    storageBucket: "jaguar-analityka.firebasestorage.app",
-    messagingSenderId: "163915747034",
-    appId: "1:163915747034:web:8c0311eaaa4ed792b25fe3",
-    measurementId: "G-T3C1M10SM6"
-  };
-
-  // Inicjalizacja
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.database();
-
-  // Nawigacja
-  const navButtons = document.querySelectorAll('nav button[data-tab]');
-  const sections = document.querySelectorAll('section');
-  const logoutBtn = document.getElementById('logoutBtn');
-  const loginForm = document.getElementById('loginForm');
-  const loginMessage = document.getElementById('loginMessage');
-
-  navButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      if(btn.disabled) return;
-      navButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const tab = btn.dataset.tab;
-      sections.forEach(s => s.id === tab ? s.classList.add('active') : s.classList.remove('active'));
-    });
-  });
-
-  logoutBtn.addEventListener('click', () => {
-    auth.signOut();
-  });
-
-  // Form logowania
-  loginForm.addEventListener('submit', e => {
-    e.preventDefault();
-    loginMessage.textContent = "";
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-
-    auth.signInWithEmailAndPassword(email, password)
-      .then(() => {
-        loginMessage.textContent = "";
-      })
-      .catch(err => {
-        loginMessage.textContent = "Błąd logowania: " + err.message;
-        loginMessage.className = "error";
-      });
-  });
-
-  // Monitorowanie stanu logowania
-  auth.onAuthStateChanged(user => {
-    if(user) {
-      // Aktywuj zakładki
-      navButtons.forEach(btn => btn.disabled = false);
-      logoutBtn.style.display = "inline-block";
-
-      // Ukryj login, pokaż inne
-      document.getElementById('login').classList.remove('active');
-      navButtons.forEach(b => b.classList.remove('active'));
-      navButtons[1].classList.add('active'); // drużyny
-      sections.forEach(s => {
-        if(s.id === 'teams') s.classList.add('active'); else s.classList.remove('active');
-      });
-
-      // Załaduj dane
-      loadTeams();
-      loadMatches();
-      loadRatings();
-      clearMessages();
-      clearForms();
-    } else {
-      // Wylogowano - blokuj zakładki
-      navButtons.forEach(btn => btn.disabled = true);
-      navButtons[0].disabled = false; // tylko login
-      logoutBtn.style.display = "none";
-      navButtons.forEach(b => b.classList.remove('active'));
-      navButtons[0].classList.add('active');
-      sections.forEach(s => {
-        if(s.id === 'login') s.classList.add('active'); else s.classList.remove('active');
-      });
-      clearForms();
-      clearMessages();
-    }
-  });
-
-  // Czyszczenie formularzy i wiadomości
-  function clearMessages() {
-    document.getElementById('teamsMessage').textContent = '';
-    document.getElementById('addPlayerMessage').textContent = '';
-    document.getElementById('ratingsMessage').textContent = '';
-    document.getElementById('matchesMessage').textContent = '';
-    loginMessage.textContent = '';
-  }
-  function clearForms() {
-    document.getElementById('teamForm').reset();
-    document.getElementById('addPlayerForm').reset();
-    document.getElementById('ratingForm').reset();
-    document.getElementById('matchForm').reset();
-  }
-
-  // --- Drużyny ---
-  const teamsTableBody = document.querySelector('#teamsTable tbody');
-  const teamForm = document.getElementById('teamForm');
-  const teamIdInput = document.getElementById('teamId');
-  const teamNameInput = document.getElementById('teamName');
-  const teamsMessage = document.getElementById('teamsMessage');
-  const teamFormClearBtn = document.getElementById('teamFormClearBtn');
-
-  let teams = [];
-
-  function loadTeams() {
-    db.ref('teams').off();
-    db.ref('teams').on('value', snapshot => {
-      const data = snapshot.val() || {};
-      teams = Object.entries(data).map(([id, team]) => ({ id, ...team }));
-      renderTeams();
-      populateTeamsSelects();
-    });
-  }
-
-  function renderTeams() {
-    teamsTableBody.innerHTML = '';
-    teams.forEach(team => {
-      const tr = document.createElement('tr');
-
-      const playersCount = team.players ? team.players.length : 0;
-
-      tr.innerHTML = `
-        <td>${team.name}</td>
-        <td>${playersCount}</td>
-        <td>
-          <button class="btn-edit" data-id="${team.id}">Edytuj</button>
-          <button class="btn-delete" data-id="${team.id}">Usuń</button>
-        </td>
-      `;
-      teamsTableBody.appendChild(tr);
-    });
-
-    // Obsługa kliknięć na edycję i usuwanie
-    teamsTableBody.querySelectorAll('.btn-edit').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const team = teams.find(t => t.id === btn.dataset.id);
-        if(team) {
-          teamIdInput.value = team.id;
-          teamNameInput.value = team.name;
-          teamsMessage.textContent = '';
-        }
-      });
-    });
-
-    teamsTableBody.querySelectorAll('.btn-delete').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if(confirm('Na pewno chcesz usunąć tę drużynę?')) {
-          db.ref('teams/' + btn.dataset.id).remove();
-        }
-      });
-    });
-  }
-
-  teamForm.addEventListener('submit', e => {
-    e.preventDefault();
-    teamsMessage.textContent = '';
-    const id = teamIdInput.value.trim();
-    const name = teamNameInput.value.trim();
-
-    if(!name) {
-      teamsMessage.textContent = 'Nazwa drużyny jest wymagana';
-      teamsMessage.className = 'error';
-      return;
-    }
-
-    if(id) {
-      // Aktualizuj drużynę
-      db.ref('teams/' + id).update({ name })
-        .then(() => {
-          teamsMessage.textContent = 'Drużyna zaktualizowana';
-          teamsMessage.className = 'success';
-          teamForm.reset();
-          teamIdInput.value = '';
-        })
-        .catch(e => {
-          teamsMessage.textContent = 'Błąd: ' + e.message;
-          teamsMessage.className = 'error';
-        });
-    } else {
-      // Dodaj nową drużynę
-      const newTeamRef = db.ref('teams').push();
-      newTeamRef.set({ name, players: [] })
-        .then(() => {
-          teamsMessage.textContent = 'Drużyna dodana';
-          teamsMessage.className = 'success';
-          teamForm.reset();
-        })
-        .catch(e => {
-          teamsMessage.textContent = 'Błąd: ' + e.message;
-          teamsMessage.className = 'error';
-        });
-    }
-  });
-
-  teamFormClearBtn.addEventListener('click', () => {
-    teamForm.reset();
-    teamIdInput.value = '';
-    teamsMessage.textContent = '';
-  });
-
-  // --- Zawodnicy i oceny ---
-  const selectTeamForPlayer = document.getElementById('selectTeamForPlayer');
-  const addPlayerForm = document.getElementById('addPlayerForm');
-  const playerNameInput = document.getElementById('playerName');
-  const addPlayerMessage = document.getElementById('addPlayerMessage');
-
-  const ratingTeamSelect = document.getElementById('ratingTeam');
-  const ratingPlayerSelect = document.getElementById('ratingPlayer');
-  const ratingForm = document.getElementById('ratingForm');
-  const ratingsMessage = document.getElementById('ratingsMessage');
-
-  let selectedRatingTeamId = null;
-
-  // Wypełnij selecty drużyn do zawodników i ocen
-  function populateTeamsSelects() {
-    // dla zawodników
-    selectTeamForPlayer.innerHTML = '<option value="">-- wybierz --</option>';
-    ratingTeamSelect.innerHTML = '<option value="">-- wybierz --</option>';
-    teams.forEach(team => {
-      const opt1 = document.createElement('option');
-      opt1.value = team.id;
-      opt1.textContent = team.name;
-      selectTeamForPlayer.appendChild(opt1);
-
-      const opt2 = document.createElement('option');
-      opt2.value = team.id;
-      opt2.textContent = team.name;
-      ratingTeamSelect.appendChild(opt2);
-    });
-  }
-
-  // Dodawanie zawodnika do drużyny
-  addPlayerForm.addEventListener('submit', e => {
-    e.preventDefault();
-    addPlayerMessage.textContent = '';
-    const teamId = selectTeamForPlayer.value;
-    const playerName = playerNameInput.value.trim();
-
-    if(!teamId || !playerName) {
-      addPlayerMessage.textContent = 'Wybierz drużynę i wpisz nazwisko zawodnika.';
-      addPlayerMessage.className = 'error';
-      return;
-    }
-
-    const teamRef = db.ref('teams/' + teamId);
-    teamRef.once('value').then(snapshot => {
-      const teamData = snapshot.val();
-      if(!teamData) throw new Error('Drużyna nie istnieje.');
-
-      let players = teamData.players || [];
-
-      if(players.some(p => p.name.toLowerCase() === playerName.toLowerCase())) {
-        throw new Error('Taki zawodnik już jest w drużynie.');
-      }
-
-      players.push({ name: playerName, id: Date.now().toString() });
-
-      return teamRef.update({ players });
-    }).then(() => {
-      addPlayerMessage.textContent = 'Zawodnik został dodany do drużyny.';
-      addPlayerMessage.className = 'success';
-      addPlayerForm.reset();
-    }).catch(err => {
-      addPlayerMessage.textContent = 'Błąd: ' + err.message;
-      addPlayerMessage.className = 'error';
-    });
-  });
-
-  // Ładowanie zawodników dla wybranej drużyny (w formularzu ocen)
-  ratingTeamSelect.addEventListener('change', () => {
-    const teamId = ratingTeamSelect.value;
-    ratingPlayerSelect.innerHTML = '<option value="">-- wybierz --</option>';
-    ratingsMessage.textContent = '';
-    if(!teamId) return;
-    selectedRatingTeamId = teamId;
-    const team = teams.find(t => t.id === teamId);
-    if(!team || !team.players) return;
-    team.players.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = p.name;
-      ratingPlayerSelect.appendChild(opt);
-    });
-  });
-
-  // Dodawanie oceny zawodnikowi
-  ratingForm.addEventListener('submit', e => {
-    e.preventDefault();
-    ratingsMessage.textContent = '';
-
-    const teamId = ratingTeamSelect.value;
-    const playerId = ratingPlayerSelect.value;
-    const date = document.getElementById('ratingDate').value;
-    const trainingRating = parseInt(document.getElementById('trainingRating').value);
-    const matchRating = parseInt(document.getElementById('matchRating').value);
-    const playTime = parseInt(document.getElementById('playTime').value);
-
-    if(!teamId || !playerId || !date || isNaN(trainingRating) || isNaN(matchRating) || isNaN(playTime)) {
-      ratingsMessage.textContent = 'Wypełnij wszystkie pola prawidłowo.';
-      ratingsMessage.className = 'error';
-      return;
-    }
-
-    // Klucz oceny - unikalny
-    const ratingId = Date.now().toString();
-
-    // Struktura oceny
-    const ratingData = {
-      teamId,
-      playerId,
-      date,
-      trainingRating,
-      matchRating,
-      playTime
-    };
-
-    db.ref('ratings/' + ratingId).set(ratingData)
-      .then(() => {
-        ratingsMessage.textContent = 'Ocena została dodana.';
-        ratingsMessage.className = 'success';
-        ratingForm.reset();
-        ratingPlayerSelect.innerHTML = '<option value="">-- wybierz --</option>';
-      })
-      .catch(e => {
-        ratingsMessage.textContent = 'Błąd: ' + e.message;
-        ratingsMessage.className = 'error';
-      });
-  });
-
-  // --- Wczytywanie ocen do wykresów ---
-  const showChartsBtn = document.getElementById('showChartsBtn');
-  const chartTrainingCtx = document.getElementById('chartTraining').getContext('2d');
-  const chartMatchCtx = document.getElementById('chartMatch').getContext('2d');
-  let chartTraining = null;
-  let chartMatch = null;
-
-  showChartsBtn.addEventListener('click', () => {
-    if(!selectedRatingTeamId) {
-      ratingsMessage.textContent = 'Wybierz drużynę w sekcji ocen.';
-      ratingsMessage.className = 'error';
-      return;
-    }
-    drawChartsForTeam(selectedRatingTeamId);
-  });
-
-  function loadRatings() {
-    // Można dodać ładowanie, ale dane są na bieżąco pobierane przy rysowaniu
-  }
-
-  function drawChartsForTeam(teamId) {
-    db.ref('ratings').orderByChild('teamId').equalTo(teamId).once('value').then(snapshot => {
-      const ratingsData = snapshot.val() || {};
-      if(Object.keys(ratingsData).length === 0) {
-        ratingsMessage.textContent = 'Brak ocen dla wybranej drużyny.';
-        ratingsMessage.className = 'error';
-        if(chartTraining) chartTraining.destroy();
-        if(chartMatch) chartMatch.destroy();
-        return;
-      }
-      ratingsMessage.textContent = '';
-      // Grupowanie po dacie
-      const dates = {};
-      Object.values(ratingsData).forEach(r => {
-        if(!dates[r.date]) dates[r.date] = { trainingSum:0, matchSum:0, count:0 };
-        dates[r.date].trainingSum += r.trainingRating;
-        dates[r.date].matchSum += r.matchRating;
-        dates[r.date].count++;
-      });
-
-      const labels = Object.keys(dates).sort();
-      const avgTraining = labels.map(d => (dates[d].trainingSum / dates[d].count).toFixed(2));
-      const avgMatch = labels.map(d => (dates[d].matchSum / dates[d].count).toFixed(2));
-
-      if(chartTraining) chartTraining.destroy();
-      if(chartMatch) chartMatch.destroy();
-
-      chartTraining = new Chart(chartTrainingCtx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Średnia ocena treningu',
-            data: avgTraining,
-            borderColor: 'blue',
-            backgroundColor: 'rgba(0,0,255,0.1)',
-            fill: true,
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true, max: 10 }
-          }
-        }
-      });
-
-      chartMatch = new Chart(chartMatchCtx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Średnia ocena meczu',
-            data: avgMatch,
-            borderColor: 'green',
-            backgroundColor: 'rgba(0,255,0,0.1)',
-            fill: true,
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: { beginAtZero: true, max: 10 }
-          }
-        }
-      });
-    });
-  }
-
-  // --- Mecze ---
-  const matchesTableBody = document.querySelector('#matchesTable tbody');
-  const matchForm = document.getElementById('matchForm');
-  const matchDateInput = document.getElementById('matchDate');
-  const matchOpponentInput = document.getElementById('matchOpponent');
-  const matchesMessage = document.getElementById('matchesMessage');
-  const matchFormClearBtn = document.getElementById('matchFormClearBtn');
-
-  let matches = [];
-
-  function loadMatches() {
-    db.ref('matches').off();
-    db.ref('matches').on('value', snapshot => {
-      const data = snapshot.val() || {};
-      matches = Object.entries(data).map(([id, match]) => ({ id, ...match }));
-      renderMatches();
-    });
-  }
-
-  function renderMatches() {
-    matchesTableBody.innerHTML = '';
-    matches.forEach(match => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${match.date}</td>
-        <td>${match.opponent}</td>
-        <td>
-          <button class="btn-edit" data-id="${match.id}">Edytuj</button>
-          <button class="btn-delete" data-id="${match.id}">Usuń</button>
-        </td>
-      `;
-      matchesTableBody.appendChild(tr);
-    });
-
-    matchesTableBody.querySelectorAll('.btn-edit').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const match = matches.find(m => m.id === btn.dataset.id);
-        if(match) {
-          matchDateInput.value = match.date;
-          matchOpponentInput.value = match.opponent;
-          matchesMessage.textContent = '';
-          matchForm.dataset.editId = match.id;
-        }
-      });
-    });
-
-    matchesTableBody.querySelectorAll('.btn-delete').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if(confirm('Na pewno chcesz usunąć ten mecz?')) {
-          db.ref('matches/' + btn.dataset.id).remove();
-        }
-      });
-    });
-  }
-
-  matchForm.addEventListener('submit', e => {
-    e.preventDefault();
-    matchesMessage.textContent = '';
-
-    const date = matchDateInput.value.trim();
-    const opponent = matchOpponentInput.value.trim();
-    const editId = matchForm.dataset.editId;
-
-    if(!date || !opponent) {
-      matchesMessage.textContent = 'Wypełnij wszystkie pola.';
-      matchesMessage.className = 'error';
-      return;
-    }
-
-    if(editId) {
-      db.ref('matches/' + editId).update({ date, opponent })
-        .then(() => {
-          matchesMessage.textContent = 'Mecz zaktualizowany.';
-          matchesMessage.className = 'success';
-          matchForm.reset();
-          delete matchForm.dataset.editId;
-        })
-        .catch(e => {
-          matchesMessage.textContent = 'Błąd: ' + e.message;
-          matchesMessage.className = 'error';
-        });
-    } else {
-      const newMatchRef = db.ref('matches').push();
-      newMatchRef.set({ date, opponent })
-        .then(() => {
-          matchesMessage.textContent = 'Mecz dodany.';
-          matchesMessage.className = 'success';
-          matchForm.reset();
-        })
-        .catch(e => {
-          matchesMessage.textContent = 'Błąd: ' + e.message;
-          matchesMessage.className = 'error';
-        });
-    }
-  });
-
-  matchFormClearBtn.addEventListener('click', () => {
-    matchForm.reset();
-    matchesMessage.textContent = '';
-    delete matchForm.dataset.editId;
-  });
-
-  // --- Inicjalizacja ---
-  window.onload = () => {
-    loadTeams();
-    loadMatches();
-  };
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
