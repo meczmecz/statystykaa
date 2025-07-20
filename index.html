@@ -3,202 +3,590 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Jaguar Analityka - Zarządzanie Drużynami i Meczami</title>
+<title>Jaguar Analityka - Logowanie i Zarządzanie</title>
 <style>
-  /* --- Prosty i czytelny styl --- */
+  /* Reset */
+  * {
+    box-sizing: border-box;
+  }
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0; padding: 0;
-    background: #f0f2f5;
-    color: #333;
+    background: #f7f9fc;
+    color: #222;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
   header {
     background: #004aad;
     color: white;
-    padding: 1rem;
+    padding: 1rem 2rem;
     text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow: 0 3px 10px rgb(0 74 173 / 0.3);
   }
   main {
-    max-width: 900px;
-    margin: 1rem auto;
-    padding: 1rem;
+    flex-grow: 1;
+    max-width: 960px;
+    margin: 2rem auto;
+    padding: 1rem 2rem;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    border-radius: 10px;
+    box-shadow: 0 3px 15px rgb(0 0 0 / 0.1);
   }
-  h2 {
-    margin-top: 0;
-    color: #004aad;
-  }
-  section {
-    margin-bottom: 2rem;
+
+  /* Formularze */
+  form {
+    max-width: 400px;
+    margin-bottom: 1.5rem;
   }
   label {
     display: block;
-    margin: 0.5rem 0 0.2rem;
+    margin-bottom: 0.3rem;
     font-weight: 600;
+    color: #004aad;
   }
-  input[type=text], input[type=date], input[type=number], select {
+  input[type="email"], input[type="password"], input[type="text"], input[type="date"], input[type="number"], select {
     width: 100%;
-    padding: 6px 10px;
-    box-sizing: border-box;
-    border: 1.5px solid #aaa;
-    border-radius: 4px;
-    transition: border-color 0.3s ease;
+    padding: 10px 12px;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    border: 1.5px solid #ccc;
+    font-size: 1rem;
+    transition: border-color 0.3s;
   }
-  input[type=text]:focus, input[type=date]:focus, input[type=number]:focus, select:focus {
+  input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focus, input[type="date"]:focus, select:focus {
     border-color: #004aad;
     outline: none;
   }
   button {
-    margin-top: 0.8rem;
-    padding: 10px 18px;
     background: #004aad;
     color: white;
+    font-weight: 700;
+    padding: 12px 18px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    font-weight: 600;
-  }
-  button:hover {
-    background: #003377;
-  }
-  ul {
-    padding-left: 1.2rem;
-  }
-  .teams-list, .players-list {
-    list-style: none;
-    padding-left: 0;
-  }
-  .teams-list li, .players-list li {
-    padding: 6px 8px;
-    border-bottom: 1px solid #ddd;
-    cursor: pointer;
+    font-size: 1rem;
     transition: background-color 0.3s ease;
   }
-  .teams-list li:hover, .players-list li:hover {
-    background-color: #e3e9ff;
+  button:hover:not(:disabled) {
+    background: #003377;
   }
-  .players-list li.selected {
-    background-color: #bdd1ff;
+  button:disabled {
+    background: #777;
+    cursor: not-allowed;
   }
+
+  /* Sekcje */
+  #appSection {
+    display: none;
+  }
+
+  /* Lista drużyn i zawodników */
   .flex-row {
     display: flex;
-    gap: 1rem;
+    gap: 2rem;
     flex-wrap: wrap;
   }
-  .flex-col {
-    flex: 1 1 300px;
+  .box {
+    flex: 1 1 350px;
   }
-  .chart-container {
-    max-width: 600px;
-    margin-top: 1rem;
+  ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1.5px solid #ddd;
+    border-radius: 6px;
+    background: #fafafa;
   }
+  li {
+    padding: 8px 12px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  li:hover {
+    background-color: #e3e9ff;
+  }
+  li.selected {
+    background-color: #bdd1ff;
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 0.5rem;
+    margin-top: 1rem;
   }
   th, td {
-    border: 1px solid #ccc;
-    padding: 6px 10px;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
     text-align: left;
   }
   th {
     background-color: #004aad;
     color: white;
   }
-  .error {
-    color: red;
-    font-weight: 600;
-    margin-top: 0.5rem;
+  #logoutBtn {
+    background: #d63333;
+    margin-top: 1rem;
   }
-  .success {
-    color: green;
-    font-weight: 600;
-    margin-top: 0.5rem;
+  #logoutBtn:hover {
+    background: #a02a2a;
+  }
+  #errorMsg {
+    color: #d63333;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  #successMsg {
+    color: #2a9d8f;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  /* Responsywność */
+  @media (max-width: 600px) {
+    .flex-row {
+      flex-direction: column;
+    }
   }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Jaguar Analityka - Zarządzanie Drużynami i Meczami</h1>
-</header>
+<header>Jaguar Analityka - Logowanie i Zarządzanie</header>
 
 <main>
 
-<section id="teamSection">
-  <h2>Drużyny</h2>
-  <form id="teamForm">
-    <label for="teamNameInput">Dodaj nową drużynę:</label>
-    <input type="text" id="teamNameInput" placeholder="Nazwa drużyny" required />
-    <button type="submit">Dodaj drużynę</button>
-  </form>
+<!-- Sekcja logowania -->
+<section id="loginSection">
+  <h2>Zaloguj się</h2>
+  <div id="errorMsg"></div>
+  <form id="loginForm">
+    <label for="emailInput">Email:</label>
+    <input type="email" id="emailInput" placeholder="Twój email" required />
+    
+    <label for="passwordInput">Hasło:</label>
+    <input type="password" id="passwordInput" placeholder="Hasło" required minlength="6" />
 
-  <h3>Lista drużyn (kliknij, aby zobaczyć skład):</h3>
-  <ul id="teamsList" class="teams-list"></ul>
+    <button type="submit">Zaloguj się</button>
+  </form>
 </section>
 
-<section id="playerSection" style="display:none;">
-  <h2>Zawodnicy drużyny: <span id="currentTeamName"></span></h2>
-  <form id="playerForm">
-    <label for="playerNameInput">Dodaj zawodnika:</label>
-    <input type="text" id="playerNameInput" placeholder="Imię i nazwisko zawodnika" required />
-    <button type="submit">Dodaj zawodnika</button>
-  </form>
-  
-  <h3>Skład drużyny:</h3>
-  <ul id="playersList" class="players-list"></ul>
+<!-- Sekcja aplikacji po zalogowaniu -->
+<section id="appSection">
 
-  <button id="backToTeamsBtn" style="margin-top:10px;">Wróć do drużyn</button>
-</section>
+  <button id="logoutBtn">Wyloguj się</button>
 
-<section id="matchSection">
-  <h2>Dodaj mecz</h2>
-  <form id="matchForm">
-    <label for="matchDate">Data meczu:</label>
-    <input type="date" id="matchDate" required />
+  <div class="flex-row">
+    <div class="box" id="teamsBox">
+      <h2>Drużyny</h2>
+      <form id="teamForm">
+        <label for="teamNameInput">Dodaj nową drużynę:</label>
+        <input type="text" id="teamNameInput" placeholder="Nazwa drużyny" required />
+        <button type="submit">Dodaj drużynę</button>
+      </form>
+      <ul id="teamsList"></ul>
+    </div>
 
-    <label for="matchTeamSelect">Wybierz drużynę Jaguar:</label>
-    <select id="matchTeamSelect" required></select>
-
-    <label for="matchOpponentInput">Przeciwnik (nazwa):</label>
-    <input type="text" id="matchOpponentInput" placeholder="Nazwa drużyny przeciwnika" required />
-
-    <label for="matchScoreInput">Wynik meczu (np. 3:2):</label>
-    <input type="text" id="matchScoreInput" placeholder="Wynik meczu" required />
-
-    <button type="submit">Dodaj mecz</button>
-  </form>
-
-  <h3>Lista meczów:</h3>
-  <table id="matchesTable">
-    <thead>
-      <tr>
-        <th>Data</th><th>Drużyna Jaguar</th><th>Przeciwnik</th><th>Wynik</th><th>Akcje</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</section>
-
-<section id="chartsSection">
-  <h2>Wykresy postępów zawodników</h2>
-  <label for="chartTeamSelect">Wybierz drużynę:</label>
-  <select id="chartTeamSelect"></select>
-  <div class="chart-container">
-    <canvas id="progressChart" width="600" height="300"></canvas>
+    <div class="box" id="playersBox" style="display:none;">
+      <h2>Zawodnicy drużyny: <span id="currentTeamName"></span></h2>
+      <form id="playerForm">
+        <label for="playerNameInput">Dodaj zawodnika:</label>
+        <input type="text" id="playerNameInput" placeholder="Imię i nazwisko zawodnika" required />
+        <button type="submit">Dodaj zawodnika</button>
+      </form>
+      <ul id="playersList"></ul>
+      <button id="backToTeamsBtn" style="margin-top:10px;">Wróć do drużyn</button>
+    </div>
   </div>
+
+  <section id="matchSection" style="margin-top: 2rem;">
+    <h2>Dodaj mecz</h2>
+    <form id="matchForm" style="max-width: 400px;">
+      <label for="matchDate">Data meczu:</label>
+      <input type="date" id="matchDate" required />
+
+      <label for="matchTeamSelect">Wybierz drużynę Jaguar:</label>
+      <select id="matchTeamSelect" required></select>
+
+      <label for="matchOpponentInput">Przeciwnik (nazwa):</label>
+      <input type="text" id="matchOpponentInput" placeholder="Nazwa drużyny przeciwnika" required />
+
+      <label for="matchScoreInput">Wynik meczu (np. 3:2):</label>
+      <input type="text" id="matchScoreInput" placeholder="Wynik meczu" required />
+
+      <button type="submit">Dodaj mecz</button>
+    </form>
+
+    <h3>Lista meczów:</h3>
+    <table id="matchesTable">
+      <thead>
+        <tr>
+          <th>Data</th><th>Drużyna Jaguar</th><th>Przeciwnik</th><th>Wynik</th><th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="chartsSection" style="margin-top: 2rem;">
+    <h2>Wykresy postępów zawodników</h2>
+    <label for="chartTeamSelect">Wybierz drużynę:</label>
+    <select id="chartTeamSelect"></select>
+    <div style="max-width: 600px; margin-top: 1rem;">
+      <canvas id="progressChart" width="600" height="350"></canvas>
+    </div>
+  </section>
 </section>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<!-- Firebase + Chart.js -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="script.js"></script>
+
+<script>
+  // --- KONFIGURACJA FIREBASE ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyAWXiBO5-woCCEqCBc2rfOIo1RhUUtevzU",
+    authDomain: "jaguar-analityka.firebaseapp.com",
+    databaseURL: "https://jaguar-analityka-default-rtdb.firebaseio.com",
+    projectId: "jaguar-analityka",
+    storageBucket: "jaguar-analityka.firebasestorage.app",
+    messagingSenderId: "163915747034",
+    appId: "1:163915747034:web:8c0311eaaa4ed792b25fe3",
+    measurementId: "G-T3C1M10SM6"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+
+  // --- ELEMENTY DOM ---
+  const loginSection = document.getElementById('loginSection');
+  const appSection = document.getElementById('appSection');
+  const errorMsg = document.getElementById('errorMsg');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  // Logowanie
+  const loginForm = document.getElementById('loginForm');
+  const emailInput = document.getElementById('emailInput');
+  const passwordInput = document.getElementById('passwordInput');
+
+  // Drużyny
+  const teamsList = document.getElementById('teamsList');
+  const teamForm = document.getElementById('teamForm');
+  const teamNameInput = document.getElementById('teamNameInput');
+
+  // Zawodnicy
+  const playersBox = document.getElementById('playersBox');
+  const playersList = document.getElementById('playersList');
+  const playerForm = document.getElementById('playerForm');
+  const playerNameInput = document.getElementById('playerNameInput');
+  const currentTeamName = document.getElementById('currentTeamName');
+  const backToTeamsBtn = document.getElementById('backToTeamsBtn');
+
+  // Mecze
+  const matchForm = document.getElementById('matchForm');
+  const matchDateInput = document.getElementById('matchDate');
+  const matchTeamSelect = document.getElementById('matchTeamSelect');
+  const matchOpponentInput = document.getElementById('matchOpponentInput');
+  const matchScoreInput = document.getElementById('matchScoreInput');
+  const matchesTableBody = document.querySelector('#matchesTable tbody');
+
+  // Wykres
+  const chartTeamSelect = document.getElementById('chartTeamSelect');
+  const progressChartCtx = document.getElementById('progressChart').getContext('2d');
+  let progressChart = null;
+
+  // --- STAN APLIKACJI ---
+  let teamsData = {};
+  let playersData = {};
+  let matchesData = {};
+  let currentTeamId = null;
+
+  // --- FUNKCJE LOGOWANIA ---
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      // Zalogowany
+      errorMsg.textContent = '';
+      loginSection.style.display = 'none';
+      appSection.style.display = 'block';
+      loadTeams();
+      loadMatches();
+      clearPlayersList();
+      clearChart();
+    } else {
+      // Wylogowany
+      loginSection.style.display = 'block';
+      appSection.style.display = 'none';
+      clearAll();
+    }
+  });
+
+  loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    errorMsg.textContent = '';
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    if (!email || !password) {
+      errorMsg.textContent = 'Podaj email i hasło';
+      return;
+    }
+    auth.signInWithEmailAndPassword(email, password)
+      .then(() => {
+        loginForm.reset();
+      })
+      .catch(err => {
+        errorMsg.textContent = 'Błąd logowania: ' + err.message;
+      });
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    auth.signOut();
+  });
+
+  // --- FUNKCJE DRUŻYN ---
+  function loadTeams() {
+    db.ref('teams').on('value', snapshot => {
+      teamsData = snapshot.val() || {};
+      renderTeamsList();
+      populateTeamSelectors();
+    });
+  }
+
+  function renderTeamsList() {
+    teamsList.innerHTML = '';
+    for (const id in teamsData) {
+      const li = document.createElement('li');
+      li.textContent = teamsData[id].name;
+      li.dataset.id = id;
+      if (id === currentTeamId) li.classList.add('selected');
+      li.onclick = () => selectTeam(id);
+      teamsList.appendChild(li);
+    }
+  }
+
+  teamForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = teamNameInput.value.trim();
+    if (!name) return alert('Podaj nazwę drużyny');
+    db.ref('teams').push({ name })
+      .then(() => {
+        teamNameInput.value = '';
+      })
+      .catch(err => alert('Błąd dodawania drużyny: ' + err.message));
+  });
+
+  function selectTeam(id) {
+    currentTeamId = id;
+    currentTeamName.textContent = teamsData[id].name;
+    playersBox.style.display = 'block';
+    loadPlayers(id);
+    renderTeamsList();
+  }
+
+  backToTeamsBtn.onclick = () => {
+    currentTeamId = null;
+    playersBox.style.display = 'none';
+    renderTeamsList();
+  };
+
+  // --- FUNKCJE ZAWODNIKÓW ---
+  function loadPlayers(teamId) {
+    db.ref('players/' + teamId).on('value', snapshot => {
+      playersData = snapshot.val() || {};
+      renderPlayersList();
+    });
+  }
+
+  function renderPlayersList() {
+    playersList.innerHTML = '';
+    for (const id in playersData) {
+      const li = document.createElement('li');
+      li.textContent = playersData[id].name;
+      li.dataset.id = id;
+      li.onclick = () => showPlayerDetails(id);
+      playersList.appendChild(li);
+    }
+  }
+
+  playerForm.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!currentTeamId) return alert('Wybierz drużynę najpierw');
+    const name = playerNameInput.value.trim();
+    if (!name) return alert('Podaj imię i nazwisko zawodnika');
+    db.ref('players/' + currentTeamId).push({
+      name,
+      trainingScores: {},
+      matchScores: {}
+    }).then(() => {
+      playerNameInput.value = '';
+    }).catch(err => alert('Błąd dodawania zawodnika: ' + err.message));
+  });
+
+  function showPlayerDetails(playerId) {
+    const player = playersData[playerId];
+    if (!player) return;
+
+    // Tu można dodać modal lub alert z informacją i możliwością dodawania ocen
+
+    let trainingAvg = calcAverage(player.trainingScores);
+    let matchAvg = calcAverage(player.matchScores);
+
+    alert(`Zawodnik: ${player.name}\nŚrednia ocena treningu: ${trainingAvg}\nŚrednia ocena meczu: ${matchAvg}\n\nObsługa dodawania ocen wkrótce!`);
+  }
+
+  function calcAverage(scoresObj) {
+    if (!scoresObj) return 0;
+    const values = Object.values(scoresObj);
+    if (values.length === 0) return 0;
+    const sum = values.reduce((a,b) => a+b, 0);
+    return (sum / values.length).toFixed(2);
+  }
+
+  function clearPlayersList() {
+    playersList.innerHTML = '';
+    playersBox.style.display = 'none';
+    currentTeamName.textContent = '';
+  }
+
+  // --- MECZE ---
+  function loadMatches() {
+    db.ref('matches').on('value', snapshot => {
+      matchesData = snapshot.val() || {};
+      renderMatchesTable();
+    });
+  }
+
+  function renderMatchesTable() {
+    matchesTableBody.innerHTML = '';
+    for (const id in matchesData) {
+      const m = matchesData[id];
+      const teamName = teamsData[m.teamId] ? teamsData[m.teamId].name : 'Nieznana drużyna';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${m.date}</td>
+        <td>${teamName}</td>
+        <td>${m.opponent}</td>
+        <td>${m.score}</td>
+        <td><button data-id="${id}" class="deleteMatchBtn">Usuń</button></td>
+      `;
+      matchesTableBody.appendChild(tr);
+    }
+
+    document.querySelectorAll('.deleteMatchBtn').forEach(btn => {
+      btn.onclick = () => {
+        if (confirm('Usunąć ten mecz?')) {
+          db.ref('matches/' + btn.dataset.id).remove();
+        }
+      };
+    });
+  }
+
+  matchForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const date = matchDateInput.value;
+    const teamId = matchTeamSelect.value;
+    const opponent = matchOpponentInput.value.trim();
+    const score = matchScoreInput.value.trim();
+    if (!date || !teamId || !opponent || !score) return alert('Wypełnij wszystkie pola meczu');
+    db.ref('matches').push({ date, teamId, opponent, score })
+      .then(() => matchForm.reset())
+      .catch(err => alert('Błąd dodawania meczu: ' + err.message));
+  });
+
+  function populateTeamSelectors() {
+    [matchTeamSelect, chartTeamSelect].forEach(sel => {
+      const oldVal = sel.value;
+      sel.innerHTML = '<option value="">-- wybierz drużynę --</option>';
+      for (const id in teamsData) {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = teamsData[id].name;
+        sel.appendChild(opt);
+      }
+      sel.value = oldVal;
+    });
+  }
+
+  // --- WYKRES ---
+  chartTeamSelect.addEventListener('change', () => {
+    const teamId = chartTeamSelect.value;
+    if (!teamId) return clearChart();
+    db.ref('players/' + teamId).once('value').then(snapshot => {
+      const players = snapshot.val() || {};
+      const labels = [];
+      const trainingAvgs = [];
+      const matchAvgs = [];
+
+      for (const id in players) {
+        labels.push(players[id].name);
+        trainingAvgs.push(calcAverage(players[id].trainingScores));
+        matchAvgs.push(calcAverage(players[id].matchScores));
+      }
+      drawChart(labels, trainingAvgs, matchAvgs);
+    });
+  });
+
+  function drawChart(labels, trainingAvgs, matchAvgs) {
+    if (progressChart) progressChart.destroy();
+    progressChart = new Chart(progressChartCtx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Średnia ocena treningu',
+            data: trainingAvgs,
+            backgroundColor: 'rgba(0, 74, 173, 0.7)'
+          },
+          {
+            label: 'Średnia ocena meczu',
+            data: matchAvgs,
+            backgroundColor: 'rgba(0, 173, 81, 0.7)'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 10
+          }
+        }
+      }
+    });
+  }
+
+  function clearChart() {
+    if (progressChart) {
+      progressChart.destroy();
+      progressChart = null;
+    }
+  }
+
+  // --- POMOCNICZE ---
+  function clearAll() {
+    teamsData = {};
+    playersData = {};
+    matchesData = {};
+    currentTeamId = null;
+    teamsList.innerHTML = '';
+    clearPlayersList();
+    matchesTableBody.innerHTML = '';
+    populateTeamSelectors();
+    clearChart();
+  }
+</script>
 
 </main>
 
 </body>
 </html>
-
