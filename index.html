@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jaguar Panel Trenerski</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -73,6 +74,10 @@
       margin-top: 0.5rem;
       padding-left: 1rem;
     }
+    canvas {
+      margin-top: 1rem;
+      max-width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -116,7 +121,10 @@
       <input type="number" placeholder="Czas gry (minuty)">
       <button type="submit">Zapisz ocenę</button>
     </form>
-    <div id="playerStats"></div>
+    <div id="playerStats">
+      <canvas id="trainingChart"></canvas>
+      <canvas id="matchChart"></canvas>
+    </div>
   </section>
 
   <script>
@@ -152,13 +160,7 @@
           const playerEl = document.createElement('div');
           playerEl.className = 'player-item';
           playerEl.textContent = player;
-          playerEl.onclick = () => {
-            const stat = teams[teamName].find(p => p.name === player).stats;
-            const avgTraining = stat.length ? (stat.reduce((a, b) => a + (b.training || 0), 0) / stat.length).toFixed(2) : '-';
-            const avgMatch = stat.length ? (stat.reduce((a, b) => a + (b.match || 0), 0) / stat.length).toFixed(2) : '-';
-            const goals = stat.reduce((a, b) => a + (b.goals || 0), 0);
-            alert(`Zawodnik: ${player}\nŚrednia trening: ${avgTraining}\nŚrednia mecz: ${avgMatch}\nBramki: ${goals}`);
-          };
+          playerEl.onclick = () => showPlayerStats(teamName, player);
           playerListEl.appendChild(playerEl);
         });
 
@@ -187,6 +189,63 @@
         });
       }
     });
+
+    document.getElementById('formZawodnik').addEventListener('submit', e => {
+      e.preventDefault();
+      const team = selectTeam.value;
+      const playerName = selectPlayer.value;
+      const date = e.target[2].value;
+      const training = Number(e.target[3].value);
+      const match = Number(e.target[4].value);
+      const minutes = Number(e.target[5].value);
+
+      const player = teams[team].find(p => p.name === playerName);
+      if (player) {
+        player.stats.push({ date, training, match, minutes });
+        showPlayerStats(team, playerName);
+      }
+    });
+
+    function showPlayerStats(team, playerName) {
+      const player = teams[team].find(p => p.name === playerName);
+      if (!player) return;
+
+      const dates = player.stats.map(s => s.date);
+      const trainingScores = player.stats.map(s => s.training);
+      const matchScores = player.stats.map(s => s.match);
+
+      const trainingCtx = document.getElementById('trainingChart').getContext('2d');
+      const matchCtx = document.getElementById('matchChart').getContext('2d');
+
+      if (window.trainingChart) window.trainingChart.destroy();
+      if (window.matchChart) window.matchChart.destroy();
+
+      window.trainingChart = new Chart(trainingCtx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: 'Ocena z treningu',
+            data: trainingScores,
+            borderColor: 'green',
+            fill: false
+          }]
+        }
+      });
+
+      window.matchChart = new Chart(matchCtx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [{
+            label: 'Ocena z meczu',
+            data: matchScores,
+            borderColor: 'blue',
+            fill: false
+          }]
+        }
+      });
+    }
   </script>
 </body>
 </html>
