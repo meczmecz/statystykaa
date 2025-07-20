@@ -2,68 +2,181 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jaguar Analiza</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jaguar - Panel Trenerski</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    header {
+      background-color: #003366;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: #0055aa;
+      padding: 0.5rem;
+    }
+    nav button {
+      background-color: white;
+      color: #0055aa;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin: 0 0.5rem;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    nav button:hover {
+      background-color: #e6e6e6;
+    }
+    section {
+      display: none;
+      padding: 2rem;
+    }
+    section.active {
+      display: block;
+      animation: fadeIn 0.3s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    form input, form textarea, form select, form button {
+      display: block;
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.6rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    form button {
+      background-color: #0055aa;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .content-wrapper {
+      max-width: 800px;
+      margin: auto;
+    }
+    .team-list, .player-list {
+      margin-top: 1rem;
+    }
+    .team-item, .player-item {
+      background: #ffffff;
+      padding: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+    }
+    .stats {
+      margin-top: 1rem;
+      background-color: #fff;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Jaguar – Panel Trenerski</h1>
-    <nav>
-      <button onclick="showPage('analiza')">Analiza meczów</button>
-      <button onclick="showPage('druzyny')">Drużyny</button>
-      <button onclick="showPage('zawodnicy')">Oceny i postęp</button>
-      <button onclick="logout()">Wyloguj</button>
-    </nav>
-  </header>
+  <header>Jaguar - Panel Trenerski</header>
+  <nav>
+    <button onclick="switchTab('analiza')">Analiza meczów</button>
+    <button onclick="switchTab('druzyny')">Drużyny</button>
+    <button onclick="switchTab('zawodnicy')">Zawodnicy</button>
+  </nav>
 
-  <main>
-    <!-- 🔵 ANALIZA MECZÓW -->
-    <section id="analiza" class="page">
+  <div class="content-wrapper">
+    <section id="analiza" class="active">
       <h2>Analiza Meczu</h2>
-      <form id="matchForm">
-        <input type="date" id="matchDate" required />
-        <input type="text" id="matchResult" placeholder="Wynik meczu" required />
-        <input type="text" id="scorers" placeholder="Strzelcy bramek" />
-        <input type="text" id="bestPlayer" placeholder="Najlepszy zawodnik" />
-        <textarea id="matchNotes" placeholder="Opis meczu"></textarea>
+      <form id="formAnaliza">
+        <input type="date" placeholder="Data meczu" required />
+        <input type="text" placeholder="Wynik meczu" required />
+        <input type="text" placeholder="Strzelcy bramek" />
+        <input type="text" placeholder="Najlepszy zawodnik" />
+        <textarea placeholder="Opis meczu"></textarea>
         <button type="submit">Zapisz mecz</button>
       </form>
-      <div id="matchList"></div>
     </section>
 
-    <!-- 🟢 DRUŻYNY -->
-    <section id="druzyny" class="page" style="display:none;">
+    <section id="druzyny">
       <h2>Drużyny</h2>
-      <form id="teamForm">
-        <input type="text" id="teamName" placeholder="Nazwa drużyny" required />
-        <button type="submit">Dodaj drużynę</button>
+      <form id="formDruzyny">
+        <input type="text" placeholder="Nazwa drużyny" required />
+        <input type="text" placeholder="Zawodnicy (oddzieleni przecinkami)" />
+        <button type="submit">Dodaj drużynę z zawodnikami</button>
       </form>
-      <div id="teamList"></div>
+      <div class="team-list" id="teamList">
+        <!-- Lista drużyn i zawodników pojawi się tutaj -->
+      </div>
     </section>
 
-    <!-- 🔴 ZAWODNICY -->
-    <section id="zawodnicy" class="page" style="display:none;">
-      <h2>Oceny Zawodników</h2>
-      <form id="ratingForm">
-        <select id="ratingTeamSelect"></select>
-        <select id="playerSelect"></select>
-        <input type="date" id="ratingDate" required />
-        <input type="number" id="trainingRating" min="1" max="5" placeholder="Ocena z treningu" />
-        <input type="number" id="matchRating" min="1" max="5" placeholder="Ocena z meczu" />
-        <input type="number" id="playTime" placeholder="Czas gry (minuty)" />
+    <section id="zawodnicy">
+      <h2>Zawodnicy i Oceny</h2>
+      <form id="formZawodnicy">
+        <select>
+          <option>Wybierz drużynę</option>
+        </select>
+        <select>
+          <option>Wybierz zawodnika</option>
+        </select>
+        <input type="date" required />
+        <input type="number" min="1" max="5" placeholder="Ocena z treningu" />
+        <input type="number" min="1" max="5" placeholder="Ocena z meczu" />
+        <input type="number" placeholder="Czas gry (minuty)" />
         <button type="submit">Zapisz ocenę</button>
       </form>
-      <canvas id="playerChart"></canvas>
+      <div class="stats">
+        <h3>Statystyki zawodnika</h3>
+        <p>Średnia ocena treningu: <span id="avgTraining">-</span></p>
+        <p>Średnia ocena meczu: <span id="avgMatch">-</span></p>
+        <p>Strzelone bramki: <span id="goals">-</span></p>
+        <canvas id="playerChart"></canvas>
+      </div>
     </section>
-  </main>
+  </div>
 
-  <!-- Firebase + Script -->
-  <script src="firebase-config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="app.js"></script>
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('section').forEach(sec => {
+        sec.classList.remove('active');
+      });
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Dodawanie drużyn z zawodnikami - tymczasowa obsługa
+    document.getElementById('formDruzyny').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const teamName = this.querySelector('input[type="text"]').value;
+      const playersRaw = this.querySelectorAll('input[type="text"]')[1].value;
+      const players = playersRaw.split(',').map(p => p.trim());
+
+      const teamDiv = document.createElement('div');
+      teamDiv.classList.add('team-item');
+      teamDiv.innerHTML = `<strong>${teamName}</strong><div class="player-list">${players.map(p => `<div class='player-item' onclick='alert("Statystyki ${p}")'>${p}</div>`).join('')}</div>`;
+
+      document.getElementById('teamList').appendChild(teamDiv);
+      this.reset();
+    });
+  </script>
 </body>
 </html>
-
 
 
