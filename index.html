@@ -26,7 +26,7 @@
   }
   select[multiple] { height:100px; }
   ul { list-style:none; padding-left:0; }
-  ul li { margin:10px 0; }
+  ul li { margin:10px 0; display:flex; align-items:center; }
   ul li input[type=text] { width:200px; margin-right:10px; }
   ul li button {
     background:#dc3545; border:none; color:#fff; padding:5px 10px; cursor:pointer; border-radius:4px;
@@ -37,6 +37,7 @@
     cursor:pointer; border-radius:4px; font-size:16px; margin-top:10px; max-width:300px;
   }
   .btn-primary:hover { background:#0056b3; }
+  .flex-row { display:flex; gap:10px; align-items:center; }
 </style>
 </head>
 <body>
@@ -82,12 +83,12 @@
   <section id="sectionMatches">
     <h2>Mecze</h2>
     <form id="matchForm">
-      <label for="teamASelect">Drużyna A</label>
+      <label for="teamASelect">Drużyna A (moja drużyna)</label>
       <select id="teamASelect" required>
         <option value="">-- wybierz drużynę A --</option>
       </select>
 
-      <label for="teamBSelect">Drużyna B</label>
+      <label for="teamBSelect">Drużyna B (przeciwnik)</label>
       <select id="teamBSelect" required>
         <option value="">-- wybierz drużynę B --</option>
       </select>
@@ -116,7 +117,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 <script>
   // KONFIGURACJA FIREBASE - wstaw swoje dane
-  const firebaseConfig = {
+   const firebaseConfig = {
     apiKey: "AIzaSyAWXiBO5-woCCEqCBc2rfOIo1RhUUtevzU",
     authDomain: "jaguar-analityka.firebaseapp.com",
     databaseURL: "https://jaguar-analityka-default-rtdb.firebaseio.com",
@@ -132,6 +133,7 @@
   let teamsData = {};
   let playersData = {};
 
+  // Wczytaj drużyny do selectów i list
   function loadTeamsSelects() {
     db.ref('teams').once('value').then(snapshot => {
       teamsData = snapshot.val() || {};
@@ -146,14 +148,18 @@
         opt1.value = id;
         opt1.textContent = teamsData[id].name;
         playerTeamSelect.appendChild(opt1);
-        const opt2 = document.createElement('option');
-        opt2.value = id;
-        opt2.textContent = teamsData[id].name;
-        teamASelect.appendChild(opt2);
+
+        const optA = document.createElement('option');
+        optA.value = id;
+        optA.textContent = teamsData[id].name;
+        teamASelect.appendChild(optA);
       }
+      // Po załadowaniu drużyn odśwież listę zawodników
+      loadPlayersList();
     });
   }
 
+  // Wczytaj zawodników dla danej drużyny do selecta (np. najlepszych zawodników w meczu)
   function loadPlayersForSelect(teamId, selectElement) {
     if (!teamId) {
       selectElement.innerHTML = '';
@@ -172,117 +178,116 @@
     });
   }
 
-  function loadTeamsList() {
-    db.ref('teams').once('value').then(snapshot => {
-      teamsData = snapshot.val() || {};
-      const ul = document.getElementById('teamsList');
-      ul.innerHTML = '';
-      for (const id in teamsData) {
-        const li = document.createElement('li');
-        li.innerHTML = `
-          <input type="text" value="${teamsData[id].name}" data-id="${id}" class="editTeamName" />
-          <button data-id="${id}" class="deleteTeamBtn">Usuń</button>
-        `;
-        ul.appendChild(li);
-      }
-    });
-  }
-
+  // Wczytaj listę zawodników
   function loadPlayersList() {
-    const ul = document.getElementById('playersList');
-    ul.innerHTML = '';
     db.ref('players').once('value').then(snapshot => {
-      const allPlayers = snapshot.val() || {};
-      for (const teamId in allPlayers) {
-        for (const pid in allPlayers[teamId]) {
-          const player = allPlayers[teamId][pid];
+      playersData = snapshot.val() || {};
+      const playersList = document.getElementById('playersList');
+      playersList.innerHTML = '';
+      for (const teamId in playersData) {
+        const teamName = teamsData[teamId]?.name || 'Nieznana drużyna';
+        for (const pid in playersData[teamId]) {
+          const player = playersData[teamId][pid];
           const li = document.createElement('li');
-          li.textContent = `${player.name} (drużyna: ${teamsData[teamId] ? teamsData[teamId].name : 'nieznana'})`;
-          ul.appendChild(li);
+          li.textContent = player.name + ' (' + teamName + ')';
+
+          const btnDel = document.createElement('button');
+          btnDel.textContent = 'Usuń';
+          btnDel.addEventListener('click', () => {
+            if(confirm(`Usunąć zawodnika ${player.name} z drużyny ${teamName}?`)) {
+              db.ref(`players/${teamId}/${pid}`).remove().then(() => {
+                loadPlayersList();
+                // odśwież selecty jeśli jest wybrana drużyna A lub B
+                const teamAId = document.getElementById('teamASelect').value;
+                const teamBId = document.getElementById('teamBSelect').value;
+                if (teamId === teamAId) loadPlayersForSelect(teamAId, document.getElementById('teamABestPlayers'));
+                if (teamId === teamBId) loadPlayersForSelect(teamBId, document.getElementById('teamBBestPlayers'));
+              });
+            }
+          });
+          li.appendChild(btnDel);
+          playersList.appendChild(li);
         }
       }
     });
   }
 
+  // Wczytaj listę drużyn (z możliwością usuwania drużyn)
+  function loadTeamsList() {
+    const teamsList = document.getElementById('teamsList');
+    teamsList.innerHTML = '';
+    for (const id in teamsData) {
+      const li = document.createElement('li');
+      li.textContent = teamsData[id].name + ' ';
+
+      const btnDel = document.createElement('button');
+      btnDel.textContent = 'Usuń';
+      btnDel.addEventListener('click', () => {
+        if(confirm(`Usunąć drużynę ${teamsData[id].name} (razem z zawodnikami)?`)) {
+          db.ref(`teams/${id}`).remove()
+          .then(() => db.ref(`players/${id}`).remove())
+          .then(() => {
+            loadTeamsSelects();
+            loadMatchesList();
+          });
+        }
+      });
+
+      li.appendChild(btnDel);
+      teamsList.appendChild(li);
+    }
+  }
+
+  // Wczytaj listę meczów
   function loadMatchesList() {
-    const ul = document.getElementById('matchesList');
-    ul.innerHTML = '';
     db.ref('matches').once('value').then(snapshot => {
       const matches = snapshot.val() || {};
+      const matchesList = document.getElementById('matchesList');
+      matchesList.innerHTML = '';
       for (const mid in matches) {
         const m = matches[mid];
-        const teamAName = teamsData[m.teamA] ? teamsData[m.teamA].name : '???';
-        const teamBName = teamsData[m.teamB] ? teamsData[m.teamB].name : '???';
-        let bestA = '', bestB = '';
-
-        if (playersData[m.teamA]) {
-          bestA = m.bestPlayersA.map(pid => playersData[m.teamA][pid]?.name || '???').join(', ');
-        }
-        if (playersData[m.teamB]) {
-          bestB = m.bestPlayersB.map(pid => playersData[m.teamB][pid]?.name || '???').join(', ');
-        }
-
+        const teamAName = teamsData[m.teamA]?.name || '???';
+        const teamBName = teamsData[m.teamB]?.name || '???';
         const li = document.createElement('li');
-        li.innerHTML = `<strong>${teamAName}</strong> vs <strong>${teamBName}</strong> | ${m.date} | Wynik: ${m.score} <br>
-          Najlepsi ${teamAName}: ${bestA} <br>
-          Najlepsi ${teamBName}: ${bestB}`;
-        ul.appendChild(li);
+        li.textContent = `${m.date}: ${teamAName} vs ${teamBName} (Wynik: ${m.score})`;
+        matchesList.appendChild(li);
       }
     });
   }
 
+  // Dodaj drużynę
   document.getElementById('teamForm').addEventListener('submit', e => {
     e.preventDefault();
-    const name = document.getElementById('teamName').value.trim();
-    if (!name) return alert('Wpisz nazwę drużyny');
+    const teamName = document.getElementById('teamName').value.trim();
+    if (!teamName) return alert('Podaj nazwę drużyny');
     const newTeamRef = db.ref('teams').push();
-    newTeamRef.set({name})
-      .then(() => {
-        document.getElementById('teamName').value = '';
-        loadTeamsSelects();
-        loadTeamsList();
-      })
-      .catch(err => alert('Błąd dodawania drużyny: ' + err.message));
+    newTeamRef.set({ name: teamName }).then(() => {
+      document.getElementById('teamName').value = '';
+      loadTeamsSelects();
+      loadTeamsList();
+    });
   });
 
-  document.getElementById('teamsList').addEventListener('input', e => {
-    if (e.target.classList.contains('editTeamName')) {
-      const id = e.target.dataset.id;
-      const newName = e.target.value.trim();
-      if (newName.length > 0) {
-        db.ref(`teams/${id}`).update({name: newName});
-        loadTeamsSelects();
-      }
-    }
-  });
-  document.getElementById('teamsList').addEventListener('click', e => {
-    if (e.target.classList.contains('deleteTeamBtn')) {
-      const id = e.target.dataset.id;
-      if (confirm('Na pewno usunąć tę drużynę? To usunie również jej zawodników!')) {
-        db.ref(`teams/${id}`).remove();
-        db.ref(`players/${id}`).remove();
-        loadTeamsSelects();
-        loadTeamsList();
-        loadPlayersList();
-      }
-    }
-  });
-
+  // Dodaj zawodnika
   document.getElementById('playerForm').addEventListener('submit', e => {
     e.preventDefault();
-    const name = document.getElementById('playerName').value.trim();
-    const teamId = document.getElementById('playerTeam').value;
-    if (!name || !teamId) return alert('Wypełnij wszystkie pola');
-    const newPlayerRef = db.ref(`players/${teamId}`).push();
-    newPlayerRef.set({name})
-      .then(() => {
-        document.getElementById('playerName').value = '';
-        document.getElementById('playerTeam').value = '';
-        loadPlayersList();
-      })
-      .catch(err => alert('Błąd dodawania zawodnika: ' + err.message));
+    const playerName = document.getElementById('playerName').value.trim();
+    const playerTeam = document.getElementById('playerTeam').value;
+    if (!playerName || !playerTeam) return alert('Podaj imię zawodnika i drużynę');
+    const newPlayerRef = db.ref(`players/${playerTeam}`).push();
+    newPlayerRef.set({ name: playerName }).then(() => {
+      document.getElementById('playerName').value = '';
+      document.getElementById('playerTeam').value = '';
+      loadPlayersList();
+      // Odśwież selecty jeśli wybrane drużyny
+      const teamAId = document.getElementById('teamASelect').value;
+      const teamBId = document.getElementById('teamBSelect').value;
+      if (playerTeam === teamAId) loadPlayersForSelect(teamAId, document.getElementById('teamABestPlayers'));
+      if (playerTeam === teamBId) loadPlayersForSelect(teamBId, document.getElementById('teamBBestPlayers'));
+    });
   });
 
+  // Przy zmianie drużyny A ustaw listę drużyn B na inne drużyny i załaduj zawodników do wyboru najlepszych
   document.getElementById('teamASelect').addEventListener('change', e => {
     const teamAId = e.target.value;
     const teamBSelect = document.getElementById('teamBSelect');
@@ -295,15 +300,19 @@
         teamBSelect.appendChild(opt);
       }
     }
+    // Załaduj zawodników drużyny A do wyboru najlepszych
     loadPlayersForSelect(teamAId, document.getElementById('teamABestPlayers'));
+    // Wyczyść wybór drużyny B i zawodników drużyny B
     document.getElementById('teamBBestPlayers').innerHTML = '';
   });
 
+  // Przy zmianie drużyny B załaduj zawodników do wyboru najlepszych
   document.getElementById('teamBSelect').addEventListener('change', e => {
     const teamBId = e.target.value;
     loadPlayersForSelect(teamBId, document.getElementById('teamBBestPlayers'));
   });
 
+  // Dodaj mecz
   document.getElementById('matchForm').addEventListener('submit', e => {
     e.preventDefault();
     const teamA = document.getElementById('teamASelect').value;
@@ -337,6 +346,7 @@
     .catch(err => alert('Błąd dodawania meczu: ' + err.message));
   });
 
+  // Nawigacja między zakładkami
   const tabs = {
     tabTeams: 'sectionTeams',
     tabPlayers: 'sectionPlayers',
@@ -353,6 +363,7 @@
     });
   }
 
+  // Inicjalizacja
   function init() {
     loadTeamsSelects();
     loadTeamsList();
@@ -360,7 +371,9 @@
     loadMatchesList();
   }
   init();
+
 </script>
 
 </body>
 </html>
+
