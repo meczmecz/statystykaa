@@ -3,26 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Analiza Jaguar</title>
+  <title>Jaguar Analiza</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header>
-    <h1>Analiza Treningów i Meczów Jaguar</h1>
+    <h1>Jaguar – Panel Trenerski</h1>
     <nav>
-      <button onclick="showSection('analiza')">Analiza meczów</button>
-      <button onclick="showSection('druzyny')">Drużyny</button>
-      <button onclick="showSection('zawodnicy')">Zawodnicy i postęp</button>
+      <button onclick="showPage('analiza')">Analiza meczów</button>
+      <button onclick="showPage('druzyny')">Drużyny</button>
+      <button onclick="showPage('zawodnicy')">Oceny i postęp</button>
+      <button onclick="logout()">Wyloguj</button>
     </nav>
   </header>
 
   <main>
-    <section id="analiza" class="page-section">Tu będzie analiza meczów...</section>
-    <section id="druzyny" class="page-section" style="display:none;">Tu będą drużyny...</section>
-    <section id="zawodnicy" class="page-section" style="display:none;">Tu będą oceny i wykresy...</section>
+    <!-- 🔵 ANALIZA MECZÓW -->
+    <section id="analiza" class="page">
+      <h2>Analiza Meczu</h2>
+      <form id="matchForm">
+        <input type="date" id="matchDate" required />
+        <input type="text" id="matchResult" placeholder="Wynik meczu" required />
+        <input type="text" id="scorers" placeholder="Strzelcy bramek" />
+        <input type="text" id="bestPlayer" placeholder="Najlepszy zawodnik" />
+        <textarea id="matchNotes" placeholder="Opis meczu"></textarea>
+        <button type="submit">Zapisz mecz</button>
+      </form>
+      <div id="matchList"></div>
+    </section>
+
+    <!-- 🟢 DRUŻYNY -->
+    <section id="druzyny" class="page" style="display:none;">
+      <h2>Drużyny</h2>
+      <form id="teamForm">
+        <input type="text" id="teamName" placeholder="Nazwa drużyny" required />
+        <button type="submit">Dodaj drużynę</button>
+      </form>
+      <div id="teamList"></div>
+    </section>
+
+    <!-- 🔴 ZAWODNICY -->
+    <section id="zawodnicy" class="page" style="display:none;">
+      <h2>Oceny Zawodników</h2>
+      <form id="ratingForm">
+        <select id="ratingTeamSelect"></select>
+        <select id="playerSelect"></select>
+        <input type="date" id="ratingDate" required />
+        <input type="number" id="trainingRating" min="1" max="5" placeholder="Ocena z treningu" />
+        <input type="number" id="matchRating" min="1" max="5" placeholder="Ocena z meczu" />
+        <input type="number" id="playTime" placeholder="Czas gry (minuty)" />
+        <button type="submit">Zapisz ocenę</button>
+      </form>
+      <canvas id="playerChart"></canvas>
+    </section>
   </main>
 
-  <script src="script.js"></script>
+  <!-- Firebase + Script -->
+  <script src="firebase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
 
