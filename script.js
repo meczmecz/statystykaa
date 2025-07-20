@@ -11,400 +11,216 @@
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Przechwytywanie elementów DOM
-const loginForm = document.getElementById('loginForm');
-const loginEmail = document.getElementById('loginEmail');
-const loginPassword = document.getElementById('loginPassword');
-const loginMessage = document.getElementById('loginMessage');
+// DOM
+const teamsContainer = document.getElementById('teamsContainer'); // Sekcja do wyświetlania drużyn i zawodników
+const playerStatsContainer = document.getElementById('playerStats'); // Sekcja do wyświetlania średnich ocen zawodnika
+const ratingForm = document.getElementById('ratingForm');
+const ratingTypeSelect = document.getElementById('ratingType'); // select trening/mecz
+const trainingRatingInput = document.getElementById('trainingRating');
+const matchRatingInput = document.getElementById('matchRating');
+const playTimeInput = document.getElementById('playTime');
+const ratingMessage = document.getElementById('ratingsMessage');
 
-const sections = document.querySelectorAll('section');
-
-// Funkcja do przełączania sekcji
-function showSection(id) {
-  sections.forEach(sec => {
-    if (sec.id === id) sec.classList.add('active');
-    else sec.classList.remove('active');
-  });
-  clearForms();
-  clearMessages();
-}
-
-// Czyszczenie formularzy i komunikatów
-function clearMessages() {
-  document.getElementById('teamsMessage').textContent = '';
-  document.getElementById('addPlayerMessage').textContent = '';
-  document.getElementById('ratingsMessage').textContent = '';
-  document.getElementById('matchesMessage').textContent = '';
-  loginMessage.textContent = '';
-}
-function clearForms() {
-  document.getElementById('teamForm').reset();
-  document.getElementById('addPlayerForm').reset();
-  document.getElementById('ratingForm').reset();
-  document.getElementById('matchForm').reset();
-}
-
-// Logowanie (proste) — zastąp własnym systemem auth
-loginForm.addEventListener('submit', e => {
-  e.preventDefault();
-  const email = loginEmail.value.trim();
-  const password = loginPassword.value.trim();
-
-  if (!email || !password) {
-    loginMessage.textContent = 'Wprowadź email i hasło.';
-    loginMessage.className = 'error';
-    return;
-  }
-
-  // Tu możesz dodać Firebase Authentication, teraz tylko symulacja:
-  if(email === "treucepacrouwe-1015@yopmail.com" && password === "123456") {
-    loginMessage.textContent = '';
-    showSection('teams');
-  } else {
-    loginMessage.textContent = 'Nieprawidłowy login lub hasło.';
-    loginMessage.className = 'error';
-  }
-});
-
-// --- Zarządzanie drużynami ---
-const teamsTableBody = document.querySelector('#teamsTable tbody');
-const teamForm = document.getElementById('teamForm');
-const teamIdInput = document.getElementById('teamId');
-const teamNameInput = document.getElementById('teamName');
-const teamsMessage = document.getElementById('teamsMessage');
-const teamFormClearBtn = document.getElementById('teamFormClearBtn');
+const matchForm = document.getElementById('matchForm');
+const matchesTableBody = document.querySelector('#matchesTable tbody');
+const matchesMessage = document.getElementById('matchesMessage');
 
 let teams = [];
+let selectedTeamId = null;
+let selectedPlayerId = null;
 
+// Wczytaj drużyny z bazy i wyświetl
 function loadTeams() {
-  db.ref('teams').off();
   db.ref('teams').on('value', snapshot => {
     const data = snapshot.val() || {};
     teams = Object.entries(data).map(([id, team]) => ({ id, ...team }));
     renderTeams();
-    populateTeamsSelects();
   });
 }
 
 function renderTeams() {
-  teamsTableBody.innerHTML = '';
+  teamsContainer.innerHTML = '';
   teams.forEach(team => {
-    const tr = document.createElement('tr');
-
-    const playersCount = team.players ? team.players.length : 0;
-
-    tr.innerHTML = `
-      <td>${team.name}</td>
-      <td>${playersCount}</td>
-      <td>
-        <button class="btn-edit" data-id="${team.id}">Edytuj</button>
-        <button class="btn-delete" data-id="${team.id}">Usuń</button>
-      </td>
-    `;
-    teamsTableBody.appendChild(tr);
-  });
-
-  // Obsługa kliknięć na edycję i usuwanie
-  teamsTableBody.querySelectorAll('.btn-edit').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const team = teams.find(t => t.id === btn.dataset.id);
-      if(team) {
-        teamIdInput.value = team.id;
-        teamNameInput.value = team.name;
-        teamsMessage.textContent = '';
-      }
+    const teamDiv = document.createElement('div');
+    teamDiv.classList.add('team');
+    teamDiv.textContent = team.name;
+    teamDiv.style.cursor = 'pointer';
+    teamDiv.addEventListener('click', () => {
+      selectedTeamId = team.id;
+      selectedPlayerId = null;
+      showPlayersForTeam(team);
+      playerStatsContainer.innerHTML = '';
+      clearRatingForm();
     });
-  });
-
-  teamsTableBody.querySelectorAll('.btn-delete').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if(confirm('Na pewno chcesz usunąć tę drużynę?')) {
-        db.ref('teams/' + btn.dataset.id).remove();
-      }
-    });
+    teamsContainer.appendChild(teamDiv);
   });
 }
 
-teamForm.addEventListener('submit', e => {
-  e.preventDefault();
-  teamsMessage.textContent = '';
-  const id = teamIdInput.value.trim();
-  const name = teamNameInput.value.trim();
+function showPlayersForTeam(team) {
+  // Wyświetl listę zawodników pod nazwą drużyny
+  let playersList = document.getElementById('playersList');
+  if(!playersList) {
+    playersList = document.createElement('ul');
+    playersList.id = 'playersList';
+    teamsContainer.appendChild(playersList);
+  }
+  playersList.innerHTML = '';
 
-  if(!name) {
-    teamsMessage.textContent = 'Nazwa drużyny jest wymagana';
-    teamsMessage.className = 'error';
+  if(!team.players || team.players.length === 0) {
+    const li = document.createElement('li');
+    li.textContent = 'Brak zawodników w drużynie';
+    playersList.appendChild(li);
     return;
   }
 
-  if(id) {
-    // Aktualizuj drużynę
-    db.ref('teams/' + id).update({ name })
-      .then(() => {
-        teamsMessage.textContent = 'Drużyna zaktualizowana';
-        teamsMessage.className = 'success';
-        teamForm.reset();
-        teamIdInput.value = '';
-      })
-      .catch(e => {
-        teamsMessage.textContent = 'Błąd: ' + e.message;
-        teamsMessage.className = 'error';
-      });
-  } else {
-    // Dodaj nową drużynę
-    const newTeamRef = db.ref('teams').push();
-    newTeamRef.set({ name, players: [] })
-      .then(() => {
-        teamsMessage.textContent = 'Drużyna dodana';
-        teamsMessage.className = 'success';
-        teamForm.reset();
-      })
-      .catch(e => {
-        teamsMessage.textContent = 'Błąd: ' + e.message;
-        teamsMessage.className = 'error';
-      });
-  }
-});
-
-teamFormClearBtn.addEventListener('click', () => {
-  teamForm.reset();
-  teamIdInput.value = '';
-  teamsMessage.textContent = '';
-});
-
-// --- Zawodnicy i oceny ---
-const selectTeamForPlayer = document.getElementById('selectTeamForPlayer');
-const addPlayerForm = document.getElementById('addPlayerForm');
-const playerNameInput = document.getElementById('playerName');
-const addPlayerMessage = document.getElementById('addPlayerMessage');
-
-const ratingTeamSelect = document.getElementById('ratingTeam');
-const ratingPlayerSelect = document.getElementById('ratingPlayer');
-const ratingForm = document.getElementById('ratingForm');
-const ratingsMessage = document.getElementById('ratingsMessage');
-
-let selectedRatingTeamId = null;
-
-// Wypełnij selecty drużyn do zawodników i ocen
-function populateTeamsSelects() {
-  selectTeamForPlayer.innerHTML = '<option value="">-- wybierz --</option>';
-  ratingTeamSelect.innerHTML = '<option value="">-- wybierz --</option>';
-  teams.forEach(team => {
-    const opt1 = document.createElement('option');
-    opt1.value = team.id;
-    opt1.textContent = team.name;
-    selectTeamForPlayer.appendChild(opt1);
-
-    const opt2 = document.createElement('option');
-    opt2.value = team.id;
-    opt2.textContent = team.name;
-    ratingTeamSelect.appendChild(opt2);
+  team.players.forEach(player => {
+    const li = document.createElement('li');
+    li.textContent = player.name;
+    li.style.cursor = 'pointer';
+    li.addEventListener('click', () => {
+      selectedPlayerId = player.id;
+      showPlayerStats(player);
+      prefillRatingForm(player);
+    });
+    playersList.appendChild(li);
   });
 }
 
-// Dodawanie zawodnika do drużyny
-addPlayerForm.addEventListener('submit', e => {
-  e.preventDefault();
-  addPlayerMessage.textContent = '';
-  const teamId = selectTeamForPlayer.value;
-  const playerName = playerNameInput.value.trim();
+function showPlayerStats(player) {
+  playerStatsContainer.innerHTML = '<h3>Średnie oceny dla: ' + player.name + '</h3><p>Ładuję dane...</p>';
 
-  if(!teamId || !playerName) {
-    addPlayerMessage.textContent = 'Wybierz drużynę i wpisz nazwisko zawodnika.';
-    addPlayerMessage.className = 'error';
-    return;
-  }
-
-  const teamRef = db.ref('teams/' + teamId);
-  teamRef.once('value').then(snapshot => {
-    const teamData = snapshot.val();
-    if(!teamData) throw new Error('Drużyna nie istnieje.');
-
-    let players = teamData.players || [];
-
-    if(players.some(p => p.name.toLowerCase() === playerName.toLowerCase())) {
-      throw new Error('Taki zawodnik już jest w drużynie.');
+  // Pobierz oceny z bazy dla tego zawodnika
+  db.ref('ratings').orderByChild('playerId').equalTo(player.id).once('value').then(snapshot => {
+    const ratings = snapshot.val();
+    if(!ratings) {
+      playerStatsContainer.innerHTML = '<h3>Średnie oceny dla: ' + player.name + '</h3><p>Brak ocen dla tego zawodnika.</p>';
+      return;
     }
 
-    players.push({ name: playerName, id: Date.now().toString() });
+    let trainingSum = 0, trainingCount = 0;
+    let matchSum = 0, matchCount = 0;
 
-    return teamRef.update({ players });
-  }).then(() => {
-    addPlayerMessage.textContent = 'Zawodnik został dodany do drużyny.';
-    addPlayerMessage.className = 'success';
-    addPlayerForm.reset();
-  }).catch(err => {
-    addPlayerMessage.textContent = 'Błąd: ' + err.message;
-    addPlayerMessage.className = 'error';
+    Object.values(ratings).forEach(r => {
+      if(r.trainingRating !== undefined && r.trainingRating !== null) {
+        trainingSum += r.trainingRating;
+        trainingCount++;
+      }
+      if(r.matchRating !== undefined && r.matchRating !== null) {
+        matchSum += r.matchRating;
+        matchCount++;
+      }
+    });
+
+    const avgTraining = trainingCount > 0 ? (trainingSum / trainingCount).toFixed(2) : 'Brak';
+    const avgMatch = matchCount > 0 ? (matchSum / matchCount).toFixed(2) : 'Brak';
+
+    playerStatsContainer.innerHTML = `
+      <h3>Średnie oceny dla: ${player.name}</h3>
+      <p>Trening: ${avgTraining}</p>
+      <p>Mecz: ${avgMatch}</p>
+    `;
   });
+}
+
+function prefillRatingForm(player) {
+  // Ustaw w formularzu hidden teamId i playerId jeśli masz
+  ratingForm.elements['teamId'].value = selectedTeamId;
+  ratingForm.elements['playerId'].value = player.id;
+
+  clearRatingForm();
+}
+
+function clearRatingForm() {
+  ratingTypeSelect.value = 'training';
+  trainingRatingInput.value = '';
+  matchRatingInput.value = '';
+  matchRatingInput.disabled = true;
+  trainingRatingInput.disabled = false;
+  playTimeInput.value = '';
+  ratingMessage.textContent = '';
+}
+
+// Zmiana typu oceny - trening czy mecz
+ratingTypeSelect.addEventListener('change', () => {
+  if(ratingTypeSelect.value === 'training') {
+    trainingRatingInput.disabled = false;
+    matchRatingInput.disabled = true;
+    matchRatingInput.value = '';
+  } else {
+    trainingRatingInput.disabled = true;
+    trainingRatingInput.value = '';
+    matchRatingInput.disabled = false;
+  }
 });
 
-// Ładowanie zawodników dla wybranej drużyny (w formularzu ocen)
-ratingTeamSelect.addEventListener('change', () => {
-  const teamId = ratingTeamSelect.value;
-  ratingPlayerSelect.innerHTML = '<option value="">-- wybierz --</option>';
-  ratingsMessage.textContent = '';
-  if(!teamId) return;
-  selectedRatingTeamId = teamId;
-  const team = teams.find(t => t.id === teamId);
-  if(!team || !team.players) return;
-  team.players.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.id;
-    opt.textContent = p.name;
-    ratingPlayerSelect.appendChild(opt);
-  });
-});
-
-// Dodawanie oceny zawodnikowi
+// Dodawanie oceny
 ratingForm.addEventListener('submit', e => {
   e.preventDefault();
-  ratingsMessage.textContent = '';
+  ratingMessage.textContent = '';
 
-  const teamId = ratingTeamSelect.value;
-  const playerId = ratingPlayerSelect.value;
-  const date = document.getElementById('ratingDate').value;
-  const trainingRating = parseInt(document.getElementById('trainingRating').value);
-  const matchRating = parseInt(document.getElementById('matchRating').value);
-  const playTime = parseInt(document.getElementById('playTime').value);
+  const teamId = ratingForm.elements['teamId'].value;
+  const playerId = ratingForm.elements['playerId'].value;
+  const date = ratingForm.elements['date'].value;
+  const ratingType = ratingTypeSelect.value;
+  const trainingRating = parseInt(trainingRatingInput.value);
+  const matchRating = parseInt(matchRatingInput.value);
+  const playTime = parseInt(playTimeInput.value);
 
-  if(!teamId || !playerId || !date || isNaN(trainingRating) || isNaN(matchRating) || isNaN(playTime)) {
-    ratingsMessage.textContent = 'Wypełnij wszystkie pola prawidłowo.';
-    ratingsMessage.className = 'error';
+  if(!teamId || !playerId || !date || !playTime) {
+    ratingMessage.textContent = 'Wypełnij wszystkie wymagane pola.';
+    ratingMessage.className = 'error';
     return;
   }
 
-  // Klucz oceny - unikalny
-  const ratingId = Date.now().toString();
+  if(ratingType === 'training' && (isNaN(trainingRating) || trainingRating < 0 || trainingRating > 10)) {
+    ratingMessage.textContent = 'Podaj ocenę treningu od 0 do 10.';
+    ratingMessage.className = 'error';
+    return;
+  }
 
-  // Struktura oceny
-  const ratingData = {
+  if(ratingType === 'match' && (isNaN(matchRating) || matchRating < 0 || matchRating > 10)) {
+    ratingMessage.textContent = 'Podaj ocenę meczu od 0 do 10.';
+    ratingMessage.className = 'error';
+    return;
+  }
+
+  const newRating = {
     teamId,
     playerId,
     date,
-    trainingRating,
-    matchRating,
-    playTime
+    playTime,
+    trainingRating: ratingType === 'training' ? trainingRating : null,
+    matchRating: ratingType === 'match' ? matchRating : null,
   };
 
-  db.ref('ratings/' + ratingId).set(ratingData)
+  const newKey = db.ref().child('ratings').push().key;
+  db.ref('ratings/' + newKey).set(newRating)
     .then(() => {
-      ratingsMessage.textContent = 'Ocena została dodana.';
-      ratingsMessage.className = 'success';
+      ratingMessage.textContent = 'Ocena została dodana!';
+      ratingMessage.className = 'success';
       ratingForm.reset();
-      ratingPlayerSelect.innerHTML = '<option value="">-- wybierz --</option>';
+      clearRatingForm();
+      if(selectedPlayerId === playerId) {
+        // Odśwież statystyki jeśli dodaliśmy ocenę dla wybranego zawodnika
+        showPlayerStats({id: playerId, name: ratingForm.elements['playerName'] ? ratingForm.elements['playerName'].value : ''});
+      }
     })
-    .catch(e => {
-      ratingsMessage.textContent = 'Błąd: ' + e.message;
-      ratingsMessage.className = 'error';
+    .catch(err => {
+      ratingMessage.textContent = 'Błąd podczas dodawania oceny: ' + err.message;
+      ratingMessage.className = 'error';
     });
 });
 
-// --- Wczytywanie ocen do wykresów ---
-const showChartsBtn = document.getElementById('showChartsBtn');
-const chartTrainingCtx = document.getElementById('chartTraining').getContext('2d');
-const chartMatchCtx = document.getElementById('chartMatch').getContext('2d');
-let chartTraining = null;
-let chartMatch = null;
-
-showChartsBtn.addEventListener('click', () => {
-  if(!selectedRatingTeamId) {
-    ratingsMessage.textContent = 'Wybierz drużynę w sekcji ocen.';
-    ratingsMessage.className = 'error';
-    return;
-  }
-  drawChartsForTeam(selectedRatingTeamId);
-});
-
-function drawChartsForTeam(teamId) {
-  db.ref('ratings').orderByChild('teamId').equalTo(teamId).once('value').then(snapshot => {
-    const ratingsData = snapshot.val() || {};
-    if(Object.keys(ratingsData).length === 0) {
-      ratingsMessage.textContent = 'Brak ocen dla wybranej drużyny.';
-      ratingsMessage.className = 'error';
-      if(chartTraining) chartTraining.destroy();
-      if(chartMatch) chartMatch.destroy();
-      return;
-    }
-    ratingsMessage.textContent = '';
-    // Grupowanie po dacie
-    const dates = {};
-    Object.values(ratingsData).forEach(r => {
-      if(!dates[r.date]) dates[r.date] = { trainingSum:0, matchSum:0, count:0 };
-      dates[r.date].trainingSum += r.trainingRating;
-      dates[r.date].matchSum += r.matchRating;
-      dates[r.date].count++;
-    });
-
-    const labels = Object.keys(dates).sort();
-    const avgTraining = labels.map(d => (dates[d].trainingSum / dates[d].count).toFixed(2));
-    const avgMatch = labels.map(d => (dates[d].matchSum / dates[d].count).toFixed(2));
-
-    if(chartTraining) chartTraining.destroy();
-    if(chartMatch) chartMatch.destroy();
-
-    chartTraining = new Chart(chartTrainingCtx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Średnia ocena treningu',
-          data: avgTraining,
-          borderColor: 'blue',
-          backgroundColor: 'rgba(0,0,255,0.1)',
-          fill: true,
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: { beginAtZero: true, max: 10 }
-        }
-      }
-    });
-
-    chartMatch = new Chart(chartMatchCtx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Średnia ocena meczu',
-          data: avgMatch,
-          borderColor: 'green',
-          backgroundColor: 'rgba(0,255,0,0.1)',
-          fill: true,
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: { beginAtZero: true, max: 10 }
-        }
-      }
-    });
-  });
-}
-
-// --- Mecze ---
-const matchesTableBody = document.querySelector('#matchesTable tbody');
-const matchForm = document.getElementById('matchForm');
-const matchDateInput = document.getElementById('matchDate');
-const matchOpponentInput = document.getElementById('matchOpponent');
-const matchesMessage = document.getElementById('matchesMessage');
-const matchFormClearBtn = document.getElementById('matchFormClearBtn');
-
-let matches = [];
-
+// --- Zarządzanie meczami ---
+// Wczytaj mecze
 function loadMatches() {
-  db.ref('matches').off();
   db.ref('matches').on('value', snapshot => {
     const data = snapshot.val() || {};
-    matches = Object.entries(data).map(([id, match]) => ({ id, ...match }));
-    renderMatches();
+    renderMatches(Object.entries(data).map(([id, match]) => ({ id, ...match })));
   });
 }
 
-function renderMatches() {
+function renderMatches(matches) {
   matchesTableBody.innerHTML = '';
   matches.forEach(match => {
     const tr = document.createElement('tr');
@@ -412,29 +228,35 @@ function renderMatches() {
       <td>${match.date}</td>
       <td>${match.opponent}</td>
       <td>
-        <button class="btn-edit" data-id="${match.id}">Edytuj</button>
-        <button class="btn-delete" data-id="${match.id}">Usuń</button>
+        <button class="editMatchBtn" data-id="${match.id}">Edytuj</button>
+        <button class="deleteMatchBtn" data-id="${match.id}">Usuń</button>
       </td>
     `;
     matchesTableBody.appendChild(tr);
   });
 
-  matchesTableBody.querySelectorAll('.btn-edit').forEach(btn => {
+  // Edycja
+  document.querySelectorAll('.editMatchBtn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const match = matches.find(m => m.id === btn.dataset.id);
-      if(match) {
-        matchDateInput.value = match.date;
-        matchOpponentInput.value = match.opponent;
-        matchesMessage.textContent = '';
-        matchForm.dataset.editId = match.id;
-      }
+      const matchId = btn.dataset.id;
+      db.ref('matches/' + matchId).once('value').then(snapshot => {
+        const match = snapshot.val();
+        if(match) {
+          matchForm.elements['date'].value = match.date;
+          matchForm.elements['opponent'].value = match.opponent;
+          matchForm.dataset.editId = matchId;
+          matchesMessage.textContent = 'Edytujesz mecz';
+        }
+      });
     });
   });
 
-  matchesTableBody.querySelectorAll('.btn-delete').forEach(btn => {
+  // Usuwanie
+  document.querySelectorAll('.deleteMatchBtn').forEach(btn => {
     btn.addEventListener('click', () => {
       if(confirm('Na pewno chcesz usunąć ten mecz?')) {
-        db.ref('matches/' + btn.dataset.id).remove();
+        const matchId = btn.dataset.id;
+        db.ref('matches/' + matchId).remove();
       }
     });
   });
@@ -444,8 +266,8 @@ matchForm.addEventListener('submit', e => {
   e.preventDefault();
   matchesMessage.textContent = '';
 
-  const date = matchDateInput.value.trim();
-  const opponent = matchOpponentInput.value.trim();
+  const date = matchForm.elements['date'].value;
+  const opponent = matchForm.elements['opponent'].value;
   const editId = matchForm.dataset.editId;
 
   if(!date || !opponent) {
@@ -481,16 +303,10 @@ matchForm.addEventListener('submit', e => {
   }
 });
 
-matchFormClearBtn.addEventListener('click', () => {
-  matchForm.reset();
-  matchesMessage.textContent = '';
-  delete matchForm.dataset.editId;
-});
-
 // --- Inicjalizacja ---
 window.onload = () => {
-  showSection('login');
   loadTeams();
   loadMatches();
+  clearRatingForm();
 };
 
