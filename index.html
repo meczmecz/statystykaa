@@ -315,8 +315,98 @@
   let matchesData = {};
 
   // CHART.JS OBIEKTY
-  let trainingChart = null;
-  let matchChart = null;
+let trainingChart = null;
+let matchChart = null;
+
+const trainingChartCanvas = document.getElementById('trainingChartCanvas');
+const matchChartCanvas = document.getElementById('matchChartCanvas');
+const chartTeamSelect = document.getElementById('chartTeamSelect');
+
+chartTeamSelect.addEventListener('change', () => {
+  const teamId = chartTeamSelect.value;
+  if (teamId) {
+    loadCharts(teamId);
+  }
+});
+
+function loadTeamsForChart() {
+  db.ref('teams').once('value')
+    .then(snapshot => {
+      const teams = snapshot.val() || {};
+      chartTeamSelect.innerHTML = '';
+      for (const id in teams) {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = teams[id].name;
+        chartTeamSelect.appendChild(option);
+      }
+      if (chartTeamSelect.options.length > 0) {
+        chartTeamSelect.value = chartTeamSelect.options[0].value;
+        loadCharts(chartTeamSelect.value);
+      }
+    });
+}
+
+function loadCharts(teamId) {
+  db.ref(`players/${teamId}`).once('value')
+    .then(snapshot => {
+      const players = snapshot.val() || {};
+      const labels = [];
+      const avgTrainingScores = [];
+      const avgMatchScores = [];
+
+      for (const playerId in players) {
+        const player = players[playerId];
+        labels.push(player.name);
+
+        const trainingScores = Object.values(player.trainingScores || {});
+        const trainingAvg = trainingScores.length ? trainingScores.reduce((a,b) => a+b, 0)/trainingScores.length : 0;
+        avgTrainingScores.push(trainingAvg);
+
+        const matchScores = Object.values(player.matchScores || {});
+        const matchAvg = matchScores.length ? matchScores.reduce((a,b) => a+b, 0)/matchScores.length : 0;
+        avgMatchScores.push(matchAvg);
+      }
+
+      if (trainingChart) trainingChart.destroy();
+      if (matchChart) matchChart.destroy();
+
+      trainingChart = new Chart(trainingChartCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Średnia ocena treningu',
+            data: avgTrainingScores,
+            backgroundColor: 'rgba(0, 51, 102, 0.7)'
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true, max: 10 }
+          }
+        }
+      });
+
+      matchChart = new Chart(matchChartCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Średnia ocena meczu',
+            data: avgMatchScores,
+            backgroundColor: 'rgba(0, 85, 170, 0.7)'
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true, max: 10 }
+          }
+        }
+      });
+    });
+}
+
 
   // OBSŁUGA LOGOWANIA
   loginForm.addEventListener('submit', e => {
