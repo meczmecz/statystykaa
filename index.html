@@ -474,308 +474,237 @@
   }
 
   // Pokaż panel szczegółów zawodnika i oceny
-  function showPlayerDetails(playerId) {
-    currentPlayerId = playerId;
-    const player = playersData[playerId];
-    if (!player) return alert('Nie znaleziono zawodnika');
+ // --- Dokończenie funkcji loadPlayers z twojego kodu ---
+function showPlayerDetails(playerId) {
+  currentPlayerId = playerId;
+  const player = playersData[playerId];
+  if (!player) return alert('Nie znaleziono zawodnika');
+  playerDetailName.textContent = player.name;
+  playerDetails.classList.remove('hidden');
+}
 
-    playerDetailName.textContent = player.name;
-    playerDetails.classList.remove('hidden');
+// Dodaj ocenę treningu zawodnikowi
+trainingScoreForm.addEventListener('submit', e => {
+  e.preventDefault();
+  if (!currentTeamId || !currentPlayerId) return alert('Wybierz zawodnika');
+  const score = parseFloat(trainingScoreInput.value);
+  if (isNaN(score) || score < 0 || score > 10) return alert('Podaj ocenę od 0 do 10');
 
-    trainingScoreInput.value = '';
-    matchScoreInputPlayer.value = '';
+  const scoreRef = db.ref(`players/${currentTeamId}/${currentPlayerId}/trainingScores`).push();
+  scoreRef.set(score)
+    .then(() => {
+      trainingScoreInput.value = '';
+      alert('Ocena treningu dodana');
+    })
+    .catch(err => alert('Błąd dodawania oceny: ' + err.message));
+});
+
+// Dodaj ocenę meczu zawodnikowi
+matchScoreForm.addEventListener('submit', e => {
+  e.preventDefault();
+  if (!currentTeamId || !currentPlayerId) return alert('Wybierz zawodnika');
+  const score = parseFloat(matchScoreInputPlayer.value);
+  if (isNaN(score) || score < 0 || score > 10) return alert('Podaj ocenę od 0 do 10');
+
+  const scoreRef = db.ref(`players/${currentTeamId}/${currentPlayerId}/matchScores`).push();
+  scoreRef.set(score)
+    .then(() => {
+      matchScoreInputPlayer.value = '';
+      alert('Ocena meczu dodana');
+    })
+    .catch(err => alert('Błąd dodawania oceny: ' + err.message));
+});
+
+// Zamknij szczegóły zawodnika
+closePlayerDetailsBtn.addEventListener('click', () => {
+  playerDetails.classList.add('hidden');
+  currentPlayerId = null;
+});
+
+// --- Wczytaj mecze ---
+function loadMatches() {
+  db.ref('matches').once('value')
+    .then(snapshot => {
+      matchesData = snapshot.val() || {};
+      renderMatchesTable();
+      populateBestPlayerSelect();
+      displayMVP();
+    })
+    .catch(err => alert('Błąd wczytywania meczów: ' + err.message));
+}
+
+// Wyświetl mecze w tabeli
+function renderMatchesTable() {
+  matchesTableBody.innerHTML = '';
+  for (const id in matchesData) {
+    const m = matchesData[id];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${m.date}</td>
+      <td>${teamsData[m.teamA]?.name || '???'}</td>
+      <td>${teamsData[m.teamB]?.name || '???'}</td>
+      <td>${m.score}</td>
+      <td>${playersData[m.bestPlayer]?.name || '???'}</td>
+      <td><button data-id="${id}" class="deleteMatchBtn">Usuń</button></td>
+    `;
+    matchesTableBody.appendChild(tr);
   }
-
-  // Dodawanie oceny treningu
-  trainingScoreForm.addEventListener('submit', e => {
-    e.preventDefault();
-    if (!currentTeamId || !currentPlayerId) return alert('Wybierz drużynę i zawodnika');
-
-    let val = parseFloat(trainingScoreInput.value);
-    if (isNaN(val) || val < 0 || val > 10) return alert('Podaj ocenę od 0 do 10');
-
-    const timestamp = Date.now();
-
-    db.ref(`players/${currentTeamId}/${currentPlayerId}/trainingScores/${timestamp}`).set(val)
-      .then(() => {
-        alert('Ocena treningu dodana!');
-        trainingScoreInput.value = '';
-        loadPlayers(currentTeamId);
-        if (chartTeamSelect.value === currentTeamId) drawCharts(currentTeamId);
-      })
-      .catch(err => alert('Błąd zapisu oceny treningu: ' + err.message));
-  });
-
-  // Dodawanie oceny meczu
-  matchScoreForm.addEventListener('submit', e => {
-    e.preventDefault();
-    if (!currentTeamId || !currentPlayerId) return alert('Wybierz drużynę i zawodnika');
-
-    let val = parseFloat(matchScoreInputPlayer.value);
-    if (isNaN(val) || val < 0 || val > 10) return alert('Podaj ocenę od 0 do 10');
-
-    const timestamp = Date.now();
-
-    db.ref(`players/${currentTeamId}/${currentPlayerId}/matchScores/${timestamp}`).set(val)
-      .then(() => {
-        alert('Ocena meczu dodana!');
-        matchScoreInputPlayer.value = '';
-        loadPlayers(currentTeamId);
-        if (chartTeamSelect.value === currentTeamId) drawCharts(currentTeamId);
-      })
-      .catch(err => alert('Błąd zapisu oceny meczu: ' + err.message));
-  });
-
-  // Zamknij szczegóły zawodnika
-  closePlayerDetailsBtn.addEventListener('click', () => {
-    playerDetails.classList.add('hidden');
-    currentPlayerId = null;
-  });
-
-  // Ładuj drużyny do formularza meczu i wykresów
-  function loadTeamsForMatches() {
-    db.ref('teams').once('value').then(snapshot => {
-      const data = snapshot.val() || {};
-      teamASelect.innerHTML = '';
-      teamBSelect.innerHTML = '';
-      bestPlayerSelect.innerHTML = '';
-
-      for (const id in data) {
-        const optA = document.createElement('option');
-        optA.value = id;
-        optA.textContent = data[id].name;
-        teamASelect.appendChild(optA);
-
-        const optB = document.createElement('option');
-        optB.value = id;
-        optB.textContent = data[id].name;
-        teamBSelect.appendChild(optB);
+  // Obsługa usuwania meczu
+  document.querySelectorAll('.deleteMatchBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      if (confirm('Usunąć ten mecz?')) {
+        db.ref(`matches/${id}`).remove()
+          .then(() => {
+            loadMatches();
+          });
       }
-
-      // Po wybraniu drużyny A lub B aktualizujemy listę zawodników do wyboru najlepszego
-      function updateBestPlayerOptions() {
-        const selectedTeamA = teamASelect.value;
-        const selectedTeamB = teamBSelect.value;
-
-        bestPlayerSelect.innerHTML = '';
-
-        if (selectedTeamA) loadPlayersOptionsForBest(selectedTeamA);
-        if (selectedTeamB && selectedTeamB !== selectedTeamA) loadPlayersOptionsForBest(selectedTeamB);
-      }
-
-      teamASelect.addEventListener('change', updateBestPlayerOptions);
-      teamBSelect.addEventListener('change', updateBestPlayerOptions);
-
-      // Najpierw wywołaj raz, żeby wypełnić
-      updateBestPlayerOptions();
     });
-  }
+  });
+}
 
-  // Załaduj zawodników do select dla najlepszego zawodnika meczu
-  function loadPlayersOptionsForBest(teamId) {
-    db.ref(`players/${teamId}`).once('value').then(snapshot => {
-      const players = snapshot.val() || {};
-      for (const id in players) {
+// Wypełnij select najlepszych zawodników na podstawie wszystkich drużyn i ich zawodników
+function populateBestPlayerSelect() {
+  bestPlayerSelect.innerHTML = '<option value="">-- wybierz --</option>';
+  // Dodaj wszystkich zawodników ze wszystkich drużyn
+  for (const teamId in playersData) {
+    // playersData jest tylko dla aktualnej drużyny, więc musimy wczytać zawodników z każdej drużyny
+    // Wczytamy osobno - lepszym rozwiązaniem byłoby wczytanie globalnie wszystkich zawodników.
+  }
+  // Rozszerzymy: wczytujemy wszystkich zawodników z wszystkich drużyn:
+  db.ref('players').once('value').then(allPlayersSnapshot => {
+    const allPlayers = allPlayersSnapshot.val() || {};
+    for (const teamId in allPlayers) {
+      for (const playerId in allPlayers[teamId]) {
+        const player = allPlayers[teamId][playerId];
         const option = document.createElement('option');
-        option.value = id;
-        option.textContent = `${players[id].name} (${teamsData[teamId]?.name || 'Drużyna'})`;
-        option.dataset.teamId = teamId;
+        option.value = playerId;
+        option.textContent = player.name + ` (${teamsData[teamId]?.name || '???'})`;
         bestPlayerSelect.appendChild(option);
       }
-    });
-  }
-
-  // Dodawanie meczu
-  matchForm.addEventListener('submit', e => {
-    e.preventDefault();
-
-    const date = matchForm.matchDate.value;
-    const teamA = matchForm.teamASelect.value;
-    const teamB = matchForm.teamBSelect.value;
-    const score = matchForm.matchScore.value.trim();
-    const bestPlayerId = matchForm.bestPlayerSelect.value;
-
-    if (!date || !teamA || !teamB || !score || !bestPlayerId) {
-      return alert('Uzupełnij wszystkie pola meczu');
     }
-    if (teamA === teamB) {
-      return alert('Wybierz różne drużyny');
+  });
+}
+
+// Obsługa dodawania meczu
+matchForm.addEventListener('submit', e => {
+  e.preventDefault();
+
+  const date = matchForm.matchDate.value;
+  const teamA = matchForm.teamASelect.value;
+  const teamB = matchForm.teamBSelect.value;
+  const score = matchForm.matchScore.value.trim();
+  const bestPlayer = matchForm.bestPlayerSelect.value;
+
+  if (!date || !teamA || !teamB || !score || !bestPlayer) {
+    return alert('Uzupełnij wszystkie pola');
+  }
+  if (teamA === teamB) {
+    return alert('Drużyny A i B nie mogą być takie same');
+  }
+
+  const newMatchRef = db.ref('matches').push();
+  newMatchRef.set({
+    date,
+    teamA,
+    teamB,
+    score,
+    bestPlayer
+  })
+  .then(() => {
+    matchForm.reset();
+    loadMatches();
+  })
+  .catch(err => alert('Błąd dodawania meczu: ' + err.message));
+});
+
+// --- LICZENIE I WYŚWIETLANIE MVP ---
+
+// Funkcja zlicza liczbę MVP dla każdego zawodnika
+function countMVP() {
+  const mvpCount = {};
+  for (const matchId in matchesData) {
+    const match = matchesData[matchId];
+    if (match.bestPlayer) {
+      mvpCount[match.bestPlayer] = (mvpCount[match.bestPlayer] || 0) + 1;
     }
+  }
+  return mvpCount;
+}
 
-    const newMatchRef = db.ref('matches').push();
+// Wyświetl listę MVP w sekcji meczów pod tabelą meczów
+function displayMVP() {
+  // Usuń poprzedni wynik jeśli jest
+  let mvpDiv = document.getElementById('mvpSummary');
+  if (!mvpDiv) {
+    mvpDiv = document.createElement('div');
+    mvpDiv.id = 'mvpSummary';
+    mvpDiv.style.marginTop = '20px';
+    document.getElementById('matches').appendChild(mvpDiv);
+  }
 
-    newMatchRef.set({
-      date,
-      teamA,
-      teamB,
-      score,
-      bestPlayerId
-    })
-      .then(() => {
-        alert('Mecz dodany!');
-        matchForm.reset();
-        loadMatches();
-      })
-      .catch(err => alert('Błąd dodawania meczu: ' + err.message));
+  const mvpCount = countMVP();
+  if (Object.keys(mvpCount).length === 0) {
+    mvpDiv.innerHTML = '<p>Brak danych o najlepszych zawodnikach meczów.</p>';
+    return;
+  }
+
+  // Pobierz wszystkie zawodników globalnie
+  db.ref('players').once('value').then(allPlayersSnapshot => {
+    const allPlayers = allPlayersSnapshot.val() || {};
+    // Stwórz listę z nazwami zawodników i liczbą MVP
+    const listItems = [];
+    for (const playerId in mvpCount) {
+      let playerName = '???';
+      let teamName = '';
+      for (const teamId in allPlayers) {
+        if (allPlayers[teamId][playerId]) {
+          playerName = allPlayers[teamId][playerId].name;
+          teamName = teamsData[teamId]?.name || '';
+          break;
+        }
+      }
+      listItems.push(`<li>${playerName} (${teamName}) - MVP: ${mvpCount[playerId]}</li>`);
+    }
+    listItems.sort((a, b) => {
+      // sortujemy malejąco po liczbie MVP
+      const numA = parseInt(a.match(/MVP: (\d+)/)[1]);
+      const numB = parseInt(b.match(/MVP: (\d+)/)[1]);
+      return numB - numA;
+    });
+
+    mvpDiv.innerHTML = `<h3>Podsumowanie liczby MVP</h3><ul>${listItems.join('')}</ul>`;
   });
+}
 
-  // Wczytaj mecze i wyświetl w tabeli
-  function loadMatches() {
-    db.ref('matches').once('value').then(snapshot => {
-      matchesData = snapshot.val() || {};
-      matchesTableBody.innerHTML = '';
-
-      for (const id in matchesData) {
-        const m = matchesData[id];
-        const tr = document.createElement('tr');
-
-        const teamAName = teamsData[m.teamA]?.name || '???';
-        const teamBName = teamsData[m.teamB]?.name || '???';
-
-        const bestPlayerName = (() => {
-          if (!m.bestPlayerId) return '';
-          // Znajdź drużynę zawodnika:
-          let found = null;
-          for (const tId in playersData) {
-            if (playersData[tId] && playersData[tId][m.bestPlayerId]) {
-              found = playersData[tId][m.bestPlayerId].name;
-              break;
-            }
-          }
-          return found || '???';
-        })();
-
-        tr.innerHTML = `
-          <td>${m.date}</td>
-          <td>${teamAName}</td>
-          <td>${teamBName}</td>
-          <td>${m.score}</td>
-          <td>${bestPlayerName}</td>
-          <td><button data-id="${id}" class="deleteMatchBtn">Usuń</button></td>
-        `;
-
-        matchesTableBody.appendChild(tr);
-      }
-
-      // Obsługa usuwania meczu
-      document.querySelectorAll('.deleteMatchBtn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          if (confirm('Na pewno chcesz usunąć ten mecz?')) {
-            db.ref(`matches/${id}`).remove().then(() => loadMatches());
-          }
-        });
-      });
-    });
+// Na start: jeśli użytkownik jest zalogowany, wczytaj drużyny i mecze
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    loginSection.classList.add('hidden');
+    mainNav.classList.remove('hidden');
+    sections.teams.classList.remove('hidden');
+    loadTeams();
+    loadMatches();
+  } else {
+    currentUser = null;
+    loginSection.classList.remove('hidden');
+    mainNav.classList.add('hidden');
+    Object.values(sections).forEach(s => s.classList.add('hidden'));
+    resetUI();
   }
+});
 
-  // Ładuj drużyny do wykresów
-  function loadTeamsForChart() {
-    db.ref('teams').once('value').then(snapshot => {
-      const data = snapshot.val() || {};
-      chartTeamSelect.innerHTML = '';
-      for (const id in data) {
-        const option = document.createElement('option');
-        option.value = id;
-        option.textContent = data[id].name;
-        chartTeamSelect.appendChild(option);
-      }
-      chartTeamSelect.value = currentTeamId || (Object.keys(data)[0] || '');
-      if (chartTeamSelect.value) drawCharts(chartTeamSelect.value);
-    });
-  }
-
-  // Obsługa zmiany drużyny na wykresach
-  chartTeamSelect.addEventListener('change', () => {
-    drawCharts(chartTeamSelect.value);
-  });
-
-  // Rysowanie wykresów średnich ocen treningów i meczów
-  function drawCharts(teamId) {
-    if (!teamId) return;
-
-    db.ref(`players/${teamId}`).once('value').then(snapshot => {
-      const players = snapshot.val() || {};
-
-      const trainingData = [];
-      const matchData = [];
-      const labels = [];
-
-      for (const playerId in players) {
-        const p = players[playerId];
-
-        // średnia ocena treningu
-        let trainingSum = 0, trainingCount = 0;
-        if (p.trainingScores) {
-          Object.values(p.trainingScores).forEach(v => {
-            trainingSum += v;
-            trainingCount++;
-          });
-        }
-        const trainingAvg = trainingCount ? (trainingSum / trainingCount) : 0;
-
-        // średnia ocena meczu
-        let matchSum = 0, matchCount = 0;
-        if (p.matchScores) {
-          Object.values(p.matchScores).forEach(v => {
-            matchSum += v;
-            matchCount++;
-          });
-        }
-        const matchAvg = matchCount ? (matchSum / matchCount) : 0;
-
-        labels.push(p.name);
-        trainingData.push(trainingAvg.toFixed(2));
-        matchData.push(matchAvg.toFixed(2));
-      }
-
-      // Rysuj wykresy
-      if (trainingChart) trainingChart.destroy();
-      if (matchChart) matchChart.destroy();
-
-      trainingChart = new Chart(trainingChartCanvas.getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Średnia ocena treningu',
-            data: trainingData,
-            backgroundColor: 'rgba(0, 51, 102, 0.7)',
-          }]
-        },
-        options: {
-          responsive: false,
-          scales: { y: { beginAtZero: true, max: 10 } }
-        }
-      });
-
-      matchChart = new Chart(matchChartCanvas.getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Średnia ocena meczu',
-            data: matchData,
-            backgroundColor: 'rgba(0, 128, 255, 0.7)',
-          }]
-        },
-        options: {
-          responsive: false,
-          scales: { y: { beginAtZero: true, max: 10 } }
-        }
-      });
-    });
-  }
-
-  // Resetuj UI przy wylogowaniu
-  function resetUI() {
-    teamsList.innerHTML = '';
-    playersList.innerHTML = '';
-    teamDetails.classList.add('hidden');
-    playerDetails.classList.add('hidden');
-    matchesTableBody.innerHTML = '';
-    authMessage.textContent = '';
-  }
+// Reset UI (usuń listy itp. przy wylogowaniu)
+function resetUI() {
+  teamsList.innerHTML = '';
+  playersList.innerHTML = '';
+  matchesTableBody.innerHTML = '';
+  bestPlayerSelect.innerHTML = '';
+  chartTeamSelect.innerHTML = '';
+  const mvpDiv = document.getElementById('mvpSummary');
+  if (mvpDiv) mvpDiv.innerHTML = '';
+}
 
   // Obsługa autoryzacji - stan użytkownika
   auth.onAuthStateChanged(user => {
