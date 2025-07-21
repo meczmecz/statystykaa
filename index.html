@@ -394,14 +394,37 @@ let matchChart = null;
         teamBSelect.innerHTML = '';
         chartTeamSelect.innerHTML = '';
 
-        for (const id in teamsData) {
-          const li = document.createElement('li');
-          li.textContent = teamsData[id].name;
-          li.dataset.teamId = id;
-          li.style.cursor = 'pointer';
-          li.addEventListener('click', () => selectTeam(id));
-          teamsList.appendChild(li);
+     for (const id in teamsData) {
+  const li = document.createElement('li');
+  li.textContent = teamsData[id].name;
+  li.dataset.teamId = id;
+  li.style.cursor = 'pointer';
 
+  // Kliknięcie na nazwę drużyny — wybór drużyny
+  li.addEventListener('click', () => selectTeam(id));
+
+  // Dodaj przycisk usuwania drużyny
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = 'Usuń';
+  deleteBtn.style.marginLeft = '10px';
+  deleteBtn.style.color = 'white';
+  deleteBtn.style.backgroundColor = '#cc3333';
+  deleteBtn.style.border = 'none';
+  deleteBtn.style.borderRadius = '4px';
+  deleteBtn.style.padding = '2px 6px';
+  deleteBtn.style.cursor = 'pointer';
+
+  // Zapobiegamy propagacji, aby kliknięcie nie wybierało drużyny
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (confirm(`Czy na pewno chcesz usunąć drużynę "${teamsData[id].name}"? Usunięcie drużyny spowoduje również usunięcie wszystkich zawodników w niej.`)) {
+      deleteTeam(id);
+    }
+  });
+
+  li.appendChild(deleteBtn);
+  teamsList.appendChild(li);
+}
           const optionA = document.createElement('option');
           optionA.value = id;
           optionA.textContent = teamsData[id].name;
