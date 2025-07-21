@@ -457,32 +457,26 @@ let matchChart = null;
   });
 
   // Wczytaj zawodników drużyny
-function loadTeamsForMatches() {
-  db.ref('teams').once('value')
-    .then(snapshot => {
-      teamsData = snapshot.val() || {};
-      teamASelect.innerHTML = '';
-      bestPlayerSelect.innerHTML = '';
-
-      for (const id in teamsData) {
-        const optionA = document.createElement('option');
-        optionA.value = id;
-        optionA.textContent = teamsData[id].name;
-        teamASelect.appendChild(optionA);
-      }
-
-      // Drużyna B to input — nic nie robimy tutaj dla niej
-
-      bestPlayerSelect.innerHTML = '';
-    });
-}
-
+  function loadPlayers(teamId) {
+    db.ref(`players/${teamId}`).once('value')
+      .then(snapshot => {
+        playersData = snapshot.val() || {};
+        playersList.innerHTML = '';
+        for (const id in playersData) {
+          const li = document.createElement('li');
+          li.textContent = playersData[id].name;
+          li.dataset.playerId = id;
+          li.addEventListener('click', () => showPlayerDetails(id));
+          playersList.appendChild(li);
+        }
+        playerDetails.classList.add('hidden');
         currentPlayerId = null;
       })
       .catch(err => alert('Błąd wczytywania zawodników: ' + err.message));
   }
 
   // Pokaż panel szczegółów zawodnika i oceny
+ // --- Dokończenie funkcji loadPlayers z twojego kodu ---
 // POKAŻ SZCZEGÓŁY ZAWODNIKA
 function showPlayerDetails(playerId) {
   if (!currentTeamId) return;
@@ -535,15 +529,12 @@ closePlayerDetailsBtn.addEventListener('click', () => {
 });
 
 // Wczytaj drużyny do selectów w zakładce mecze
-// Załóżmy, że teamBInput to element <input type="text" id="teamBInput">
-const teamBInput = document.getElementById('teamBInput');
-
-// Wczytaj drużyny dla drużyny A
 function loadTeamsForMatches() {
   db.ref('teams').once('value')
     .then(snapshot => {
       teamsData = snapshot.val() || {};
       teamASelect.innerHTML = '';
+      teamBSelect.innerHTML = '';
       bestPlayerSelect.innerHTML = '';
 
       for (const id in teamsData) {
@@ -551,41 +542,36 @@ function loadTeamsForMatches() {
         optionA.value = id;
         optionA.textContent = teamsData[id].name;
         teamASelect.appendChild(optionA);
-      }
 
-      // Drużyna B to input, więc nie ma opcji do uzupełniania
+        const optionB = document.createElement('option');
+        optionB.value = id;
+        optionB.textContent = teamsData[id].name;
+        teamBSelect.appendChild(optionB);
+      }
 
       // Reset najlepszy zawodnik
       bestPlayerSelect.innerHTML = '';
     });
 }
 
-// Przy zmianie drużyny A lub wpisaniu nazwy drużyny B aktualizuj zawodników
+// Przy zmianie drużyny w select najlepszy zawodnik, wczytaj zawodników z tej drużyny
 teamASelect.addEventListener('change', updateBestPlayerOptions);
-teamBInput.addEventListener('input', updateBestPlayerOptions);
+teamBSelect.addEventListener('change', updateBestPlayerOptions);
 
 function updateBestPlayerOptions() {
-  const teamAId = teamASelect.value;
-  const teamBName = teamBInput.value.trim().toLowerCase();
+  // Weź zawodników z obu drużyn
+  const teamA = teamASelect.value;
+  const teamB = teamBSelect.value;
 
   bestPlayerSelect.innerHTML = '';
 
-  if (!teamAId && !teamBName) return;
+  // Jeśli brak drużyn, wyjdź
+  if (!teamA && !teamB) return;
 
-  // Znajdź id drużyny B na podstawie wpisanej nazwy
-  let teamBId = null;
-  if (teamBName) {
-    for (const id in teamsData) {
-      if (teamsData[id].name.toLowerCase() === teamBName) {
-        teamBId = id;
-        break;
-      }
-    }
-  }
-
+  // Pobierz zawodników z obu drużyn i połącz w jedną listę
   Promise.all([
-    teamAId ? db.ref(`players/${teamAId}`).once('value') : Promise.resolve({ val: () => null }),
-    teamBId ? db.ref(`players/${teamBId}`).once('value') : Promise.resolve({ val: () => null })
+    teamA ? db.ref(`players/${teamA}`).once('value') : Promise.resolve({ val: () => null }),
+    teamB ? db.ref(`players/${teamB}`).once('value') : Promise.resolve({ val: () => null })
   ]).then(([snapA, snapB]) => {
     const playersA = snapA.val() || {};
     const playersB = snapB.val() || {};
@@ -594,7 +580,7 @@ function updateBestPlayerOptions() {
 
     for (const id in allPlayers) {
       const option = document.createElement('option');
-      option.value = id + '|' + (playersA[id] ? teamAId : teamBId);
+      option.value = id + '|' + (playersA[id] ? teamA : teamB); // id + teamId oddzielone |
       option.textContent = allPlayers[id].name;
       bestPlayerSelect.appendChild(option);
     }
