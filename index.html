@@ -457,19 +457,26 @@ let matchChart = null;
   });
 
   // Wczytaj zawodników drużyny
-  function loadPlayers(teamId) {
-    db.ref(`players/${teamId}`).once('value')
-      .then(snapshot => {
-        playersData = snapshot.val() || {};
-        playersList.innerHTML = '';
-        for (const id in playersData) {
-          const li = document.createElement('li');
-          li.textContent = playersData[id].name;
-          li.dataset.playerId = id;
-          li.addEventListener('click', () => showPlayerDetails(id));
-          playersList.appendChild(li);
-        }
-        playerDetails.classList.add('hidden');
+function loadTeamsForMatches() {
+  db.ref('teams').once('value')
+    .then(snapshot => {
+      teamsData = snapshot.val() || {};
+      teamASelect.innerHTML = '';
+      bestPlayerSelect.innerHTML = '';
+
+      for (const id in teamsData) {
+        const optionA = document.createElement('option');
+        optionA.value = id;
+        optionA.textContent = teamsData[id].name;
+        teamASelect.appendChild(optionA);
+      }
+
+      // Drużyna B to input — nic nie robimy tutaj dla niej
+
+      bestPlayerSelect.innerHTML = '';
+    });
+}
+
         currentPlayerId = null;
       })
       .catch(err => alert('Błąd wczytywania zawodników: ' + err.message));
