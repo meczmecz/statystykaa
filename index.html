@@ -396,7 +396,19 @@ let matchChart = null;
 
         for (const id in teamsData) {
           const li = document.createElement('li');
-          li.textContent = teamsData[id].name;
+          li.innerHTML = `
+  <span>${teamsData[id].name}</span>
+  <button onclick="editTeam('${id}', '${teamsData[id].name.replace(/'/g, "\\'")}')">Edytuj</button>
+`;
+function editTeam(teamId, oldName) {
+  const newName = prompt("Podaj nową nazwę drużyny:", oldName);
+  if (newName && newName.trim()) {
+    db.ref(`teams/${teamId}`).update({ name: newName.trim() })
+      .then(() => loadTeams())
+      .catch(err => alert("Błąd edycji drużyny: " + err.message));
+  }
+}
+
           li.dataset.teamId = id;
           li.style.cursor = 'pointer';
           li.addEventListener('click', () => selectTeam(id));
