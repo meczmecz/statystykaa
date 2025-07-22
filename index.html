@@ -838,7 +838,6 @@ function resetUI() {
   if (trainingChart) trainingChart.destroy();
   if (matchChart) matchChart.destroy();
 }
-
 // Obsługa autoryzacji - stan użytkownika
 auth.onAuthStateChanged(user => {
   if (user) {
@@ -876,6 +875,7 @@ function editPlayerName(playerId) {
       .catch(err => alert('Błąd zmiany nazwiska zawodnika: ' + err.message));
   }
 }  // <- zamykamy funkcję editPlayerName
+
 
 
 </script>
