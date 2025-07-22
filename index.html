@@ -1,74 +1,193 @@
-<!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jaguar Analityka</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Przykładowa Strona</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f7fa;
+    /* Reset */
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    header {
-      background-color: #003366;
-      color: white;
+
+    body {
+      background-color: #f7f9fc;
+      color: #333;
       padding: 20px;
-      text-align: center;
-      font-size: 1.5em;
-      font-weight: bold;
     }
-    main {
-      max-width: 1200px;
-      margin: auto;
-      padding: 20px;
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
       background: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 30px 40px;
     }
-    section {
-      margin-bottom: 50px;
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+      font-weight: 700;
+      letter-spacing: 1px;
     }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
     label {
-      display: block;
-      margin-top: 10px;
+      flex: 1 1 100%;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #34495e;
     }
-    input, select, textarea {
+
+    input[type="text"],
+    input[type="email"],
+    select,
+    textarea {
       width: 100%;
-      padding: 8px;
-      margin-top: 4px;
-      box-sizing: border-box;
+      padding: 12px 15px;
+      border: 1.8px solid #d1d9e6;
+      border-radius: 6px;
+      transition: border-color 0.3s ease;
+      font-size: 16px;
     }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #2980b9;
+      box-shadow: 0 0 5px rgba(41, 128, 185, 0.5);
+    }
+
     button {
-      margin-top: 15px;
-      background-color: #003366;
+      background-color: #2980b9;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 6px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 10px;
+      flex: 1 1 100%;
+      max-width: 200px;
+      align-self: center;
     }
+
     button:hover {
-      background-color: #0055aa;
+      background-color: #1f6391;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
+
+    /* Przykładowa sekcja listy */
+    .list-section {
+      margin-top: 40px;
     }
-    table, th, td {
-      border: 1px solid #ccc;
+
+    .list-section h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #2980b9;
+      padding-bottom: 6px;
     }
-    th, td {
-      padding: 10px;
-      text-align: left;
+
+    ul {
+      list-style: none;
+      padding-left: 0;
     }
-    th {
-      background-color: #003366;
-      color: white;
+
+    ul li {
+      background: #ecf0f1;
+      margin-bottom: 10px;
+      padding: 12px 18px;
+      border-radius: 6px;
+      box-shadow: 1px 1px 4px rgba(0,0,0,0.05);
+      font-size: 16px;
+      color: #2c3e50;
+    }
+
+    /* Responsive */
+    @media (min-width: 600px) {
+      form > div {
+        flex: 1 1 45%;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Formularz kontaktowy</h1>
+    <form id="contactForm">
+      <div>
+        <label for="name">Imię i nazwisko</label>
+        <input type="text" id="name" name="name" placeholder="Wpisz swoje imię i nazwisko" required />
+      </div>
+      <div>
+        <label for="email">Adres e-mail</label>
+        <input type="email" id="email" name="email" placeholder="Wpisz swój e-mail" required />
+      </div>
+      <div>
+        <label for="subject">Temat</label>
+        <select id="subject" name="subject" required>
+          <option value="">Wybierz temat</option>
+          <option value="pytanie">Pytanie</option>
+          <option value="uwaga">Uwaga</option>
+          <option value="inne">Inne</option>
+        </select>
+      </div>
+      <div style="flex: 1 1 100%;">
+        <label for="message">Wiadomość</label>
+        <textarea id="message" name="message" rows="5" placeholder="Napisz swoją wiadomość" required></textarea>
+      </div>
+      <button type="submit">Wyślij</button>
+    </form>
+
+    <section class="list-section">
+      <h2>Ostatnie wiadomości</h2>
+      <ul id="messagesList">
+        <li>Jan Kowalski: Dziękuję za pomoc!</li>
+        <li>Agnieszka Nowak: Mam pytanie dotyczące zamówienia.</li>
+        <li>Piotr Zieliński: Świetna strona, wszystko działa!</li>
+      </ul>
+    </section>
+  </div>
+
+  <script>
+    // Przykład obsługi formularza
+    const form = document.getElementById('contactForm');
+    const messagesList = document.getElementById('messagesList');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = form.name.value.trim();
+      const email = form.email.value.trim();
+      const subject = form.subject.value;
+      const message = form.message.value.trim();
+
+      if (!name || !email || !subject || !message) {
+        alert('Proszę wypełnić wszystkie pola.');
+        return;
+      }
+
+      // Dodaj nową wiadomość do listy (można tu potem zrobić wysyłkę na backend)
+      const li = document.createElement('li');
+      li.textContent = `${name} (${subject}): ${message}`;
+      messagesList.prepend(li);
+
+      form.reset();
+    });
+  </script>
+  </body>
   <header>Jaguar Analityka - Pełna Wersja</header>
   <main>
     <!-- Drużyny -->
