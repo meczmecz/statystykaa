@@ -287,7 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderPlayers();
   renderMatches();
   updateTeamSelects();
-});
+
 loginForm.addEventListener('submit', e => {
   e.preventDefault();
   console.log('Kliknięto przycisk logowania'); // <- Sprawdź, czy to się pokazuje
