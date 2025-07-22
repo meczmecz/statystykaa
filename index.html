@@ -186,42 +186,85 @@
 
   <!-- MECZE -->
   <section id="matches" class="hidden">
-    <h2>Dodaj nowy mecz</h2>
-    <form id="matchForm">
-      <label for="matchDate">Data meczu:</label>
-      <input type="date" id="matchDate" name="matchDate" required />
+      <h1>Dodaj Mecz</h1>
 
-      <label for="teamASelect">Drużyna A:</label>
-      <select id="teamASelect" name="teamASelect" required></select>
+  <form id="matchForm">
+    <label for="date">Data meczu:</label>
+    <input type="date" id="date" name="date" required />
 
-      <label for="teamBSelect">Drużyna B:</label>
-      <select id="teamBSelect" name="teamBSelect" required></select>
+    <label for="teamA">Drużyna A (Jaguar):</label>
+    <input type="text" id="teamA" name="teamA" required />
 
-      <label for="matchScore">Wynik (np. 3:1):</label>
-      <input type="text" id="matchScore" name="matchScore" placeholder="np. 3:1" required />
+    <label for="teamB">Drużyna B (Przeciwnik):</label>
+    <input type="text" id="teamB" name="teamB" required />
 
-      <label for="bestPlayerSelect">Najlepszy zawodnik meczu:</label>
-      <select id="bestPlayerSelect" name="bestPlayerSelect" required></select>
+    <label for="score">Wynik (np. 2-1):</label>
+    <input type="text" id="score" name="score" required />
 
-      <button type="submit">Dodaj mecz</button>
-    </form>
+    <label for="bestPlayerId">ID najlepszego zawodnika:</label>
+    <input type="text" id="bestPlayerId" name="bestPlayerId" required />
 
-    <h3>Lista meczów</h3>
-    <table id="matchesTable">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Drużyna A</th>
-          <th>Drużyna B</th>
-          <th>Wynik</th>
-          <th>Najlepszy zawodnik</th>
-          <th>Akcje</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </section>
+    <label for="bestPlayerTeamId">Z jakiej drużyny (teamA/teamB):</label>
+    <input type="text" id="bestPlayerTeamId" name="bestPlayerTeamId" required />
 
+    <label for="matchRating">Ocena meczu (0-10):</label>
+    <input type="number" id="matchRating" name="matchRating" min="0" max="10" step="0.1" required />
+
+    <label for="top3Jaguar">Top 3 Jaguar (ID zawodników, przecinki):</label>
+    <input type="text" id="top3Jaguar" name="top3Jaguar" placeholder="np. id1,id2,id3" required />
+
+    <label for="top3Opponent">Top 3 przeciwnik (ID zawodników, przecinki):</label>
+    <input type="text" id="top3Opponent" name="top3Opponent" placeholder="np. id1,id2,id3" required />
+
+    <label for="goalScorers">Strzelcy bramek (ID zawodników, przecinki):</label>
+    <input type="text" id="goalScorers" name="goalScorers" placeholder="np. id1,id2" required />
+
+    <button type="submit">Zapisz mecz</button>
+  </form>
+
+  <script>
+    const matchForm = document.getElementById('matchForm');
+
+    matchForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const date = matchForm.date.value;
+      const teamA = matchForm.teamA.value;
+      const teamB = matchForm.teamB.value;
+      const score = matchForm.score.value;
+      const bestPlayerId = matchForm.bestPlayerId.value;
+      const bestPlayerTeamId = matchForm.bestPlayerTeamId.value;
+      const matchRating = parseFloat(matchForm.matchRating.value);
+      const top3Jaguar = matchForm.top3Jaguar.value.split(',').map(id => id.trim());
+      const top3Opponent = matchForm.top3Opponent.value.split(',').map(id => id.trim());
+      const goalScorers = matchForm.goalScorers.value.split(',').map(id => id.trim());
+
+      if (top3Jaguar.length !== 3 || top3Opponent.length !== 3) {
+        return alert("Wpisz 3 zawodników w top 3 każdej drużyny");
+      }
+
+      try {
+        const newMatchRef = firebase.firestore().collection('matches').doc();
+        await newMatchRef.set({
+          date,
+          teamA,
+          teamB,
+          score,
+          bestPlayerId,
+          bestPlayerTeamId,
+          matchRating,
+          top3Jaguar,
+          top3Opponent,
+          goalScorers
+        });
+
+        alert("Mecz zapisany pomyślnie!");
+        matchForm.reset();
+      } catch (error) {
+        console.error("Błąd podczas zapisu meczu:", error);
+        alert("Wystąpił błąd przy zapisie meczu.");
+      }
+    });
   <!-- POSTĘP -->
   <section id="progress" class="hidden">
     <h2>Postęp zawodników</h2>
