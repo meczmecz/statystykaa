@@ -95,18 +95,46 @@
     <form id="matchForm">
       <label for="matchDate">Data meczu:</label>
       <input type="date" id="matchDate" name="matchDate" required />
-      <label for="teamASelect">Drużyna A:</label>
+      <label for="teamASelect">Drużyna A (Jaguar):</label>
       <select id="teamASelect" name="teamASelect" required></select>
-      <label for="teamBSelect">Drużyna B:</label>
-      <select id="teamBSelect" name="teamBSelect" required></select>
+      <label for="teamBName">Drużyna B (nazwa):</label>
+      <input type="text" id="teamBName" name="teamBName" required placeholder="Wpisz nazwę drużyny przeciwnej" />
       <label for="matchScore">Wynik (np. 3:1):</label>
       <input type="text" id="matchScore" name="matchScore" placeholder="np. 3:1" required />
-      <label for="bestPlayerSelect">Najlepszy zawodnik meczu:</label>
-      <select id="bestPlayerSelect" name="bestPlayerSelect" required></select>
+
+      <label>Najlepsi zawodnicy Jaguara:</label>
+      <div id="jaguarBestPlayers"></div>
+      <div id="jaguarPlayersRatings"></div>
+
+      <label>Najlepsi zawodnicy drużyny przeciwnej:</label>
+      <input type="text" name="opponentBestPlayer1" placeholder="Zawodnik 1" required />
+      <input type="text" name="opponentBestPlayer2" placeholder="Zawodnik 2" required />
+      <input type="text" name="opponentBestPlayer3" placeholder="Zawodnik 3" required />
+      <div id="opponentPlayersRatings"></div>
+
+      <label for="matchRating">Ocena meczu (opcjonalnie):</label>
+      <input type="number" id="matchRating" name="matchRating" min="0" max="10" step="0.1" />
+
       <button type="submit">Dodaj mecz</button>
     </form>
     <h3>Lista meczów</h3>
-    <table id="matchesTable"><thead><tr><th>Data</th><th>Drużyna A</th><th>Drużyna B</th><th>Wynik</th><th>Najlepszy zawodnik</th><th>Akcje</th></tr></thead><tbody></tbody></table>
+    <table id="matchesTable">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Drużyna A</th>
+          <th>Drużyna B</th>
+          <th>Wynik</th>
+          <th>Najlepsi Jaguar</th>
+          <th>Oceny Jaguar</th>
+          <th>Najlepsi przeciwnik</th>
+          <th>Oceny przeciwnik</th>
+          <th>Ocena meczu</th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </section>
 
   <!-- POSTĘP -->
@@ -173,9 +201,11 @@
   // MECZE
   const matchForm = document.getElementById('matchForm');
   const teamASelect = document.getElementById('teamASelect');
-  const teamBSelect = document.getElementById('teamBSelect');
-  const bestPlayerSelect = document.getElementById('bestPlayerSelect');
+  const teamBName = document.getElementById('teamBName');
   const matchesTableBody = document.querySelector('#matchesTable tbody');
+  const jaguarBestPlayersDiv = document.getElementById('jaguarBestPlayers');
+  const jaguarPlayersRatingsDiv = document.getElementById('jaguarPlayersRatings');
+  const opponentPlayersRatingsDiv = document.getElementById('opponentPlayersRatings');
 
   // WYKRESY
   const chartTeamSelect = document.getElementById('chartTeamSelect');
@@ -240,7 +270,6 @@
       .catch(err => alert('Błąd dodawania drużyny: ' + err.message));
   });
 
-  // FUNKCJA EDYCJI DRUŻYNY
   function editTeam(teamId, oldName) {
     const newName = prompt("Podaj nową nazwę drużyny:", oldName);
     if (newName && newName.trim()) {
@@ -257,7 +286,6 @@
         teamsData = snapshot.val() || {};
         teamsList.innerHTML = '';
         teamASelect.innerHTML = '';
-        teamBSelect.innerHTML = '';
         chartTeamSelect.innerHTML = '';
         for (const id in teamsData) {
           const li = document.createElement('li');
@@ -275,11 +303,6 @@
           optionA.textContent = name;
           teamASelect.appendChild(optionA);
 
-          const optionB = document.createElement('option');
-          optionB.value = id;
-          optionB.textContent = name;
-          teamBSelect.appendChild(optionB);
-
           const optionChart = document.createElement('option');
           optionChart.value = id;
           optionChart.textContent = name;
@@ -290,11 +313,11 @@
         currentPlayerId = null;
         playersList.innerHTML = '';
         playerDetails.classList.add('hidden');
+        updateJaguarBestPlayers();
       })
       .catch(err => alert('Błąd wczytywania drużyn: ' + err.message));
   }
 
-  // SELEKCJA DRUŻYNY
   function selectTeam(teamId) {
     currentTeamId = teamId;
     teamNameDisplay.textContent = teamsData[teamId].name;
@@ -303,7 +326,6 @@
     playerDetails.classList.add('hidden');
   }
 
-  // DODAJ ZAWODNIKA
   playerForm.addEventListener('submit', e => {
     e.preventDefault();
     if (!currentTeamId) return alert('Wybierz drużynę');
@@ -321,7 +343,6 @@
       .catch(err => alert('Błąd dodawania zawodnika: ' + err.message));
   });
 
-  // FUNKCJA EDYCJI ZAWODNIKA
   function editPlayer(playerId, oldName) {
     if (!currentTeamId) return;
     const newName = prompt("Podaj nowe imię i nazwisko zawodnika:", oldName);
@@ -332,7 +353,6 @@
     }
   }
 
-  // WCZYTAJ ZAWODNIKÓW
   function loadPlayers(teamId) {
     db.ref(`players/${teamId}`).once('value')
       .then(snapshot => {
@@ -354,7 +374,6 @@
       .catch(err => alert('Błąd wczytywania zawodników: ' + err.message));
   }
 
-  // POKAŻ SZCZEGÓŁY ZAWODNIKA
   function showPlayerDetails(playerId) {
     if (!currentTeamId) return;
     currentPlayerId = playerId;
@@ -364,7 +383,6 @@
     playerDetails.classList.remove('hidden');
   }
 
-  // OCENA TRENINGU
   trainingScoreForm.addEventListener('submit', e => {
     e.preventDefault();
     if (!currentTeamId || !currentPlayerId) return alert('Wybierz zawodnika');
@@ -380,7 +398,6 @@
       .catch(err => alert('Błąd dodawania oceny treningu: ' + err.message));
   });
 
-  // OCENA MECZU
   matchScoreForm.addEventListener('submit', e => {
     e.preventDefault();
     if (!currentTeamId || !currentPlayerId) return alert('Wybierz zawodnika');
@@ -401,95 +418,185 @@
     currentPlayerId = null;
   });
 
-  // DLA MECZÓW: WCZYTAJ DRUŻYNY DO SELECT
+  // MECZE - nowe funkcje
   function loadTeamsForMatches() {
     db.ref('teams').once('value')
       .then(snapshot => {
         teamsData = snapshot.val() || {};
         teamASelect.innerHTML = '';
-        teamBSelect.innerHTML = '';
-        bestPlayerSelect.innerHTML = '';
         for (const id in teamsData) {
           const name = teamsData[id].name;
           const optionA = document.createElement('option');
           optionA.value = id; optionA.textContent = name;
           teamASelect.appendChild(optionA);
-          const optionB = document.createElement('option');
-          optionB.value = id; optionB.textContent = name;
-          teamBSelect.appendChild(optionB);
         }
+        updateJaguarBestPlayers();
       })
       .catch(err => alert('Błąd wczytywania drużyn: ' + err.message));
   }
 
-  teamASelect.addEventListener('change', updateBestPlayerOptions);
-  teamBSelect.addEventListener('change', updateBestPlayerOptions);
-
-  function updateBestPlayerOptions() {
-    const teamA = teamASelect.value;
-    const teamB = teamBSelect.value;
-    bestPlayerSelect.innerHTML = '';
-    Promise.all([
-      teamA ? db.ref(`players/${teamA}`).once('value') : Promise.resolve({ val: () => null }),
-      teamB ? db.ref(`players/${teamB}`).once('value') : Promise.resolve({ val: () => null })
-    ]).then(([snapA, snapB]) => {
-      const playersA = snapA.val() || {};
-      const playersB = snapB.val() || {};
-      const allPlayers = { ...playersA, ...playersB };
-      for (const id in allPlayers) {
-        const option = document.createElement('option');
-        const teamId = playersA[id] ? teamA : teamB;
-        option.value = id + '|' + teamId;
-        option.textContent = allPlayers[id].name;
-        bestPlayerSelect.appendChild(option);
+  // 3 najlepszych z Jaguara (dynamika)
+  function updateJaguarBestPlayers() {
+    const teamId = teamASelect.value;
+    jaguarBestPlayersDiv.innerHTML = '';
+    jaguarPlayersRatingsDiv.innerHTML = '';
+    if (!teamId) return;
+    db.ref(`players/${teamId}`).once('value').then(snapshot => {
+      const players = snapshot.val() || {};
+      for (let i = 1; i <= 3; i++) {
+        const select = document.createElement('select');
+        select.name = `jaguarBestPlayer${i}`;
+        select.required = true;
+        select.innerHTML = '<option value="">- wybierz zawodnika -</option>';
+        for (const pid in players) {
+          const option = document.createElement('option');
+          option.value = pid;
+          option.textContent = players[pid].name;
+          select.appendChild(option);
+        }
+        select.dataset.idx = i;
+        jaguarBestPlayersDiv.appendChild(select);
       }
     });
   }
+  teamASelect.addEventListener('change', updateJaguarBestPlayers);
+
+  // Pola na oceny dla wybranych zawodników Jaguara
+  jaguarBestPlayersDiv.addEventListener('change', function() {
+    jaguarPlayersRatingsDiv.innerHTML = '';
+    Array.from(jaguarBestPlayersDiv.querySelectorAll('select')).forEach((select, i) => {
+      if (select.value) {
+        const label = document.createElement('label');
+        label.textContent = `Ocena zawodnika (${select.options[select.selectedIndex].text}, opcjonalnie):`;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.name = `jaguarBestPlayerRating${i+1}`;
+        input.min = 0;
+        input.max = 10;
+        input.step = 0.1;
+        jaguarPlayersRatingsDiv.appendChild(label);
+        jaguarPlayersRatingsDiv.appendChild(input);
+      }
+    });
+  });
+
+  // Pola na oceny dla zawodników drużyny przeciwnej (po wpisaniu nazwisk)
+  document.querySelectorAll('input[name^="opponentBestPlayer"]').forEach((input, i) => {
+    input.addEventListener('input', function() {
+      opponentPlayersRatingsDiv.innerHTML = '';
+      document.querySelectorAll('input[name^="opponentBestPlayer"]').forEach((inp, idx) => {
+        if (inp.value) {
+          const label = document.createElement('label');
+          label.textContent = `Ocena zawodnika przeciwnika (${inp.value}, opcjonalnie):`;
+          const ratingInput = document.createElement('input');
+          ratingInput.type = 'number';
+          ratingInput.name = `opponentBestPlayerRating${idx+1}`;
+          ratingInput.min = 0;
+          ratingInput.max = 10;
+          ratingInput.step = 0.1;
+          opponentPlayersRatingsDiv.appendChild(label);
+          opponentPlayersRatingsDiv.appendChild(ratingInput);
+        }
+      });
+    });
+  });
 
   // DODAJ MECZ
   matchForm.addEventListener('submit', e => {
     e.preventDefault();
     const date = matchForm.matchDate.value;
     const teamA = matchForm.teamASelect.value;
-    const teamB = matchForm.teamBSelect.value;
+    const teamB = matchForm.teamBName.value.trim();
     const score = matchForm.matchScore.value.trim();
-    const bestPlayerVal = matchForm.bestPlayerSelect.value;
-    if (!date || !teamA || !teamB || !score || !bestPlayerVal) return alert('Uzupełnij wszystkie pola');
-    if (teamA === teamB) return alert('Drużyny muszą być różne');
-    const [bestPlayerId, bestPlayerTeamId] = bestPlayerVal.split('|');
+
+    // Najlepsi z Jaguara
+    const jaguarPlayersSelects = jaguarBestPlayersDiv.querySelectorAll('select');
+    const jaguarBestPlayers = Array.from(jaguarPlayersSelects).map(sel => sel.value);
+
+    // Najlepsi z drużyny przeciwnej
+    const opponentBestPlayers = [
+      matchForm.opponentBestPlayer1.value.trim(),
+      matchForm.opponentBestPlayer2.value.trim(),
+      matchForm.opponentBestPlayer3.value.trim()
+    ];
+
+    // Ocena meczu
+    const matchRating = matchForm.matchRating.value ? parseFloat(matchForm.matchRating.value) : null;
+
+    // Oceny zawodników Jaguara (opcjonalnie)
+    const jaguarPlayersRatings = [];
+    jaguarPlayersSelects.forEach((sel, i) => {
+      const rating = matchForm[`jaguarBestPlayerRating${i+1}`]?.value;
+      jaguarPlayersRatings.push(rating ? parseFloat(rating) : null);
+    });
+
+    // Oceny zawodników przeciwnika (opcjonalnie)
+    const opponentPlayersRatings = [];
+    for (let i = 1; i <= 3; i++) {
+      const rating = matchForm[`opponentBestPlayerRating${i}`]?.value;
+      opponentPlayersRatings.push(rating ? parseFloat(rating) : null);
+    }
+
+    if (!date || !teamA || !teamB || !score || jaguarBestPlayers.some(v=>!v) || opponentBestPlayers.some(v=>!v)) {
+      alert('Uzupełnij wszystkie wymagane pola!');
+      return;
+    }
+
     db.ref('matches').push({
-      date, teamA, teamB, score, bestPlayerId, bestPlayerTeamId
+      date,
+      teamA,
+      teamBName: teamB,
+      score,
+      jaguarBestPlayers,
+      opponentBestPlayers,
+      matchRating,
+      jaguarPlayersRatings,
+      opponentPlayersRatings
+    }).then(() => {
+      matchForm.reset();
+      loadMatches();
+      updateJaguarBestPlayers();
+      opponentPlayersRatingsDiv.innerHTML = '';
     })
-      .then(() => {
-        matchForm.reset();
-        loadMatches();
-      })
-      .catch(err => alert('Błąd dodawania meczu: ' + err.message));
+    .catch(err => alert('Błąd dodawania meczu: ' + err.message));
   });
 
   // WCZYTAJ MECZE
   function loadMatches() {
     db.ref('matches').once('value')
       .then(snapshot => {
-        matchesData = snapshot.val() || {};
         matchesTableBody.innerHTML = '';
-        for (const matchId in matchesData) {
-          const match = matchesData[matchId];
+        const matches = snapshot.val() || {};
+        for (const matchId in matches) {
+          const match = matches[matchId];
           const tr = document.createElement('tr');
-          ['date','teamA','teamB','score'].forEach(key => {
-            const td = document.createElement('td');
-            td.textContent = key === 'teamA'
-              ? teamsData[match.teamA]?.name
-              : key === 'teamB'
-              ? teamsData[match.teamB]?.name
-              : match[key];
-            tr.appendChild(td);
-          });
-          const tdBest = document.createElement('td');
-          db.ref(`players/${match.bestPlayerTeamId}/${match.bestPlayerId}`).once('value')
-            .then(ps => { tdBest.textContent = ps.val()?.name || 'N/D'; })
-            .catch(() => { tdBest.textContent = 'N/D'; });
-          tr.appendChild(tdBest);
+          // Ustal nazwiska zawodników Jaguara
+          let jaguarNames = [];
+          let jaguarRatings = [];
+          if (match.jaguarBestPlayers && Array.isArray(match.jaguarBestPlayers)) {
+            jaguarNames = match.jaguarBestPlayers.map(pid => {
+              if (teamsData[match.teamA] && playersData[pid]) {
+                return playersData[pid].name;
+              }
+              return pid;
+            });
+            jaguarRatings = (match.jaguarPlayersRatings || []).map(r => r !== null && r !== undefined && r!=='' ? r : '-');
+          }
+          // Ustal zawodników przeciwnika i oceny
+          let opponentNames = (match.opponentBestPlayers || []).map(n => n || '-');
+          let opponentRatings = (match.opponentPlayersRatings || []).map(r => r !== null && r !== undefined && r!=='' ? r : '-');
+
+          tr.innerHTML = `
+            <td>${match.date}</td>
+            <td>${teamsData[match.teamA]?.name || ''}</td>
+            <td>${match.teamBName || ''}</td>
+            <td>${match.score}</td>
+            <td>${jaguarNames.join('<br>')}</td>
+            <td>${jaguarRatings.join('<br>')}</td>
+            <td>${opponentNames.join('<br>')}</td>
+            <td>${opponentRatings.join('<br>')}</td>
+            <td>${match.matchRating !== undefined && match.matchRating !== null ? match.matchRating : '-'}</td>
+          `;
           const tdAct = document.createElement('td');
           const delBtn = document.createElement('button');
           delBtn.textContent = 'Usuń';
@@ -560,16 +667,16 @@
       .catch(err => alert('Błąd rysowania wykresów: ' + err.message));
   }
 
-  // RESET UI
   function resetUI() {
     teamsList.innerHTML = '';
     teamDetails.classList.add('hidden');
     playerDetails.classList.add('hidden');
     matchesTableBody.innerHTML = '';
     teamASelect.innerHTML = '';
-    teamBSelect.innerHTML = '';
-    bestPlayerSelect.innerHTML = '';
     chartTeamSelect.innerHTML = '';
+    jaguarBestPlayersDiv.innerHTML = '';
+    jaguarPlayersRatingsDiv.innerHTML = '';
+    opponentPlayersRatingsDiv.innerHTML = '';
     currentTeamId = null;
     currentPlayerId = null;
     teamsData = {};
@@ -580,5 +687,7 @@
   }
 </script>
 
+</body>
+</html>
 </body>
 </html>
