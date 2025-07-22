@@ -839,23 +839,24 @@ function resetUI() {
   if (matchChart) matchChart.destroy();
 }
 
-  // Obsługa autoryzacji - stan użytkownika
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      currentUser = user;
-      loginSection.classList.add('hidden');
-      mainNav.classList.remove('hidden');
-      sections.teams.classList.remove('hidden');
-      loadTeams();
-    } else {
-      currentUser = null;
-      loginSection.classList.remove('hidden');
-      mainNav.classList.add('hidden');
-      Object.values(sections).forEach(s => s.classList.add('hidden'));
-      resetUI();
-    }
+// Obsługa autoryzacji - stan użytkownika
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    loginSection.classList.add('hidden');
+    mainNav.classList.remove('hidden');
+    sections.teams.classList.remove('hidden');
+    loadTeams();
+  } else {
+    currentUser = null;
+    loginSection.classList.remove('hidden');
+    mainNav.classList.add('hidden');
+    Object.values(sections).forEach(s => s.classList.add('hidden'));
+    resetUI();
   }
-  // Funkcja edytująca nazwę drużyny
+});  // <- tutaj zamykamy onAuthStateChanged
+
+// Funkcja edytująca nazwę drużyny
 function editTeamName(teamId) {
   const newName = prompt("Nowa nazwa drużyny:", teamsData[teamId].name);
   if (newName && newName.trim()) {
@@ -864,6 +865,8 @@ function editTeamName(teamId) {
       .catch(err => alert('Błąd edycji nazwy drużyny: ' + err.message));
   }
 }
+
+// Funkcja edytująca nazwisko zawodnika
 function editPlayerName(playerId) {
   const player = playersData[playerId];
   const newName = prompt("Nowe imię i nazwisko zawodnika:", player.name);
@@ -872,7 +875,8 @@ function editPlayerName(playerId) {
       .then(() => loadPlayers(currentTeamId))
       .catch(err => alert('Błąd zmiany nazwiska zawodnika: ' + err.message));
   }
-});
+}  // <- zamykamy funkcję editPlayerName
+
 
 </script>
 
