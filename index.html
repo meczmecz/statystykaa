@@ -194,14 +194,21 @@
       <label for="teamASelect">Drużyna A:</label>
       <select id="teamASelect" name="teamASelect" required></select>
 
-      <label for="teamBSelect">Drużyna B:</label>
-      <select id="teamBSelect" name="teamBSelect" required></select>
+     <label for="teamBInput">Drużyna B (przeciwnik):</label>
+     <input type="text" id="teamBInput" name="teamBInput" required placeholder="Nazwa drużyny przeciwnej" />
 
-      <label for="matchScore">Wynik (np. 3:1):</label>
-      <input type="text" id="matchScore" name="matchScore" placeholder="np. 3:1" required />
 
-      <label for="bestPlayerSelect">Najlepszy zawodnik meczu:</label>
-      <select id="bestPlayerSelect" name="bestPlayerSelect" required></select>
+    <label for="matchRating">Ocena meczu (0-10):</label>
+<input type="number" id="matchRating" name="matchRating" min="0" max="10" step="0.1" />
+
+<label for="topJaguarPlayers">Top 3 zawodnicy Jaguara (oddzielone przecinkami, opcjonalnie z ocenami np. Kowalski 8.5):</label>
+<input type="text" id="topJaguarPlayers" name="topJaguarPlayers" placeholder="np. Kowalski 8.5, Nowak 8.0, Wiśniewski 7.5" />
+
+<label for="topOpponentPlayers">Top 3 zawodnicy przeciwnika (oddzielone przecinkami):</label>
+<input type="text" id="topOpponentPlayers" name="topOpponentPlayers" placeholder="np. Smith 8.0, Doe 7.5, King 7.0" />
+
+<label for="goalScorers">Strzelcy bramek (opcjonalnie):</label>
+<textarea id="goalScorers" name="goalScorers" rows="2" placeholder="np. Kowalski 2, Smith 1"></textarea>
 
       <button type="submit">Dodaj mecz</button>
     </form>
@@ -214,6 +221,11 @@
           <th>Drużyna A</th>
           <th>Drużyna B</th>
           <th>Wynik</th>
+          <th>Ocena meczu</th>
+<th>Top 3 Jaguar</th>
+<th>Top 3 Przeciwnik</th>
+<th>Strzelcy</th>
+
           <th>Najlepszy zawodnik</th>
           <th>Akcje</th>
         </tr>
@@ -296,9 +308,14 @@
   // MECZE
   const matchForm = document.getElementById('matchForm');
   const teamASelect = document.getElementById('teamASelect');
-  const teamBSelect = document.getElementById('teamBSelect');
+const teamB = matchForm.teamBSelect.value;
   const bestPlayerSelect = document.getElementById('bestPlayerSelect');
   const matchesTableBody = document.querySelector('#matchesTable tbody');
+  const matchRating = parseFloat(matchForm.matchRating.value);
+const topJaguarPlayers = matchForm.topJaguarPlayers.value.trim();
+const topOpponentPlayers = matchForm.topOpponentPlayers.value.trim();
+const goalScorers = matchForm.goalScorers.value.trim();
+
 
   // WYKRESY
   const chartTeamSelect = document.getElementById('chartTeamSelect');
@@ -396,7 +413,8 @@ let matchChart = null;
 
         for (const id in teamsData) {
           const li = document.createElement('li');
-          li.textContent = teamsData[id].name;
+          li.innerHTML = `${teamsData[id].name}
+          <button onclick="editTeamName('${id}')">✏️</button>`;
           li.dataset.teamId = id;
           li.style.cursor = 'pointer';
           li.addEventListener('click', () => selectTeam(id));
@@ -611,6 +629,10 @@ matchForm.addEventListener('submit', e => {
     teamB,
     score,
     bestPlayerId,
+    matchRating,
+    topJaguarPlayers,
+    topOpponentPlayers,
+    goalScorers,
     bestPlayerTeamId
   })
     .then(() => {
@@ -646,6 +668,22 @@ function loadMatches() {
         const scoreTd = document.createElement('td');
         scoreTd.textContent = match.score;
         tr.appendChild(scoreTd);
+        const ratingTd = document.createElement('td');
+ratingTd.textContent = match.matchRating || '-';
+tr.appendChild(ratingTd);
+
+const jaguarTd = document.createElement('td');
+jaguarTd.textContent = match.topJaguarPlayers || '-';
+tr.appendChild(jaguarTd);
+
+const opponentTd = document.createElement('td');
+opponentTd.textContent = match.topOpponentPlayers || '-';
+tr.appendChild(opponentTd);
+
+const scorersTd = document.createElement('td');
+scorersTd.textContent = match.goalScorers || '-';
+tr.appendChild(scorersTd);
+
 
         const bestPlayerTd = document.createElement('td');
         // Pobierz imię i nazwisko zawodnika
@@ -816,7 +854,26 @@ function resetUI() {
       Object.values(sections).forEach(s => s.classList.add('hidden'));
       resetUI();
     }
-  });
+  }
+  // Funkcja edytująca nazwę drużyny
+function editTeamName(teamId) {
+  const newName = prompt("Nowa nazwa drużyny:", teamsData[teamId].name);
+  if (newName && newName.trim()) {
+    db.ref(`teams/${teamId}/name`).set(newName.trim())
+      .then(() => loadTeams())
+      .catch(err => alert('Błąd edycji nazwy drużyny: ' + err.message));
+  }
+}
+function editPlayerName(playerId) {
+  const player = playersData[playerId];
+  const newName = prompt("Nowe imię i nazwisko zawodnika:", player.name);
+  if (newName && newName.trim()) {
+    db.ref(`players/${currentTeamId}/${playerId}/name`).set(newName.trim())
+      .then(() => loadPlayers(currentTeamId))
+      .catch(err => alert('Błąd zmiany nazwiska zawodnika: ' + err.message));
+  }
+});
+
 </script>
 
 </body>
