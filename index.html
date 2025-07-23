@@ -338,6 +338,8 @@
       <div class="form-col">
         <label for="teamName">Nazwa drużyny:</label>
         <input type="text" id="teamName" name="teamName" required placeholder="Wpisz nazwę drużyny" />
+        <label for="teamSearchInput">Wyszukaj drużynę:</label>
+<input type="text" id="teamSearchInput" placeholder="Wpisz nazwę drużyny..." style="margin-bottom:15px;" />
       </div>
       <div class="form-col" style="align-self:end">
         <button type="submit"><i class="fas fa-plus"></i> Dodaj drużynę</button>
@@ -380,6 +382,8 @@
           <input type="text" name="opponentBestPlayer1" placeholder="Zawodnik 1" required />
           <input type="text" name="opponentBestPlayer2" placeholder="Zawodnik 2" required />
           <input type="text" name="opponentBestPlayer3" placeholder="Zawodnik 3" required />
+          <label for="matchSearchInput">Wyszukaj mecz:</label>
+<input type="text" id="matchSearchInput" placeholder="Szukaj po nazwie drużyny lub dacie..." style="margin-bottom:15px;" />
           <div id="opponentPlayersRatings"></div>
         </div>
         <div class="form-col">
@@ -410,7 +414,6 @@
       <tbody></tbody>
     </table>
   </section>
-
   <!-- POSTĘP -->
   <section id="progress" class="hidden">
     <h2><i class="fa-solid fa-chart-line"></i> Postęp zawodników</h2>
@@ -1028,6 +1031,41 @@
     playersData = {};
     matchesData = {};
   }
+  // Wyszukiwarka drużyn
+const teamSearchInput = document.getElementById('teamSearchInput');
+teamSearchInput.addEventListener('input', function() {
+  const query = this.value.trim().toLowerCase();
+  Array.from(document.querySelectorAll('.team-card')).forEach(card => {
+    const name = card.querySelector('h4').textContent.toLowerCase();
+    card.style.display = name.includes(query) ? '' : 'none';
+  });
+});
+
+// Wyszukiwarka meczów
+const matchSearchInput = document.getElementById('matchSearchInput');
+matchSearchInput.addEventListener('input', function() {
+  const query = this.value.trim().toLowerCase();
+  Array.from(document.querySelectorAll('#matchesTable tbody tr')).forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(query) ? '' : 'none';
+  });
+});
+
+// Zawijanie zawodników po kliknięciu na drużynę
+document.addEventListener('click', function(e) {
+  if (e.target.closest('.team-card') && !e.target.closest('.team-actions')) {
+    const card = e.target.closest('.team-card');
+    const playersList = card.querySelector('.team-players');
+    playersList.style.display = (playersList.style.display === 'none' || !playersList.style.display) ? 'block' : 'none';
+  }
+});
+
+// Domyślnie chowaj zawodników
+setTimeout(() => {
+  Array.from(document.querySelectorAll('.team-players')).forEach(list => {
+    list.style.display = 'none';
+  });
+}, 500);
 </script>
 </body>
 </html>
