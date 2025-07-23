@@ -688,7 +688,7 @@
       db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}/matchScores/${newScoreKey}`).set(score)
         .then(() => { this.matchScoreInputPlayer.value = ''; loadTeams(); });
     });
-
+    
     // Dodaj obsługę przycisku "Zobacz postęp"
     document.getElementById('showPlayerProgressBtn').onclick = function() {
       const chartContainer = document.getElementById('playerProgressChartContainer');
