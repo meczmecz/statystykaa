@@ -592,7 +592,7 @@
           teamDiv.querySelector(`#playerForm_${id}`).addEventListener('submit', function(e) {
             e.preventDefault();
             const playerName = this.playerNameInput.value.trim();
-            if (!playerName) return alert('Podaj imię i nazwisko zawodnika');
+            if (!playerName) return alert('Podaj imię i nazwisko zawodnika ');
             db.ref(`players/${id}`).push({
               name: playerName,
               trainingScores: {},
@@ -603,7 +603,7 @@
             });
           });
 
-          // Opcje do selectów
+          // Opcje do selectów dodatkowe
           const optionA = document.createElement('option');
           optionA.value = id;
           optionA.textContent = name;
@@ -650,6 +650,7 @@
         <input type="number" id="matchScoreInputPlayer" min="0" max="10" step="0.5" required />
         <button type="submit"><i class="fa fa-plus"></i></button>
       </form>
+      
       <button id="showPlayerProgressBtn"><i class="fa fa-chart-line"></i> Zobacz postęp</button>
       <div id="playerProgressChartContainer" style="display:none;">
         <canvas id="playerProgressChart" width="300" height="220"></canvas>
@@ -657,6 +658,7 @@
       </div>
       <button id="closePlayerDetailsBtn"><i class="fa fa-times"></i> Zamknij szczegóły</button>
     `;
+    
     playerDetails.classList.remove('hidden');
     document.body.appendChild(playerDetails);
     playerDetails.style.position = 'fixed';
@@ -668,13 +670,16 @@
 
     document.getElementById('closePlayerDetailsBtn').onclick = () => {
       playerDetails.classList.add('hidden');
+      
       // Schowaj i zniszcz wykres jeśli jest otwarty
+      
       document.getElementById('playerProgressChartContainer').style.display = 'none';
       if (playerProgressChartObj) {
         playerProgressChartObj.destroy();
         playerProgressChartObj = null;
       }
     };
+    
     document.getElementById('trainingScoreForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const score = parseFloat(this.trainingScoreInput.value);
@@ -683,6 +688,7 @@
       db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}/trainingScores/${newScoreKey}`).set(score)
         .then(() => { this.trainingScoreInput.value = ''; loadTeams(); });
     });
+    
     document.getElementById('matchScoreForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const score = parseFloat(this.matchScoreInputPlayer.value);
@@ -693,11 +699,13 @@
     });
     
     // Dodaj obsługę przycisku "Zobacz postęp"
+    
     document.getElementById('showPlayerProgressBtn').onclick = function() {
       const chartContainer = document.getElementById('playerProgressChartContainer');
       chartContainer.style.display = 'block';
 
       // Pobierz dane ocen z Firebase
+      
       db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).once('value')
         .then(snapshot => {
           const pdata = snapshot.val() || {};
@@ -705,14 +713,17 @@
           const matchScores = pdata.matchScores || {};
 
           // Zbuduj tablice: (data, wartość) dla obu typów ocen
+          
           const trainingData = Object.entries(trainingScores).map(([key, val]) => ({id: key, score: val}));
           const matchData = Object.entries(matchScores).map(([key, val]) => ({id: key, score: val}));
 
           // Sortuj według klucza (Firebase push keys są chronologiczne)
+          
           trainingData.sort((a,b)=>a.id.localeCompare(b.id));
           matchData.sort((a,b)=>a.id.localeCompare(b.id));
 
           // Przygotuj etykiety osi X (np. 1, 2, 3... lub daty jeśli chcesz)
+          
           const trainingLabels = trainingData.map((d,i)=>'Trening '+(i+1));
           const matchLabels    = matchData.map((d,i)=>'Mecz '+(i+1));
           // Łączymy obie tablice i etykiety
@@ -723,17 +734,21 @@
             if (trainingLabels[i]) txt += trainingLabels[i];
             if (matchLabels[i]) txt += (txt?', ':'') + matchLabels[i];
             labels.push(txt || 'Ocena '+(i+1));
+            
           }
 
           // Przygotuj dane dla wykresu
+          
           const trainingScoresArr = trainingData.map(d=>d.score);
           const matchScoresArr = matchData.map(d=>d.score);
 
           // Wyrównaj długości tablic do maxLen
+          
           while (trainingScoresArr.length < maxLen) trainingScoresArr.push(null);
           while (matchScoresArr.length < maxLen) matchScoresArr.push(null);
 
           // Tworzenie wykresu Chart.js
+          
           const ctx = document.getElementById('playerProgressChart').getContext('2d');
           if (playerProgressChartObj) playerProgressChartObj.destroy();
           playerProgressChartObj = new Chart(ctx, {
@@ -774,6 +789,7 @@
     };
 
     // Zamknij wykres postępu
+    
     document.getElementById('closePlayerProgressBtn').onclick = function() {
       document.getElementById('playerProgressChartContainer').style.display='none';
       if (playerProgressChartObj) {
@@ -782,7 +798,9 @@
       }
     };
   }
+  
   // MECZE - nowe funkcje
+  
   function loadTeamsForMatches() {
     db.ref('teams').once('value')
       .then(snapshot => {
@@ -821,9 +839,11 @@
       }
     });
   }
+  
   teamASelect.addEventListener('change', updateJaguarBestPlayers);
 
   // Pola na oceny dla wybranych zawodników Jaguara
+  
   jaguarBestPlayersDiv.addEventListener('change', function() {
     jaguarPlayersRatingsDiv.innerHTML = '';
     Array.from(jaguarBestPlayersDiv.querySelectorAll('select')).forEach((select, i) => {
@@ -844,6 +864,7 @@
   });
 
   // Pola na oceny dla zawodników drużyny przeciwnej (po wpisaniu nazwisk)
+  
   document.querySelectorAll('input[name^="opponentBestPlayer"]').forEach((input, i) => {
     input.addEventListener('input', function() {
       opponentPlayersRatingsDiv.innerHTML = '';
@@ -866,6 +887,7 @@
   });
 
   // DODAJ MECZ
+  
   matchForm.addEventListener('submit', e => {
     e.preventDefault();
     const date = matchForm.matchDate.value;
@@ -879,21 +901,25 @@
       matchForm.opponentBestPlayer2.value.trim(),
       matchForm.opponentBestPlayer3.value.trim()
     ];
+    
     const matchRating = matchForm.matchRating.value ? parseFloat(matchForm.matchRating.value) : null;
     const jaguarPlayersRatings = [];
     jaguarPlayersSelects.forEach((sel, i) => {
       const rating = matchForm[`jaguarBestPlayerRating${i+1}`]?.value;
       jaguarPlayersRatings.push(rating ? parseFloat(rating) : null);
     });
+    
     const opponentPlayersRatings = [];
     for (let i = 1; i <= 3; i++) {
       const rating = matchForm[`opponentBestPlayerRating${i}`]?.value;
       opponentPlayersRatings.push(rating ? parseFloat(rating) : null);
     }
+    
     if (!date || !teamA || !teamB || !score || jaguarBestPlayers.some(v=>!v) || opponentBestPlayers.some(v=>!v)) {
       alert('Uzupełnij wszystkie wymagane pola!');
       return;
     }
+    
     db.ref('matches').push({
       date,
       teamA,
@@ -914,6 +940,7 @@
   });
 
   // WCZYTAJ MECZE
+  
   function loadMatches() {
     db.ref('matches').once('value')
       .then(snapshot => {
@@ -926,7 +953,9 @@
           for (const matchId in matches) {
             const match = matches[matchId];
             const tr = document.createElement('tr');
+            
             // Nazwiska Jaguar
+            
             let jaguarNames = [];
             let jaguarRatings = [];
             if (match.jaguarBestPlayers && Array.isArray(match.jaguarBestPlayers)) {
@@ -959,6 +988,7 @@
                 db.ref(`matches/${matchId}`).remove().then(loadMatches).catch(err => alert('Błąd usuwania meczu: ' + err.message));
               }
             });
+          
             tdAct.appendChild(delBtn);
             tr.appendChild(tdAct);
             matchesTableBody.appendChild(tr);
@@ -969,6 +999,7 @@
   }
 
   // WYKRESY
+  
   function loadTeamsForChart() {
     db.ref('teams').once('value')
       .then(snapshot => {
@@ -1017,6 +1048,7 @@
   }
 
   // RESET UI
+  
   function resetUI() {
     teamsList.innerHTML = '';
     matchesTableBody.innerHTML = '';
@@ -1031,7 +1063,9 @@
     playersData = {};
     matchesData = {};
   }
+  
   // Wyszukiwarka drużyn
+  
 const teamSearchInput = document.getElementById('teamSearchInput');
 teamSearchInput.addEventListener('input', function() {
   const query = this.value.trim().toLowerCase();
@@ -1042,6 +1076,7 @@ teamSearchInput.addEventListener('input', function() {
 });
 
 // Wyszukiwarka meczów
+  
 const matchSearchInput = document.getElementById('matchSearchInput');
 matchSearchInput.addEventListener('input', function() {
   const query = this.value.trim().toLowerCase();
@@ -1052,6 +1087,7 @@ matchSearchInput.addEventListener('input', function() {
 });
 
 // Zawijanie zawodników po kliknięciu na drużynę
+  
 document.addEventListener('click', function(e) {
   if (e.target.closest('.team-card') && !e.target.closest('.team-actions')) {
     const card = e.target.closest('.team-card');
@@ -1061,11 +1097,13 @@ document.addEventListener('click', function(e) {
 });
 
 // Domyślnie chowaj zawodników
+  
 setTimeout(() => {
   Array.from(document.querySelectorAll('.team-players')).forEach(list => {
     list.style.display = 'none';
   });
 }, 500);
+  
 </script>
 </body>
 </html>
