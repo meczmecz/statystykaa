@@ -1,3 +1,5 @@
+<!DOCTYPE html>
+<html lang="pl">
 
 <!DOCTYPE html>
 <html lang="pl">
@@ -297,10 +299,19 @@
         font-size: 0.99em;
       }
     }
+
+    #playerProgressChart {
+      margin-top: 16px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 8px #c2d7e9;
+      padding: 10px 10px 10px 10px;
+      max-width: 320px;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
-
 <header><i class="fas fa-futbol"></i> Jaguar Analityka <span style="font-size:0.7em;font-weight:400;">zarządzanie drużynami i meczami</span></header>
 <main>
   <!-- LOGOWANIE -->
@@ -419,9 +430,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-  const firebaseConfig = {
+ const firebaseConfig = {
     apiKey: "AIzaSyAWXiBO5-woCCEqCBc2rfOIo1RhUUtevzU",
     authDomain: "jaguar-analityka.firebaseapp.com",
     databaseURL: "https://jaguar-analityka-default-rtdb.firebaseio.com",
@@ -621,7 +631,9 @@
   }
   window.editPlayer = editPlayer;
 
+
   // Szczegóły zawodnika (w karcie)
+  let playerProgressChartObj = null; // dodaj zmienną globalną wykresu
   function showPlayerDetails(teamId, playerId, playerData) {
     if (!playerData) return;
     currentDetailTeamId = teamId;
@@ -638,6 +650,11 @@
         <input type="number" id="matchScoreInputPlayer" min="0" max="10" step="0.5" required />
         <button type="submit"><i class="fa fa-plus"></i></button>
       </form>
+      <button id="showPlayerProgressBtn"><i class="fa fa-chart-line"></i> Zobacz postęp</button>
+      <div id="playerProgressChartContainer" style="display:none;">
+        <canvas id="playerProgressChart" width="300" height="220"></canvas>
+        <button id="closePlayerProgressBtn" style="margin-top:7px;"><i class="fa fa-times"></i> Zamknij wykres</button>
+      </div>
       <button id="closePlayerDetailsBtn"><i class="fa fa-times"></i> Zamknij szczegóły</button>
     `;
     playerDetails.classList.remove('hidden');
@@ -648,8 +665,15 @@
     playerDetails.style.zIndex = 1000;
     playerDetails.style.width = '350px';
     playerDetails.style.maxWidth = '96vw';
+
     document.getElementById('closePlayerDetailsBtn').onclick = () => {
       playerDetails.classList.add('hidden');
+      // Schowaj i zniszcz wykres jeśli jest otwarty
+      document.getElementById('playerProgressChartContainer').style.display = 'none';
+      if (playerProgressChartObj) {
+        playerProgressChartObj.destroy();
+        playerProgressChartObj = null;
+      }
     };
     document.getElementById('trainingScoreForm').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -667,8 +691,97 @@
       db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}/matchScores/${newScoreKey}`).set(score)
         .then(() => { this.matchScoreInputPlayer.value = ''; loadTeams(); });
     });
-  }
 
+    // Dodaj obsługę przycisku "Zobacz postęp"
+    document.getElementById('showPlayerProgressBtn').onclick = function() {
+      const chartContainer = document.getElementById('playerProgressChartContainer');
+      chartContainer.style.display = 'block';
+
+      // Pobierz dane ocen z Firebase
+      db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).once('value')
+        .then(snapshot => {
+          const pdata = snapshot.val() || {};
+          const trainingScores = pdata.trainingScores || {};
+          const matchScores = pdata.matchScores || {};
+
+          // Zbuduj tablice: (data, wartość) dla obu typów ocen
+          const trainingData = Object.entries(trainingScores).map(([key, val]) => ({id: key, score: val}));
+          const matchData = Object.entries(matchScores).map(([key, val]) => ({id: key, score: val}));
+
+          // Sortuj według klucza (Firebase push keys są chronologiczne)
+          trainingData.sort((a,b)=>a.id.localeCompare(b.id));
+          matchData.sort((a,b)=>a.id.localeCompare(b.id));
+
+          // Przygotuj etykiety osi X (np. 1, 2, 3... lub daty jeśli chcesz)
+          const trainingLabels = trainingData.map((d,i)=>'Trening '+(i+1));
+          const matchLabels    = matchData.map((d,i)=>'Mecz '+(i+1));
+          // Łączymy obie tablice i etykiety
+          const maxLen = Math.max(trainingData.length, matchData.length);
+          const labels = [];
+          for (let i=0;i<maxLen;i++) {
+            let txt = '';
+            if (trainingLabels[i]) txt += trainingLabels[i];
+            if (matchLabels[i]) txt += (txt?', ':'') + matchLabels[i];
+            labels.push(txt || 'Ocena '+(i+1));
+          }
+
+          // Przygotuj dane dla wykresu
+          const trainingScoresArr = trainingData.map(d=>d.score);
+          const matchScoresArr = matchData.map(d=>d.score);
+
+          // Wyrównaj długości tablic do maxLen
+          while (trainingScoresArr.length < maxLen) trainingScoresArr.push(null);
+          while (matchScoresArr.length < maxLen) matchScoresArr.push(null);
+
+          // Tworzenie wykresu Chart.js
+          const ctx = document.getElementById('playerProgressChart').getContext('2d');
+          if (playerProgressChartObj) playerProgressChartObj.destroy();
+          playerProgressChartObj = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: 'Oceny treningowe',
+                  data: trainingScoresArr,
+                  borderColor: '#003366',
+                  backgroundColor: 'rgba(0,51,102,0.07)',
+                  fill: false,
+                  tension: 0.2,
+                  spanGaps: true
+                },
+                {
+                  label: 'Oceny meczowe',
+                  data: matchScoresArr,
+                  borderColor: '#ffb400',
+                  backgroundColor: 'rgba(255,180,0,0.07)',
+                  fill: false,
+                  tension: 0.2,
+                  spanGaps: true
+                }
+              ]
+            },
+            options: {
+              responsive: false,
+              plugins: { legend: { display:true }, title: { display:false } },
+              scales: {
+                y: { beginAtZero: true, max: 10 }
+              }
+            }
+          });
+        })
+        .catch(err=>alert('Błąd pobierania ocen zawodnika: '+err.message));
+    };
+
+    // Zamknij wykres postępu
+    document.getElementById('closePlayerProgressBtn').onclick = function() {
+      document.getElementById('playerProgressChartContainer').style.display='none';
+      if (playerProgressChartObj) {
+        playerProgressChartObj.destroy();
+        playerProgressChartObj = null;
+      }
+    };
+  }
   // MECZE - nowe funkcje
   function loadTeamsForMatches() {
     db.ref('teams').once('value')
