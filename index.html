@@ -326,13 +326,31 @@
     <div id="authMessage"></div>
   </section>
 
-  <nav id="mainNav" class="hidden">
+ <nav id="mainNav" class="hidden">
     <button data-tab="teams" class="active"><i class="fas fa-users"></i> Drużyny</button>
     <button data-tab="matches"><i class="fas fa-trophy"></i> Mecze</button>
+    <button data-tab="squad"><i class="fas fa-users-gear"></i> Kadra meczu</button>
+    <button data-tab="playtime"><i class="fa fa-clock"></i> Czas</button>
     <button data-tab="progress"><i class="fas fa-chart-line"></i> Postęp</button>
     <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Wyloguj</button>
-  </nav>
+</nav>
+<!-- KADRA MECZU -->
+<section id="squad" class="hidden">
+  <h2><i class="fas fa-users-gear"></i> Kadra meczu</h2>
+  <label for="squadMatchSelect">Wybierz mecz:</label>
+  <select id="squadMatchSelect"></select>
+  <div id="squadFormContainer"></div>
+</section>
 
+<!-- CZAS NA BOISKU -->
+<section id="playtime" class="hidden">
+  <h2><i class="fa fa-clock"></i> Czas na boisku</h2>
+  <label for="playtimeTeamSelect">Wybierz drużynę:</label>
+  <select id="playtimeTeamSelect"></select>
+  <label for="playtimePlayerSelect">Wybierz zawodnika:</label>
+  <select id="playtimePlayerSelect"></select>
+  <div id="playtimeStats"></div>
+</section>
   <!-- DRUŻYNY -->
   <section id="teams" class="hidden">
     <h2><i class="fa-solid fa-people-group"></i> Drużyny i zawodnicy</h2>
@@ -455,11 +473,13 @@
   const navButtons = mainNav.querySelectorAll('button[data-tab]');
   const logoutBtn = document.getElementById('logoutBtn');
 
-  const sections = {
-    teams: document.getElementById('teams'),
-    matches: document.getElementById('matches'),
-    progress: document.getElementById('progress'),
-  };
+const sections = {
+  teams: document.getElementById('teams'),
+  matches: document.getElementById('matches'),
+  squad: document.getElementById('squad'),
+  playtime: document.getElementById('playtime'),
+  progress: document.getElementById('progress'),
+};
 
   // DRUŻYNY I ZAWODNICY js
   const teamForm = document.getElementById('teamForm');
@@ -514,17 +534,19 @@
     if (user) { currentUser = user; loginSection.classList.add('hidden'); mainNav.classList.remove('hidden'); sections.teams.classList.remove('hidden'); loadTeams(); }
     else { currentUser = null; loginSection.classList.remove('hidden'); mainNav.classList.add('hidden'); Object.values(sections).forEach(s => s.classList.add('hidden')); resetUI(); }
   });
-  navButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      navButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      Object.values(sections).forEach(s => s.classList.add('hidden'));
-      sections[btn.dataset.tab].classList.remove('hidden');
-      if (btn.dataset.tab === 'teams') loadTeams();
-      if (btn.dataset.tab === 'matches') { loadTeamsForMatches(); loadMatches(); }
-      if (btn.dataset.tab === 'progress') loadTeamsForChart();
-    });
+ navButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    navButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    Object.values(sections).forEach(s => s.classList.add('hidden'));
+    sections[btn.dataset.tab].classList.remove('hidden');
+    if (btn.dataset.tab === 'teams') loadTeams();
+    if (btn.dataset.tab === 'matches') { loadTeamsForMatches(); loadMatches(); }
+    if (btn.dataset.tab === 'progress') loadTeamsForChart();
+    if (btn.dataset.tab === 'squad') loadSquadTab();
+    if (btn.dataset.tab === 'playtime') loadPlaytimeTab();
   });
+});
 
   // DRUŻYNY
   teamForm.addEventListener('submit', e => {
@@ -583,10 +605,12 @@
             const list = teamDiv.querySelector(`#playersList_${id}`);
             for (const pid in players) {
               const li = document.createElement('li');
-              li.innerHTML = `<span>${players[pid].name}</span>
-                <button class="player-edit-btn" title="Edytuj" onclick="event.stopPropagation();window.editPlayer('${id}','${pid}','${players[pid].name.replace(/'/g,"\\'")}')"><i class="fa fa-pen"></i></button>`;
-              li.addEventListener('click', () => showPlayerDetails(id, pid, players[pid]));
-              list.appendChild(li);
+             li.innerHTML = `<span>${players[pid].name}</span>
+  <button class="player-edit-btn" title="Edytuj" onclick="event.stopPropagation();window.editPlayer('${id}','${pid}','${players[pid].name.replace(/'/g,"\\'")}')"><i class="fa fa-pen"></i></button>
+  <button class="player-remove-btn" title="Usuń" onclick="event.stopPropagation();window.removePlayer('${id}','${pid}')"><i class="fa fa-trash"></i></button>
+`;
+li.addEventListener('click', () => showPlayerDetails(id, pid, players[pid]));
+list.appendChild(li);
             }
           });
 
@@ -1099,7 +1123,200 @@ document.addEventListener('click', function(e) {
 });
 
 // Domyślnie chowaj zawodników po kliknieciu
-  
+ // --- KADRA MECZU ---
+function loadSquadTab() {
+  db.ref('matches').once('value').then(snapshot => {
+    const matches = snapshot.val() || {};
+    const squadMatchSelect = document.getElementById('squadMatchSelect');
+    squadMatchSelect.innerHTML = '';
+    for (const mid in matches) {
+      const m = matches[mid];
+      const opt = document.createElement('option');
+      opt.value = mid;
+      opt.textContent = `${m.date} – ${teamsData[m.teamA]?.name || ''} vs ${m.teamBName}`;
+      squadMatchSelect.appendChild(opt);
+    }
+    squadMatchSelect.onchange = () => showSquadForm(squadMatchSelect.value);
+    if (squadMatchSelect.value) showSquadForm(squadMatchSelect.value);
+  });
+}
+
+function showSquadForm(matchId) {
+  db.ref(`matches/${matchId}`).once('value').then(snap => {
+    const match = snap.val();
+    if (!match) return;
+    const teamId = match.teamA;
+    db.ref(`players/${teamId}`).once('value').then(psnap => {
+      const players = psnap.val() || {};
+      const container = document.getElementById('squadFormContainer');
+      container.innerHTML = `<h3>Bramkarz</h3>
+        <select id="goalkeeperSelect"><option value="">Wybierz...</option>
+          ${Object.entries(players).map(([pid, p]) => `<option value="${pid}">${p.name}</option>`).join('')}
+        </select>
+        <h3>Zawodnicy</h3>
+        <div id="squadPlayersList"></div>
+        <button id="addSquadPlayerBtn"><i class="fa fa-plus"></i> Dodaj zawodnika</button>
+        <button id="saveSquadBtn"><i class="fa fa-save"></i> Zapisz skład</button>`;
+      
+      let squadPlayers = [];
+
+      function renderSquadList() {
+        const list = document.getElementById('squadPlayersList');
+        list.innerHTML = '';
+        squadPlayers.forEach((sp, i) => {
+          list.innerHTML += `<div>
+            <select class="squadPlayerSelect" data-idx="${i}">
+              <option value="">Wybierz...</option>
+              ${Object.entries(players).map(([pid, p]) =>
+                `<option value="${pid}"${sp.playerId===pid?' selected':''}>${p.name}</option>`).join('')}
+            </select>
+            <input type="number" class="squadPlayerMinutes" data-idx="${i}" value="${sp.minutes||''}" min="0" max="120" placeholder="minuty na boisku">
+            <button class="removeSquadPlayerBtn" data-idx="${i}"><i class="fa fa-trash"></i></button>
+          </div>`;
+        });
+        // Obsługa usuwania
+        list.querySelectorAll('.removeSquadPlayerBtn').forEach(btn => {
+          btn.onclick = () => {
+            squadPlayers.splice(btn.dataset.idx,1);
+            renderSquadList();
+          };
+        });
+        // Obsługa zmiany zawodnika/minut
+        list.querySelectorAll('.squadPlayerSelect').forEach(sel => {
+          sel.onchange = () => { squadPlayers[sel.dataset.idx].playerId = sel.value; };
+        });
+        list.querySelectorAll('.squadPlayerMinutes').forEach(inp => {
+          inp.oninput = () => { squadPlayers[inp.dataset.idx].minutes = parseInt(inp.value)||0; };
+        });
+      }
+      renderSquadList();
+
+      document.getElementById('addSquadPlayerBtn').onclick = () => {
+        squadPlayers.push({playerId:'',minutes:0});
+        renderSquadList();
+      };
+
+      document.getElementById('saveSquadBtn').onclick = () => {
+        const goalkeeperId = document.getElementById('goalkeeperSelect').value;
+        db.ref(`matches/${matchId}/squad`).set({
+          goalkeeper: goalkeeperId,
+          players: squadPlayers
+        }).then(()=>alert('Skład zapisany'));
+      };
+    });
+  });
+}
+
+// --- CZAS NA BOISKU ---
+function loadPlaytimeTab() {
+  db.ref('teams').once('value').then(snap=>{
+    const teams = snap.val()||{};
+    const teamSel = document.getElementById('playtimeTeamSelect');
+    teamSel.innerHTML = '';
+    for (const tid in teams) {
+      const o = document.createElement('option');
+      o.value = tid; o.textContent = teams[tid].name;
+      teamSel.appendChild(o);
+    }
+    teamSel.onchange = loadPlaytimePlayers;
+    loadPlaytimePlayers();
+  });
+}
+function loadPlaytimePlayers() {
+  const teamId = document.getElementById('playtimeTeamSelect').value;
+  db.ref(`players/${teamId}`).once('value').then(snap=>{
+    const players = snap.val()||{};
+    const playerSel = document.getElementById('playtimePlayerSelect');
+    playerSel.innerHTML = '';
+    for (const pid in players) {
+      const o = document.createElement('option');
+      o.value = pid; o.textContent = players[pid].name;
+      playerSel.appendChild(o);
+    }
+    playerSel.onchange = showPlaytimeStats;
+    showPlaytimeStats();
+  });
+}
+function showPlaytimeStats() {
+  const teamId = document.getElementById('playtimeTeamSelect').value;
+  const playerId = document.getElementById('playtimePlayerSelect').value;
+  db.ref('matches').once('value').then(snap=>{
+    const matches = snap.val()||{};
+    let total = 0;
+    let stats = [];
+    for (const mid in matches) {
+      const squad = matches[mid]?.squad;
+      if (!squad) continue;
+      squad.players?.forEach(sp=>{
+        if (sp.playerId===playerId) {
+          total += sp.minutes||0;
+          stats.push(`<li>${matches[mid].date} vs ${matches[mid].teamBName}: ${sp.minutes||0} min</li>`);
+        }
+      });
+      if (squad.goalkeeper===playerId) {
+        stats.push(`<li>${matches[mid].date} vs ${matches[mid].teamBName}: 90 min (bramkarz)</li>`);
+        total += 90;
+      }
+    }
+    document.getElementById('playtimeStats').innerHTML = `<ul>${stats.join('')}</ul><b>Suma: ${total} minut</b>`;
+  });
+}
+
+// --- USUWANIE ZAWODNIKA ---
+// W funkcji loadTeams, gdy tworzysz li dla zawodnika, dodaj przycisk:
+function removePlayer(teamId, playerId) {
+  if (confirm('Na pewno usunąć zawodnika?')) {
+    db.ref(`players/${teamId}/${playerId}`).remove().then(loadTeams);
+  }
+}
+window.removePlayer = removePlayer;
+
+// --- PRZENOSZENIE ---
+// W funkcji showPlayerDetails dodaj przycisk:
+playerDetails.innerHTML += `<button id="transferPlayerBtn"><i class="fa fa-exchange-alt"></i> Przenieś zawodnika</button>`;
+// I obsługę:
+document.getElementById('transferPlayerBtn').onclick = function() {
+  db.ref('teams').once('value').then(snap=>{
+    const teams = snap.val()||{};
+    let teamsOpts = Object.entries(teams).map(([tid,t])=>`<option value="${tid}">${t.name}</option>`).join('');
+    const html = `
+      <label>Do której drużyny?</label>
+      <select id="transferTargetTeam">${teamsOpts}</select>
+      <label>Typ przeniesienia:</label>
+      <select id="transferType">
+        <option value="permanent">Na stałe</option>
+        <option value="temporary">Tymczasowo</option>
+      </select>
+      <div id="transferPeriodDiv" style="display:none;">
+        <label>Do kiedy? (data)</label>
+        <input type="date" id="transferEndDate">
+      </div>
+      <button id="confirmTransferBtn">Przenieś</button>
+    `;
+    playerDetails.innerHTML += html;
+    document.getElementById('transferType').onchange = function() {
+      document.getElementById('transferPeriodDiv').style.display =
+        this.value==='temporary'?'block':'none';
+    };
+    document.getElementById('confirmTransferBtn').onclick = function() {
+      const targetTeam = document.getElementById('transferTargetTeam').value;
+      const type = document.getElementById('transferType').value;
+      if (type==='permanent') {
+        db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).once('value').then(snap=>{
+          const pdata = snap.val();
+          db.ref(`players/${targetTeam}/${currentDetailPlayerId}`).set(pdata)
+            .then(()=>db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).remove())
+            .then(()=>{alert('Przeniesiono zawodnika'); loadTeams(); playerDetails.classList.add('hidden');});
+        });
+      } else {
+        const endDate = document.getElementById('transferEndDate').value;
+        db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}/temporaryTransfer`).set({
+          to: targetTeam, endDate
+        }).then(()=>alert('Przeniesiono zawodnika tymczasowo'));
+      }
+    };
+  });
+}; 
 setTimeout(() => {
   Array.from(document.querySelectorAll('.team-players')).forEach(list => {
     list.style.display = 'none';
