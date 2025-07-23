@@ -446,7 +446,7 @@
   const auth = firebase.auth();
   const db = firebase.database();
 
-  // ELEMENTY DOM
+  // ELEMENTY DOM js
   const loginSection = document.getElementById('loginSection');
   const loginForm = document.getElementById('loginForm');
   const authMessage = document.getElementById('authMessage');
@@ -461,7 +461,7 @@
     progress: document.getElementById('progress'),
   };
 
-  // DRUŻYNY I ZAWODNICY
+  // DRUŻYNY I ZAWODNICY js
   const teamForm = document.getElementById('teamForm');
   const teamsList = document.getElementById('teamsList');
   const playerDetails = document.createElement('div');
@@ -469,7 +469,7 @@
   let currentDetailTeamId = null;
   let currentDetailPlayerId = null;
 
-  // MECZE
+  // MECZE js
   const matchForm = document.getElementById('matchForm');
   const teamASelect = document.getElementById('teamASelect');
   const teamBName = document.getElementById('teamBName');
@@ -478,12 +478,12 @@
   const jaguarPlayersRatingsDiv = document.getElementById('jaguarPlayersRatings');
   const opponentPlayersRatingsDiv = document.getElementById('opponentPlayersRatings');
 
-  // WYKRESY
+  // WYKRESY js
   const chartTeamSelect = document.getElementById('chartTeamSelect');
   const trainingChartCanvas = document.getElementById('trainingChart');
   const matchChartCanvas = document.getElementById('matchChart');
 
-  // STANY
+  // STANY js
   let currentUser = null;
   let teamsData = {};
   let playersData = {};
@@ -491,7 +491,7 @@
   let trainingChart = null;
   let matchChart = null;
 
-  // LOGOWANIE
+  // LOGOWANIE do przycisku tam poczatek
   loginForm.addEventListener('submit', e => {
     e.preventDefault();
     authMessage.textContent = '';
@@ -550,7 +550,7 @@
     db.ref(`teams/${teamId}`).remove().then(loadTeams);
   }
 
-  // KARTY DRUŻYN
+  // KARTY DRUŻYN do uzupelnienia
   function loadTeams() {
     db.ref('teams').once('value')
       .then(snapshot => {
@@ -577,7 +577,7 @@
           `;
           teamsList.appendChild(teamDiv);
 
-          // Załaduj zawodników do karty
+          // Załaduj zawodników do karty podpina
           db.ref(`players/${id}`).once('value').then(snap => {
             const players = snap.val() || {};
             const list = teamDiv.querySelector(`#playersList_${id}`);
@@ -590,7 +590,7 @@
             }
           });
 
-          // Dodawanie zawodnika
+          // Dodawanie zawodnika uzupelnianie danych
           teamDiv.querySelector(`#playerForm_${id}`).addEventListener('submit', function(e) {
             e.preventDefault();
             const playerName = this.playerNameInput.value.trim();
@@ -605,7 +605,7 @@
             });
           });
 
-          // Opcje do selectów dodatkowe
+          // Opcje do selectów dodatkowe pozwalaa dodawac oceny itp przy ustawieniach meczu 
           const optionA = document.createElement('option');
           optionA.value = id;
           optionA.textContent = name;
@@ -623,7 +623,7 @@
   window.editTeam = editTeam;
   window.deleteTeam = deleteTeam;
 
-  // Edycja zawodnika
+  // Edycja zawodnika, zmiana imienia itp
   function editPlayer(teamId, playerId, oldName) {
     const newName = prompt("Podaj nowe imię i nazwisko zawodnika:", oldName);
     if (newName && newName.trim()) {
@@ -673,7 +673,7 @@
     document.getElementById('closePlayerDetailsBtn').onclick = () => {
       playerDetails.classList.add('hidden');
       
-      // Schowaj i zniszcz wykres jeśli jest otwarty
+      // Schowaj i zniszcz wykres jeśli jest otwarty, ten od indywidualnego zawodniak
       
       document.getElementById('playerProgressChartContainer').style.display = 'none';
       if (playerProgressChartObj) {
@@ -700,13 +700,13 @@
         .then(() => { this.matchScoreInputPlayer.value = ''; loadTeams(); });
     });
     
-    // Dodaj obsługę przycisku "Zobacz postęp"
+    // Dodaj obsługę przycisku "Zobacz postęp" to do wykresow całej druzyny ze srednimi ocenami treningu i meczy
     
     document.getElementById('showPlayerProgressBtn').onclick = function() {
       const chartContainer = document.getElementById('playerProgressChartContainer');
       chartContainer.style.display = 'block';
 
-      // Pobierz dane ocen z Firebase
+      // Pobierz dane ocen z Firebase bo tam sie zapisuja i potem daja do wykresu
       
       db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).once('value')
         .then(snapshot => {
@@ -749,7 +749,7 @@
           while (trainingScoresArr.length < maxLen) trainingScoresArr.push(null);
           while (matchScoresArr.length < maxLen) matchScoresArr.push(null);
 
-          // Tworzenie wykresu Chart.js
+          // Tworzenie wykresu Chart.js w js
           
           const ctx = document.getElementById('playerProgressChart').getContext('2d');
           if (playerProgressChartObj) playerProgressChartObj.destroy();
@@ -790,7 +790,7 @@
         .catch(err=>alert('Błąd pobierania ocen zawodnika: '+err.message));
     };
 
-    // Zamknij wykres postępu
+    // Zamknij wykres postępu po uzyciu
     
     document.getElementById('closePlayerProgressBtn').onclick = function() {
       document.getElementById('playerProgressChartContainer').style.display='none';
@@ -801,7 +801,7 @@
     };
   }
   
-  // MECZE - nowe funkcje
+  // MECZE - nowe funkcje, czyli wyszukanie danego meczu
   
   function loadTeamsForMatches() {
     db.ref('teams').once('value')
@@ -844,7 +844,7 @@
   
   teamASelect.addEventListener('change', updateJaguarBestPlayers);
 
-  // Pola na oceny dla wybranych zawodników Jaguara
+  // Pola na oceny dla wybranych zawodników Jaguara, indywidualny wykres
   
   jaguarBestPlayersDiv.addEventListener('change', function() {
     jaguarPlayersRatingsDiv.innerHTML = '';
@@ -865,7 +865,7 @@
     });
   });
 
-  // Pola na oceny dla zawodników drużyny przeciwnej (po wpisaniu nazwisk)
+  // Pola na oceny dla zawodników drużyny przeciwnej (po wpisaniu nazwisk i imie)
   
   document.querySelectorAll('input[name^="opponentBestPlayer"]').forEach((input, i) => {
     input.addEventListener('input', function() {
@@ -941,7 +941,7 @@
     .catch(err => alert('Błąd dodawania meczu: ' + err.message));
   });
 
-  // WCZYTAJ MECZE
+  // WCZYTAJ MECZE, wszytskie dane do tabelki
   
   function loadMatches() {
     db.ref('matches').once('value')
@@ -1000,7 +1000,7 @@
       .catch(err => alert('Błąd wczytywania meczów: ' + err.message));
   }
 
-  // WYKRESY
+  // WYKRESY indywidualne itp
   
   function loadTeamsForChart() {
     db.ref('teams').once('value')
@@ -1066,7 +1066,7 @@
     matchesData = {};
   }
   
-  // Wyszukiwarka drużyn
+  // Wyszukiwarka drużyn, ten caly pasek
   
 const teamSearchInput = document.getElementById('teamSearchInput');
 teamSearchInput.addEventListener('input', function() {
@@ -1077,7 +1077,7 @@ teamSearchInput.addEventListener('input', function() {
   });
 });
 
-// Wyszukiwarka meczów
+// Wyszukiwarka meczów, ten pasek z lupa
   
 const matchSearchInput = document.getElementById('matchSearchInput');
 matchSearchInput.addEventListener('input', function() {
@@ -1098,7 +1098,7 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Domyślnie chowaj zawodników
+// Domyślnie chowaj zawodników po kliknieciu
   
 setTimeout(() => {
   Array.from(document.querySelectorAll('.team-players')).forEach(list => {
