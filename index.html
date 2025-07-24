@@ -481,7 +481,7 @@ const sections = {
   progress: document.getElementById('progress'),
 };
 
-  // DRUŻYNY I ZAWODNICY js
+  // DRUŻYNY I ZAWODNICY js te dane itp
   const teamForm = document.getElementById('teamForm');
   const teamsList = document.getElementById('teamsList');
   const playerDetails = document.createElement('div');
@@ -489,7 +489,7 @@ const sections = {
   let currentDetailTeamId = null;
   let currentDetailPlayerId = null;
 
-  // MECZE js
+  // MECZE js dane itp
   const matchForm = document.getElementById('matchForm');
   const teamASelect = document.getElementById('teamASelect');
   const teamBName = document.getElementById('teamBName');
@@ -498,12 +498,12 @@ const sections = {
   const jaguarPlayersRatingsDiv = document.getElementById('jaguarPlayersRatings');
   const opponentPlayersRatingsDiv = document.getElementById('opponentPlayersRatings');
 
-  // WYKRESY js
+  // WYKRESY js dane
   const chartTeamSelect = document.getElementById('chartTeamSelect');
   const trainingChartCanvas = document.getElementById('trainingChart');
   const matchChartCanvas = document.getElementById('matchChart');
 
-  // STANY js
+  // STANY js dane
   let currentUser = null;
   let teamsData = {};
   let playersData = {};
@@ -511,7 +511,7 @@ const sections = {
   let trainingChart = null;
   let matchChart = null;
 
-  // LOGOWANIE do przycisku tam poczatek
+  //LOGOWANIE PRZYCISK ITP
   loginForm.addEventListener('submit', e => {
     e.preventDefault();
     authMessage.textContent = '';
@@ -548,7 +548,7 @@ const sections = {
   });
 });
 
-  // DRUŻYNY
+  // DRUZYNY, PRZYCISKI DO DODAWANIA DANYCH
   teamForm.addEventListener('submit', e => {
     e.preventDefault();
     const name = teamForm.teamName.value.trim();
@@ -572,7 +572,7 @@ const sections = {
     db.ref(`teams/${teamId}`).remove().then(loadTeams);
   }
 
-  // KARTY DRUŻYN do uzupelnienia
+  // KARTY DRUZYN DO UZUPELNIENIA DANE ZAWODNIOW PROGRES ITP
   function loadTeams() {
     db.ref('teams').once('value')
       .then(snapshot => {
@@ -599,7 +599,7 @@ const sections = {
           `;
           teamsList.appendChild(teamDiv);
 
-          // Załaduj zawodników do karty podpina
+          // ZALADUJ ZAWODNIKA 
           db.ref(`players/${id}`).once('value').then(snap => {
             const players = snap.val() || {};
             const list = teamDiv.querySelector(`#playersList_${id}`);
@@ -614,7 +614,7 @@ list.appendChild(li);
             }
           });
 
-          // Dodawanie zawodnika uzupelnianie danych
+          //DODAWANIE ZAWODNIUKA DO DRUZYNY
           teamDiv.querySelector(`#playerForm_${id}`).addEventListener('submit', function(e) {
             e.preventDefault();
             const playerName = this.playerNameInput.value.trim();
@@ -629,7 +629,7 @@ list.appendChild(li);
             });
           });
 
-          // Opcje do selectów dodatkowe pozwalaa dodawac oceny itp przy ustawieniach meczu 
+          // OPCJE DO SELECTOW 
           const optionA = document.createElement('option');
           optionA.value = id;
           optionA.textContent = name;
@@ -647,7 +647,7 @@ list.appendChild(li);
   window.editTeam = editTeam;
   window.deleteTeam = deleteTeam;
 
-  // Edycja zawodnika, zmiana imienia itp
+  // EDYTOWANIE DANYCH ZAWODNIKOW IMION ITP
   function editPlayer(teamId, playerId, oldName) {
     const newName = prompt("Podaj nowe imię i nazwisko zawodnika:", oldName);
     if (newName && newName.trim()) {
@@ -657,9 +657,8 @@ list.appendChild(li);
   }
   window.editPlayer = editPlayer;
 
-
-  // Szczegóły zawodnika (w karcie)
-  let playerProgressChartObj = null; // dodaj zmienną globalną wykresu
+  //DODAWANIE OCEN 1-10
+  let playerProgressChartObj = null; // ODPOWIADA ZA AMIANE LOKALNA MECZY
   function showPlayerDetails(teamId, playerId, playerData) {
     if (!playerData) return;
     currentDetailTeamId = teamId;
@@ -696,8 +695,9 @@ list.appendChild(li);
 
     document.getElementById('closePlayerDetailsBtn').onclick = () => {
       playerDetails.classList.add('hidden');
-      
-      // Schowaj i zniszcz wykres jeśli jest otwarty, ten od indywidualnego zawodniak
+
+
+      //CHOWA OTWARTE WYKRESY
       
       document.getElementById('playerProgressChartContainer').style.display = 'none';
       if (playerProgressChartObj) {
@@ -724,7 +724,7 @@ list.appendChild(li);
         .then(() => { this.matchScoreInputPlayer.value = ''; loadTeams(); });
     });
     
-    // Dodaj obsługę przycisku "Zobacz postęp" to do wykresow całej druzyny ze srednimi ocenami treningu i meczy
+    // PRZYCISK ZOBACZ PROGRES DO WAZODNIKOW
     
     document.getElementById('showPlayerProgressBtn').onclick = function() {
       const chartContainer = document.getElementById('playerProgressChartContainer');
@@ -763,7 +763,7 @@ list.appendChild(li);
             
           }
 
-          // Przygotuj dane dla wykresu
+          // DANE DIO WYKRESU TE UZUPELNIONE
           
           const trainingScoresArr = trainingData.map(d=>d.score);
           const matchScoresArr = matchData.map(d=>d.score);
@@ -912,7 +912,7 @@ list.appendChild(li);
     });
   });
 
-  // DODAJ MECZ
+  // DODAJ MECZ Z PRZECIWNIKIEM KONTRA JAGUAR DO WYBORU W KODZIE JETS
   
   matchForm.addEventListener('submit', e => {
     e.preventDefault();
@@ -945,7 +945,7 @@ list.appendChild(li);
       alert('Uzupełnij wszystkie wymagane pola!');
       return;
     }
-    
+    //DANE Z KTORYCH KORZYSTAM
     db.ref('matches').push({
       date,
       teamA,
@@ -979,8 +979,8 @@ list.appendChild(li);
           for (const matchId in matches) {
             const match = matches[matchId];
             const tr = document.createElement('tr');
-            
-            // Nazwiska Jaguar
+
+            //NAJLEPSZE NAZWISKA ZAWODNIKOW JAGUARA
             
             let jaguarNames = [];
             let jaguarRatings = [];
@@ -993,7 +993,7 @@ list.appendChild(li);
             }
             let opponentNames = (match.opponentBestPlayers || []).map(n => n ? `<span class="tag">${n}</span>` : '-');
             let opponentRatings = (match.opponentPlayersRatings || []).map(r => r !== null && r !== undefined && r!=='' ? r : '-');
-
+//DANER DO UZUPELNIENIA
             tr.innerHTML = `
               <td data-label="Data">${match.date}</td>
               <td data-label="Drużyna A">${teamsData[match.teamA]?.name || ''}</td>
@@ -1004,6 +1004,7 @@ list.appendChild(li);
               <td data-label="Najlepsi przeciwnik">${opponentNames.join('<br>')}</td>
               <td data-label="Oceny przeciwnik">${opponentRatings.join('<br>')}</td>
               <td data-label="Ocena meczu">${match.matchRating !== undefined && match.matchRating !== null ? `<span class="match-star"><i class="fas fa-star"></i></span> ${match.matchRating}` : '-'}</td>
+              //MOZLIWOSC USUNIECIA MECZU
             `;
             const tdAct = document.createElement('td');
             const delBtn = document.createElement('button');
@@ -1073,7 +1074,7 @@ list.appendChild(li);
       .catch(err => alert('Błąd rysowania wykresów: ' + err.message));
   }
 
-  // RESET UI
+  // RESET UI DO WSYTSKICH
   
   function resetUI() {
     teamsList.innerHTML = '';
@@ -1101,7 +1102,7 @@ teamSearchInput.addEventListener('input', function() {
   });
 });
 
-// Wyszukiwarka meczów, ten pasek z lupa
+// Wyszukiwarka meczów, ten pasek
   
 const matchSearchInput = document.getElementById('matchSearchInput');
 matchSearchInput.addEventListener('input', function() {
@@ -1263,7 +1264,6 @@ function showPlaytimeStats() {
 }
 
 // --- USUWANIE ZAWODNIKA ---
-// W funkcji loadTeams, gdy tworzysz li dla zawodnika, dodaj przycisk:
 function removePlayer(teamId, playerId) {
   if (confirm('Na pewno usunąć zawodnika?')) {
     db.ref(`players/${teamId}/${playerId}`).remove().then(loadTeams);
@@ -1272,9 +1272,9 @@ function removePlayer(teamId, playerId) {
 window.removePlayer = removePlayer;
 
 // --- PRZENOSZENIE ---
-// W funkcji showPlayerDetails dodaj przycisk:
+
 playerDetails.innerHTML += `<button id="transferPlayerBtn"><i class="fa fa-exchange-alt"></i> Przenieś zawodnika</button>`;
-// I obsługę:
+
 document.getElementById('transferPlayerBtn').onclick = function() {
   db.ref('teams').once('value').then(snap=>{
     const teams = snap.val()||{};
