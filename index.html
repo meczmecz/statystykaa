@@ -1150,7 +1150,9 @@ function showSquadForm(matchId) {
       const players = psnap.val() || {};
       const container = document.getElementById('squadFormContainer');
       container.innerHTML = `<h3>Bramkarz</h3>
+          <div id="squadPlayersList"></div>
         <select id="goalkeeperSelect"><option value="">Wybierz...</option>
+          <button id="addSquadPlayerBtn"><i class="fa fa-plus"></i> Dodaj zawodnika</button>
           ${Object.entries(players).map(([pid, p]) => `<option value="${pid}">${p.name}</option>`).join('')}
         </select>
         <h3>Zawodnicy</h3>
