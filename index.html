@@ -632,16 +632,17 @@ checkTemporaryTransfers();
     const players = allPlayers[id] || {};
     // Dodaj zawodników tymczasowych z innych drużyn!
     for (const otherTeamId in allPlayers) {
-      if (otherTeamId === id) continue;
-      for (const pid in allPlayers[otherTeamId]) {
-        const p = allPlayers[otherTeamId][pid];
-        if (p.temporaryTransfer?.to === id) {
-          if (new Date(p.temporaryTransfer.endDate) > new Date()) {
-            players[pid] = {...p, temporaryTransfer:true, originalTeam:otherTeamId};
-          }
-        }
+  if (otherTeamId === id) continue;
+  for (const pid in allPlayers[otherTeamId]) {
+    const p = allPlayers[otherTeamId][pid];
+    // Dodaj zawodnika tymczasowego TYLKO jeśli NIE istnieje już w tej drużynie!
+    if (p.temporaryTransfer?.to === id && !(pid in players)) {
+      if (new Date(p.temporaryTransfer.endDate) > new Date()) {
+        players[pid] = {...p, temporaryTransfer:true, originalTeam:otherTeamId};
       }
     }
+  }
+}
     const list = teamsList.querySelector(`#playersList_${id}`);
     for (const pid in players) {
       const li = document.createElement('li');
