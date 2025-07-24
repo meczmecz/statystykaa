@@ -1384,52 +1384,6 @@ function removePlayer(teamId, playerId) {
 }
 window.removePlayer = removePlayer;
 
-// --- PRZENOSZENIE ---
-
-playerDetails.innerHTML += `<button id="transferPlayerBtn"><i class="fa fa-exchange-alt"></i> Przenieś zawodnika</button>`;
-
-document.getElementById('transferPlayerBtn').onclick = function() {
-  db.ref('teams').once('value').then(snap=>{
-    const teams = snap.val()||{};
-    let teamsOpts = Object.entries(teams).map(([tid,t])=>`<option value="${tid}">${t.name}</option>`).join('');
-    const html = `
-      <label>Do której drużyny?</label>
-      <select id="transferTargetTeam">${teamsOpts}</select>
-      <label>Typ przeniesienia:</label>
-      <select id="transferType">
-        <option value="permanent">Na stałe</option>
-        <option value="temporary">Tymczasowo</option>
-      </select>
-      <div id="transferPeriodDiv" style="display:none;">
-        <label>Do kiedy? (data)</label>
-        <input type="date" id="transferEndDate">
-      </div>
-      <button id="confirmTransferBtn">Przenieś</button>
-    `;
-    playerDetails.innerHTML += html;
-    document.getElementById('transferType').onchange = function() {
-      document.getElementById('transferPeriodDiv').style.display =
-        this.value==='temporary'?'block':'none';
-    };
-    document.getElementById('confirmTransferBtn').onclick = function() {
-      const targetTeam = document.getElementById('transferTargetTeam').value;
-      const type = document.getElementById('transferType').value;
-      if (type==='permanent') {
-        db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).once('value').then(snap=>{
-          const pdata = snap.val();
-          db.ref(`players/${targetTeam}/${currentDetailPlayerId}`).set(pdata)
-            .then(()=>db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).remove())
-            .then(()=>{alert('Przeniesiono zawodnika'); loadTeams(); playerDetails.classList.add('hidden');});
-        });
-      } else {
-        const endDate = document.getElementById('transferEndDate').value;
-        db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}/temporaryTransfer`).set({
-          to: targetTeam, endDate
-        }).then(()=>alert('Przeniesiono zawodnika tymczasowo'));
-      }
-    };
-  });
-}; 
 setTimeout(() => {
   Array.from(document.querySelectorAll('.team-players')).forEach(list => {
     list.style.display = 'none';
