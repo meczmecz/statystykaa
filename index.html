@@ -571,7 +571,33 @@ const sections = {
     db.ref(`players/${teamId}`).remove();
     db.ref(`teams/${teamId}`).remove().then(loadTeams);
   }
-
+function checkTemporaryTransfers() {
+  db.ref('players').once('value').then(allPlayersSnap => {
+    const allPlayers = allPlayersSnap.val() || {};
+    for (const teamId in allPlayers) {
+      for (const pid in allPlayers[teamId]) {
+        const p = allPlayers[teamId][pid];
+        if (p.temporaryTransfer) {
+          if (new Date(p.temporaryTransfer.endDate) <= new Date()) {
+            const originalTeam = teamId; // Tu był
+            const targetTeam = p.temporaryTransfer.to; // Tu jest teraz
+            // Przenieś z targetTeam do originalTeam
+            db.ref(`players/${targetTeam}/${pid}`).once('value').then(snap=>{
+              const pdata = snap.val();
+              if (pdata) {
+                delete pdata.temporaryTransfer;
+                db.ref(`players/${originalTeam}/${pid}`).set(pdata)
+                  .then(()=>db.ref(`players/${targetTeam}/${pid}`).remove());
+              }
+            });
+          }
+        }
+      }
+    }
+  });
+}
+// Wywołaj na starcie, np. ZARAZ po zalogowaniu lub przed loadTeams():
+checkTemporaryTransfers();
   // KARTY DRUZYN DO UZUPELNIENIA DANE ZAWODNIOW PROGRES ITP
   function loadTeams() {
     db.ref('teams').once('value')
@@ -600,19 +626,38 @@ const sections = {
           teamsList.appendChild(teamDiv);
 
           // ZALADUJ ZAWODNIKA 
-          db.ref(`players/${id}`).once('value').then(snap => {
-            const players = snap.val() || {};
-            const list = teamDiv.querySelector(`#playersList_${id}`);
-            for (const pid in players) {
-              const li = document.createElement('li');
-             li.innerHTML = `<span>${players[pid].name}</span>
-  <button class="player-edit-btn" title="Edytuj" onclick="event.stopPropagation();window.editPlayer('${id}','${pid}','${players[pid].name.replace(/'/g,"\\'")}')"><i class="fa fa-pen"></i></button>
-  <button class="player-remove-btn" title="Usuń" onclick="event.stopPropagation();window.removePlayer('${id}','${pid}')"><i class="fa fa-trash"></i></button>
-`;
-li.addEventListener('click', () => showPlayerDetails(id, pid, players[pid]));
-list.appendChild(li);
-            }
-          });
+  db.ref('players').once('value').then(allPlayersSnap => {
+  const allPlayers = allPlayersSnap.val() || {};
+  for (const id in teamsData) {
+    const players = allPlayers[id] || {};
+    // Dodaj zawodników tymczasowych z innych drużyn!
+    for (const otherTeamId in allPlayers) {
+      if (otherTeamId === id) continue;
+      for (const pid in allPlayers[otherTeamId]) {
+        const p = allPlayers[otherTeamId][pid];
+        if (p.temporaryTransfer?.to === id) {
+          if (new Date(p.temporaryTransfer.endDate) > new Date()) {
+            players[pid] = {...p, temporaryTransfer:true, originalTeam:otherTeamId};
+          }
+        }
+      }
+    }
+    const list = teamsList.querySelector(`#playersList_${id}`);
+    for (const pid in players) {
+      const li = document.createElement('li');
+      li.innerHTML = `<span>${players[pid].name}</span>
+        <button class="player-edit-btn" title="Edytuj" onclick="event.stopPropagation();window.editPlayer('${id}','${pid}','${players[pid].name.replace(/'/g,"\\'")}')"><i class="fa fa-pen"></i></button>
+        <button class="player-remove-btn" title="Usuń" onclick="event.stopPropagation();window.removePlayer('${id}','${pid}')"><i class="fa fa-trash"></i></button>
+      `;
+      // Dodaj znacznik tymczasowego transferu!
+      if (players[pid].temporaryTransfer) {
+        li.innerHTML += ` <span style="color:#ffb400;font-weight:bold;">(tymczasowo do ${players[pid].temporaryTransfer.endDate})</span>`;
+      }
+      li.addEventListener('click', () => showPlayerDetails(id, pid, players[pid]));
+      list.appendChild(li);
+    }
+  }
+});
 
           //DODAWANIE ZAWODNIUKA DO DRUZYNY
           teamDiv.querySelector(`#playerForm_${id}`).addEventListener('submit', function(e) {
@@ -682,6 +727,7 @@ list.appendChild(li);
         <button id="closePlayerProgressBtn" style="margin-top:7px;"><i class="fa fa-times"></i> Zamknij wykres</button>
       </div>
       <button id="closePlayerDetailsBtn"><i class="fa fa-times"></i> Zamknij szczegóły</button>
+        <button id="transferPlayerBtn"><i class="fa fa-exchange-alt"></i> Przenieś zawodnika</button>
     `;
     
     playerDetails.classList.remove('hidden');
@@ -823,7 +869,56 @@ list.appendChild(li);
         playerProgressChartObj = null;
       }
     };
+    document.getElementById('transferPlayerBtn').onclick = function() {
+  db.ref('teams').once('value').then(snap=>{
+    const teams = snap.val()||{};
+    let teamsOpts = Object.entries(teams)
+      .filter(([tid]) => tid !== currentDetailTeamId) // nie pokazuj obecnej drużyny!
+      .map(([tid,t])=>`<option value="${tid}">${t.name}</option>`).join('');
+    const html = `
+      <div id="transferForm">
+        <label>Do której drużyny?</label>
+        <select id="transferTargetTeam">${teamsOpts}</select>
+        <label>Typ przeniesienia:</label>
+        <select id="transferType">
+          <option value="permanent">Na stałe</option>
+          <option value="temporary">Tymczasowo</option>
+        </select>
+        <div id="transferPeriodDiv" style="display:none;">
+          <label>Do kiedy? (data)</label>
+          <input type="date" id="transferEndDate">
+        </div>
+        <button id="confirmTransferBtn">Przenieś</button>
+      </div>
+    `;
+    playerDetails.querySelector('#transferForm')?.remove();
+    playerDetails.innerHTML += html;
+
+    document.getElementById('transferType').onchange = function() {
+      document.getElementById('transferPeriodDiv').style.display =
+        this.value==='temporary'?'block':'none';
+    };
+    document.getElementById('confirmTransferBtn').onclick = function() {
+      const targetTeam = document.getElementById('transferTargetTeam').value;
+      const type = document.getElementById('transferType').value;
+      if (type==='permanent') {
+        db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).once('value').then(snap=>{
+          const pdata = snap.val();
+          db.ref(`players/${targetTeam}/${currentDetailPlayerId}`).set(pdata)
+            .then(()=>db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).remove())
+            .then(()=>{alert('Przeniesiono zawodnika'); loadTeams(); playerDetails.classList.add('hidden');});
+        });
+      } else {
+        const endDate = document.getElementById('transferEndDate').value;
+        db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}/temporaryTransfer`).set({
+          to: targetTeam, endDate
+        }).then(()=>alert('Przeniesiono zawodnika tymczasowo'));
+      }
+    };
+  });
+};
   }
+  
   
   // MECZE - nowe funkcje, czyli wyszukanie danego meczu
   
