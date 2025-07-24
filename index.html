@@ -980,7 +980,7 @@ checkTemporaryTransfers();
   }
   
   
-  // MECZE - wyszukanie danego meczu
+  // MECZE - WYSZUKIWANIE DANEGO MECZU
   
   function loadTeamsForMatches() {
     db.ref('teams').once('value')
@@ -1023,7 +1023,7 @@ checkTemporaryTransfers();
   
   teamASelect.addEventListener('change', updateJaguarBestPlayers);
 
-  // Pola na oceny dla wybranych zawodników Jaguara, indywidualny wykres
+  // Pola na oceny dla wybranych zawodników Jaguara, INDYWIDUALNY WYKRES
   
   jaguarBestPlayersDiv.addEventListener('change', function() {
     jaguarPlayersRatingsDiv.innerHTML = '';
@@ -1044,7 +1044,7 @@ checkTemporaryTransfers();
     });
   });
 
-  // Pola na oceny dla zawodników drużyny przeciwnej (po wpisaniu nazwisk i imie ie sa wymagane)
+  // Pola na oceny dla zawodników drużyny przeciwnej (po wpisaniu nazwisk i imie sa wymagane W SENSIE MOZE BYC TYLKO IMIE ALE MUSI COS BYC NIE MOZE BYĆ PUSTE)
   
   document.querySelectorAll('input[name^="opponentBestPlayer"]').forEach((input, i) => {
     input.addEventListener('input', function() {
@@ -1067,7 +1067,7 @@ checkTemporaryTransfers();
     });
   });
 
-  // DODAJ MECZ Z PRZECIWNIKIEM KONTRA JAGUAR DO WYBORU W KODZIE JETS
+  // DODAJ MECZ Z PRZECIWNIKIEM KONTRA JAGUAR DO WYBORU W KODZIE JEST
   
   matchForm.addEventListener('submit', e => {
     e.preventDefault();
@@ -1151,7 +1151,7 @@ checkTemporaryTransfers();
             let opponentNames = (match.opponentBestPlayers || []).map(n => n ? `<span class="tag">${n}</span>` : '-');
             let opponentRatings = (match.opponentPlayersRatings || []).map(r => r !== null && r !== undefined && r!=='' ? r : '-');
 
-            //DANER DO UZUPELNIENIA
+            //DANER DO UZUPELNIENIA DO MECZY
             
             tr.innerHTML = `
               <td data-label="Data">${match.date}</td>
@@ -1184,7 +1184,7 @@ checkTemporaryTransfers();
       .catch(err => alert('Błąd wczytywania meczów: ' + err.message));
   }
 
-  // WYKRESY indywidualne itp
+  // WYKRESY INDYWIDUALNE DLA ZAWODNIKOW
   
   function loadTeamsForChart() {
     db.ref('teams').once('value')
@@ -1233,7 +1233,7 @@ checkTemporaryTransfers();
       .catch(err => alert('Błąd rysowania wykresów: ' + err.message));
   }
 
-  // RESET UI DO WSYTSKICH
+  // RESET UI DO WSYZTKICH
   
   function resetUI() {
     teamsList.innerHTML = '';
@@ -1250,7 +1250,7 @@ checkTemporaryTransfers();
     matchesData = {};
   }
   
-  // Wyszukiwarka drużyn, ten caly pasek
+  // WYSZUKIWARKA DRUZYN
   
 const teamSearchInput = document.getElementById('teamSearchInput');
 teamSearchInput.addEventListener('input', function() {
@@ -1261,7 +1261,7 @@ teamSearchInput.addEventListener('input', function() {
   });
 });
 
-// Wyszukiwarka meczów, ten pasek
+// WYSZUKIWARKA MECZOW
   
 const matchSearchInput = document.getElementById('matchSearchInput');
 matchSearchInput.addEventListener('input', function() {
@@ -1272,7 +1272,7 @@ matchSearchInput.addEventListener('input', function() {
   });
 });
 
-// Zawijanie zawodników po kliknięciu na drużynę
+//ZAWIJANIE DRUZYN Z ZAWODNIKAMI PO KLIKNIECIU
   
 document.addEventListener('click', function(e) {
   if (e.target.closest('.team-card') && !e.target.closest('.team-actions')) {
@@ -1282,7 +1282,7 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Domyślnie chowaj zawodników po kliknieciu
+// DOMYSLNE CHOWANIE ZAWODNIKOW PO KLIKNIECIU
   
  // --- KADRA MECZU ---
 function loadSquadTab() {
@@ -1336,7 +1336,7 @@ function showSquadForm(matchId) {
           </div>`;
         });
         
-        // Obsługa usuwani
+        // OBSLUGA USUWANIA
         
         list.querySelectorAll('.removeSquadPlayerBtn').forEach(btn => {
           btn.onclick = () => {
@@ -1345,7 +1345,7 @@ function showSquadForm(matchId) {
           };
         });
         
-        // Obsługa zmiany zawodnika/minut
+        //OBSLUGA ZMIANY ZAWODNIKOW TAM DANYCH ITP
         
         list.querySelectorAll('.squadPlayerSelect').forEach(sel => {
           sel.onchange = () => { squadPlayers[sel.dataset.idx].playerId = sel.value; };
