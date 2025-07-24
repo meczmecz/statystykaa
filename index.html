@@ -584,19 +584,19 @@ const sections = {
           const teamDiv = document.createElement('div');
           teamDiv.className = 'team-card';
           const name = teamsData[id].name;
-          teamDiv.innerHTML = `
+          teamDiv.innerHTML = 
             <div class="team-actions">
               <button title="Edytuj" onclick="event.stopPropagation();window.editTeam('${id}','${name.replace(/'/g,"\\'")}')"><i class="fa-solid fa-pen"></i></button>
               <button title="Usuń" class="danger" onclick="event.stopPropagation();window.deleteTeam('${id}')"><i class="fa-solid fa-trash"></i></button>
-            </div>
+            <div>
             <h4><i class="fas fa-shield"></i> ${name}</h4>
             <div><b>Zawodnicy:</b></div>
             <ul class="team-players" id="playersList_${id}"></ul>
             <form class="add-player-row" id="playerForm_${id}">
               <input type="text" name="playerNameInput" required placeholder="Imię i nazwisko zawodnika"/>
               <button type="submit"><i class="fa fa-plus"></i></button>
-            </form>
-          `;
+            <form>
+          ;
           teamsList.appendChild(teamDiv);
 
           // Załaduj zawodników do karty podpina
@@ -605,10 +605,10 @@ const sections = {
             const list = teamDiv.querySelector(`#playersList_${id}`);
             for (const pid in players) {
               const li = document.createElement('li');
-             li.innerHTML = `<span>${players[pid].name}</span>
+             li.innerHTML = <span>${players[pid].name}</span>
   <button class="player-edit-btn" title="Edytuj" onclick="event.stopPropagation();window.editPlayer('${id}','${pid}','${players[pid].name.replace(/'/g,"\\'")}')"><i class="fa fa-pen"></i></button>
   <button class="player-remove-btn" title="Usuń" onclick="event.stopPropagation();window.removePlayer('${id}','${pid}')"><i class="fa fa-trash"></i></button>
-`;
+;
 li.addEventListener('click', () => showPlayerDetails(id, pid, players[pid]));
 list.appendChild(li);
             }
@@ -664,26 +664,26 @@ list.appendChild(li);
     if (!playerData) return;
     currentDetailTeamId = teamId;
     currentDetailPlayerId = playerId;
-    playerDetails.innerHTML = `
+    playerDetails.innerHTML = 
       <h4><i class="fa-solid fa-user"></i> Szczegóły zawodnika: <span>${playerData.name}</span></h4>
       <form id="trainingScoreForm">
         <label>Dodaj ocenę treningu (0-10):</label>
         <input type="number" id="trainingScoreInput" min="0" max="10" step="0.5" required />
         <button type="submit"><i class="fa fa-plus"></i></button>
-      </form>
+      <form>
       <form id="matchScoreForm">
         <label>Dodaj ocenę meczu (0-10):</label>
         <input type="number" id="matchScoreInputPlayer" min="0" max="10" step="0.5" required />
         <button type="submit"><i class="fa fa-plus"></i></button>
-      </form>
+      <form>
       
       <button id="showPlayerProgressBtn"><i class="fa fa-chart-line"></i> Zobacz postęp</button>
       <div id="playerProgressChartContainer" style="display:none;">
         <canvas id="playerProgressChart" width="300" height="220"></canvas>
         <button id="closePlayerProgressBtn" style="margin-top:7px;"><i class="fa fa-times"></i> Zamknij wykres</button>
-      </div>
+      <div>
       <button id="closePlayerDetailsBtn"><i class="fa fa-times"></i> Zamknij szczegóły</button>
-    `;
+    ;
     
     playerDetails.classList.remove('hidden');
     document.body.appendChild(playerDetails);
@@ -994,7 +994,7 @@ list.appendChild(li);
             let opponentNames = (match.opponentBestPlayers || []).map(n => n ? `<span class="tag">${n}</span>` : '-');
             let opponentRatings = (match.opponentPlayersRatings || []).map(r => r !== null && r !== undefined && r!=='' ? r : '-');
 
-            tr.innerHTML = `
+            tr.innerHTML = 
               <td data-label="Data">${match.date}</td>
               <td data-label="Drużyna A">${teamsData[match.teamA]?.name || ''}</td>
               <td data-label="Drużyna B">${match.teamBName || ''}</td>
@@ -1004,7 +1004,7 @@ list.appendChild(li);
               <td data-label="Najlepsi przeciwnik">${opponentNames.join('<br>')}</td>
               <td data-label="Oceny przeciwnik">${opponentRatings.join('<br>')}</td>
               <td data-label="Ocena meczu">${match.matchRating !== undefined && match.matchRating !== null ? `<span class="match-star"><i class="fas fa-star"></i></span> ${match.matchRating}` : '-'}</td>
-            `;
+            ;
             const tdAct = document.createElement('td');
             const delBtn = document.createElement('button');
             delBtn.textContent = 'Usuń';
@@ -1316,7 +1316,7 @@ document.getElementById('transferPlayerBtn').onclick = function() {
       }
     };
   });
-}; 
+
 setTimeout(() => {
   Array.from(document.querySelectorAll('.team-players')).forEach(list => {
     list.style.display = 'none';
