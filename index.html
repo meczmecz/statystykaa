@@ -901,19 +901,37 @@ checkTemporaryTransfers();
     document.getElementById('confirmTransferBtn').onclick = function() {
       const targetTeam = document.getElementById('transferTargetTeam').value;
       const type = document.getElementById('transferType').value;
-      if (type==='permanent') {
-        db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).once('value').then(snap=>{
-          const pdata = snap.val();
-          db.ref(`players/${targetTeam}/${currentDetailPlayerId}`).set(pdata)
-            .then(()=>db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).remove())
-            .then(()=>{alert('Przeniesiono zawodnika'); loadTeams(); playerDetails.classList.add('hidden');});
-        });
-      } else {
-        const endDate = document.getElementById('transferEndDate').value;
-        db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}/temporaryTransfer`).set({
-          to: targetTeam, endDate
-        }).then(()=>alert('Przeniesiono zawodnika tymczasowo'));
+   if (type === 'permanent') {
+  db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).once('value').then(snap => {
+    const pdata = snap.val();
+    db.ref(`players/${targetTeam}/${currentDetailPlayerId}`).set(pdata)
+      .then(() => db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).remove())
+      .then(() => { alert('Przeniesiono zawodnika'); loadTeams(); playerDetails.classList.add('hidden'); });
+  });
+} else {
+  const endDate = document.getElementById('transferEndDate').value;
+  db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}`).once('value').then(snap => {
+    const pdata = snap.val();
+    // Dodaj informację o transferze do oryginalnej drużyny
+    db.ref(`players/${currentDetailTeamId}/${currentDetailPlayerId}/temporaryTransfer`).set({
+      to: targetTeam,
+      endDate
+    });
+    // Skopiuj zawodnika do docelowej drużyny i dodaj informację o tymczasowości
+    db.ref(`players/${targetTeam}/${currentDetailPlayerId}`).set({
+      ...pdata,
+      temporaryTransfer: {
+        from: currentDetailTeamId,
+        endDate,
+        isTemporary: true
       }
+    }).then(() => {
+      alert('Przeniesiono zawodnika tymczasowo');
+      loadTeams();
+      playerDetails.classList.add('hidden');
+    });
+  });
+}
     };
   });
 };
