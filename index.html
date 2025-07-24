@@ -272,7 +272,9 @@
       font-weight: 700;
       letter-spacing: 0.2px;
     }
+    
     /* Auth Message */
+    
     #authMessage { color: var(--danger); margin-top: 12px; text-align: center; font-weight: 700; }
     /* Responsive */
     @media (max-width: 900px) {
@@ -313,7 +315,9 @@
 <header></div><i class="fas fa-futbol"></i> Jaguar Analityka <span style="font-size:0.7em;font-weight:400;">zarządzanie drużynami i meczami</span></header>
 
   <main>
+    
   <!-- LOGOWANIE -->
+    
   <section id="loginSection">
     <h2><i class="fas fa-right-to-bracket"></i> Logowanie</h2>
     <form id="loginForm">
@@ -334,7 +338,9 @@
     <button data-tab="progress"><i class="fas fa-chart-line"></i> Postęp</button>
     <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Wyloguj</button>
 </nav>
+    
 <!-- KADRA MECZU -->
+    
 <section id="squad" class="hidden">
   <h2><i class="fas fa-users-gear"></i> Kadra meczu</h2>
   <label for="squadMatchSelect">Wybierz mecz:</label>
@@ -343,6 +349,7 @@
 </section>
 
 <!-- CZAS NA BOISKU -->
+    
 <section id="playtime" class="hidden">
   <h2><i class="fa fa-clock"></i> Czas na boisku</h2>
   <label for="playtimeTeamSelect">Wybierz drużynę:</label>
@@ -351,7 +358,9 @@
   <select id="playtimePlayerSelect"></select>
   <div id="playtimeStats"></div>
 </section>
+    
   <!-- DRUŻYNY -->
+    
   <section id="teams" class="hidden">
     <h2><i class="fa-solid fa-people-group"></i> Drużyny i zawodnicy</h2>
     <form id="teamForm" class="form-row">
@@ -369,6 +378,7 @@
   </section>
 
   <!-- MECZE -->
+    
   <section id="matches" class="hidden">
     <h2><i class="fas fa-trophy"></i> Dodaj nowy mecz</h2>
     <form id="matchForm">
@@ -434,7 +444,9 @@
       <tbody></tbody>
     </table>
   </section>
+    
   <!-- POSTĘP -->
+    
   <section id="progress" class="hidden">
     <h2><i class="fa-solid fa-chart-line"></i> Postęp zawodników</h2>
     <label for="chartTeamSelect">Wybierz drużynę:</label>
@@ -451,6 +463,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+  
  const firebaseConfig = {
     apiKey: "AIzaSyAWXiBO5-woCCEqCBc2rfOIo1RhUUtevzU",
     authDomain: "jaguar-analityka.firebaseapp.com",
@@ -465,6 +478,7 @@
   const db = firebase.database();
 
   // ELEMENTY DOM js
+  
   const loginSection = document.getElementById('loginSection');
   const loginForm = document.getElementById('loginForm');
   const authMessage = document.getElementById('authMessage');
@@ -482,6 +496,7 @@ const sections = {
 };
 
   // DRUŻYNY I ZAWODNICY js te dane itp
+  
   const teamForm = document.getElementById('teamForm');
   const teamsList = document.getElementById('teamsList');
   const playerDetails = document.createElement('div');
@@ -490,6 +505,7 @@ const sections = {
   let currentDetailPlayerId = null;
 
   // MECZE js dane itp
+  
   const matchForm = document.getElementById('matchForm');
   const teamASelect = document.getElementById('teamASelect');
   const teamBName = document.getElementById('teamBName');
@@ -499,11 +515,13 @@ const sections = {
   const opponentPlayersRatingsDiv = document.getElementById('opponentPlayersRatings');
 
   // WYKRESY js dane
+  
   const chartTeamSelect = document.getElementById('chartTeamSelect');
   const trainingChartCanvas = document.getElementById('trainingChart');
   const matchChartCanvas = document.getElementById('matchChart');
 
   // STANY js dane
+  
   let currentUser = null;
   let teamsData = {};
   let playersData = {};
@@ -512,6 +530,7 @@ const sections = {
   let matchChart = null;
 
   //LOGOWANIE PRZYCISK ITP
+  
   loginForm.addEventListener('submit', e => {
     e.preventDefault();
     authMessage.textContent = '';
@@ -530,10 +549,12 @@ const sections = {
       resetUI();
     });
   });
+  
   auth.onAuthStateChanged(user => {
     if (user) { currentUser = user; loginSection.classList.add('hidden'); mainNav.classList.remove('hidden'); sections.teams.classList.remove('hidden'); loadTeams(); }
     else { currentUser = null; loginSection.classList.remove('hidden'); mainNav.classList.add('hidden'); Object.values(sections).forEach(s => s.classList.add('hidden')); resetUI(); }
   });
+  
  navButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     navButtons.forEach(b => b.classList.remove('active'));
@@ -549,6 +570,7 @@ const sections = {
 });
 
   // DRUZYNY, PRZYCISKI DO DODAWANIA DANYCH
+  
   teamForm.addEventListener('submit', e => {
     e.preventDefault();
     const name = teamForm.teamName.value.trim();
@@ -596,9 +618,13 @@ function checkTemporaryTransfers() {
     }
   });
 }
+  
 // Wywołaj na starcie, np. ZARAZ po zalogowaniu lub przed loadTeams():
+  
 checkTemporaryTransfers();
+  
   // KARTY DRUZYN DO UZUPELNIENIA DANE ZAWODNIOW PROGRES ITP
+  
   function loadTeams() {
     db.ref('teams').once('value')
       .then(snapshot => {
@@ -626,13 +652,17 @@ checkTemporaryTransfers();
           teamsList.appendChild(teamDiv);
 
           // ZALADUJ ZAWODNIKA 
+          
  db.ref('players').once('value').then(allPlayersSnap => {
   const allPlayers = allPlayersSnap.val() || {};
   for (const id in teamsData) {
-    // 1. Zawodnicy tej drużyny
+    
+    //  Zawodnicy tej drużyny
+    
     const localPlayers = allPlayers[id] || {};
 
-    // 2. Zawodnicy tymczasowi z innych drużyn
+    //  Zawodnicy tymczasowi z innych drużyn
+    
     const tempPlayers = {};
     for (const otherTeamId in allPlayers) {
       if (otherTeamId === id) continue;
@@ -647,7 +677,8 @@ checkTemporaryTransfers();
       }
     }
 
-    // 3. Połącz do jednej listy dla renderowania
+    //  Połącz do jednej listy dla renderowania
+    
     const mergedPlayers = {...localPlayers, ...tempPlayers};
     const list = document.getElementById(`playersList_${id}`);
     list.innerHTML = '';
@@ -666,8 +697,9 @@ checkTemporaryTransfers();
     }
   }
 });
-
-          //DODAWANIE ZAWODNIUKA DO DRUZYNY
+ 
+          //DODAWANIE ZAWODNIUKA DO DRUZYNY TYLKO IMIE I NAZWISKO
+          
           teamDiv.querySelector(`#playerForm_${id}`).addEventListener('submit', function(e) {
             e.preventDefault();
             const playerName = this.playerNameInput.value.trim();
@@ -683,6 +715,7 @@ checkTemporaryTransfers();
           });
 
           // OPCJE DO SELECTOW 
+          
           const optionA = document.createElement('option');
           optionA.value = id;
           optionA.textContent = name;
@@ -701,6 +734,7 @@ checkTemporaryTransfers();
   window.deleteTeam = deleteTeam;
 
   // EDYTOWANIE DANYCH ZAWODNIKOW IMION ITP
+  
   function editPlayer(teamId, playerId, oldName) {
     const newName = prompt("Podaj nowe imię i nazwisko zawodnika:", oldName);
     if (newName && newName.trim()) {
@@ -711,7 +745,8 @@ checkTemporaryTransfers();
   window.editPlayer = editPlayer;
 
   //DODAWANIE OCEN 1-10
-  let playerProgressChartObj = null; // ODPOWIADA ZA AMIANE LOKALNA MECZY
+  
+  let playerProgressChartObj = null;                                                                      // ODPOWIADA ZA AMIANE LOKALNA MECZY
   function showPlayerDetails(teamId, playerId, playerData) {
     if (!playerData) return;
     currentDetailTeamId = teamId;
@@ -778,7 +813,7 @@ checkTemporaryTransfers();
         .then(() => { this.matchScoreInputPlayer.value = ''; loadTeams(); });
     });
     
-    // PRZYCISK ZOBACZ PROGRES DO WAZODNIKOW
+    // PRZYCISK ZOBACZ PROGRES DO ZAWODNIKOW
     
     document.getElementById('showPlayerProgressBtn').onclick = function() {
       const chartContainer = document.getElementById('playerProgressChartContainer');
@@ -792,21 +827,21 @@ checkTemporaryTransfers();
           const trainingScores = pdata.trainingScores || {};
           const matchScores = pdata.matchScores || {};
 
-          // Zbuduj tablice: (data, wartość) dla obu typów ocen
+          // Zbuduj tablice: (data, wartość) dla obu typów ocen TRENINGOWYCH I MECZOWYCH
           
           const trainingData = Object.entries(trainingScores).map(([key, val]) => ({id: key, score: val}));
           const matchData = Object.entries(matchScores).map(([key, val]) => ({id: key, score: val}));
 
-          // Sortuj według klucza (Firebase push keys są chronologiczne)
+          // Sortuj według klucza (Firebase push keys są chronologiczn DLAN NICH)
           
           trainingData.sort((a,b)=>a.id.localeCompare(b.id));
           matchData.sort((a,b)=>a.id.localeCompare(b.id));
-
-          // Przygotuj etykiety osi X (np. 1, 2, 3... lub daty jeśli chcesz)
           
           const trainingLabels = trainingData.map((d,i)=>'Trening '+(i+1));
           const matchLabels    = matchData.map((d,i)=>'Mecz '+(i+1));
+          
           // Łączymy obie tablice i etykiety
+          
           const maxLen = Math.max(trainingData.length, matchData.length);
           const labels = [];
           for (let i=0;i<maxLen;i++) {
@@ -868,7 +903,7 @@ checkTemporaryTransfers();
         .catch(err=>alert('Błąd pobierania ocen zawodnika: '+err.message));
     };
 
-    // Zamknij wykres postępu po uzyciu
+    // Zamknij wykres postępu po uzyciu ZA SPRAWA PRZYCISKU
     
     document.getElementById('closePlayerProgressBtn').onclick = function() {
       document.getElementById('playerProgressChartContainer').style.display='none';
@@ -925,7 +960,6 @@ checkTemporaryTransfers();
       to: targetTeam,
       endDate
     });
-    // Skopiuj zawodnika do docelowej drużyny i dodaj informację o tymczasowości
     db.ref(`players/${targetTeam}/${currentDetailPlayerId}`).set({
       ...pdata,
       temporaryTransfer: {
@@ -946,7 +980,7 @@ checkTemporaryTransfers();
   }
   
   
-  // MECZE - nowe funkcje, czyli wyszukanie danego meczu
+  // MECZE - wyszukanie danego meczu
   
   function loadTeamsForMatches() {
     db.ref('teams').once('value')
@@ -1010,7 +1044,7 @@ checkTemporaryTransfers();
     });
   });
 
-  // Pola na oceny dla zawodników drużyny przeciwnej (po wpisaniu nazwisk i imie)
+  // Pola na oceny dla zawodników drużyny przeciwnej (po wpisaniu nazwisk i imie ie sa wymagane)
   
   document.querySelectorAll('input[name^="opponentBestPlayer"]').forEach((input, i) => {
     input.addEventListener('input', function() {
@@ -1066,7 +1100,9 @@ checkTemporaryTransfers();
       alert('Uzupełnij wszystkie wymagane pola!');
       return;
     }
+    
     //DANE Z KTORYCH KORZYSTAM
+    
     db.ref('matches').push({
       date,
       teamA,
@@ -1114,7 +1150,9 @@ checkTemporaryTransfers();
             }
             let opponentNames = (match.opponentBestPlayers || []).map(n => n ? `<span class="tag">${n}</span>` : '-');
             let opponentRatings = (match.opponentPlayersRatings || []).map(r => r !== null && r !== undefined && r!=='' ? r : '-');
-//DANER DO UZUPELNIENIA
+
+            //DANER DO UZUPELNIENIA
+            
             tr.innerHTML = `
               <td data-label="Data">${match.date}</td>
               <td data-label="Drużyna A">${teamsData[match.teamA]?.name || ''}</td>
@@ -1245,6 +1283,7 @@ document.addEventListener('click', function(e) {
 });
 
 // Domyślnie chowaj zawodników po kliknieciu
+  
  // --- KADRA MECZU ---
 function loadSquadTab() {
   db.ref('matches').once('value').then(snapshot => {
@@ -1296,14 +1335,18 @@ function showSquadForm(matchId) {
             <button class="removeSquadPlayerBtn" data-idx="${i}"><i class="fa fa-trash"></i></button>
           </div>`;
         });
-        // Obsługa usuwania
+        
+        // Obsługa usuwani
+        
         list.querySelectorAll('.removeSquadPlayerBtn').forEach(btn => {
           btn.onclick = () => {
             squadPlayers.splice(btn.dataset.idx,1);
             renderSquadList();
           };
         });
+        
         // Obsługa zmiany zawodnika/minut
+        
         list.querySelectorAll('.squadPlayerSelect').forEach(sel => {
           sel.onchange = () => { squadPlayers[sel.dataset.idx].playerId = sel.value; };
         });
@@ -1330,6 +1373,7 @@ function showSquadForm(matchId) {
 }
 
 // --- CZAS NA BOISKU ---
+  
 function loadPlaytimeTab() {
   db.ref('teams').once('value').then(snap=>{
     const teams = snap.val()||{};
@@ -1385,6 +1429,7 @@ function showPlaytimeStats() {
 }
 
 // --- USUWANIE ZAWODNIKA ---
+  
 function removePlayer(teamId, playerId) {
   if (confirm('Na pewno usunąć zawodnika?')) {
     db.ref(`players/${teamId}/${playerId}`).remove().then(loadTeams);
