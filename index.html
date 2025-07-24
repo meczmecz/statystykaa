@@ -1150,7 +1150,6 @@ function showSquadForm(matchId) {
       const players = psnap.val() || {};
       const container = document.getElementById('squadFormContainer');
       container.innerHTML = `<h3>Bramkarz</h3>
-          <div id="squadPlayersList"></div>
         <select id="goalkeeperSelect"><option value="">Wybierz...</option>
           ${Object.entries(players).map(([pid, p]) => `<option value="${pid}">${p.name}</option>`).join('')}
         </select>
@@ -1165,17 +1164,6 @@ function showSquadForm(matchId) {
         const list = document.getElementById('squadPlayersList');
         list.innerHTML = '';
         squadPlayers.forEach((sp, i) => {
-          list.innerHTML += `<div>
-            <select class="squadPlayerSelect" data-idx="${i}">
-              <option value="">Wybierz...</option>
-              ${Object.entries(players).map(([pid, p]) =>
-                `<option value="${pid}"${sp.playerId===pid?' selected':''}>${p.name}</option>`).join('')}
-            </select>
-            <input type="number" class="squadPlayerMinutes" data-idx="${i}" value="${sp.minutes||''}" min="0" max="120" placeholder="minuty na boisku">
-            <button class="removeSquadPlayerBtn" data-idx="${i}"><i class="fa fa-trash"></i></button>
-          </div>`;
-        });
-        goalkeeper.forEach((sp, i) => {
           list.innerHTML += `<div>
             <select class="squadPlayerSelect" data-idx="${i}">
               <option value="">Wybierz...</option>
