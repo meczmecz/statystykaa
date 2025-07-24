@@ -664,10 +664,10 @@ list.appendChild(li);
     currentDetailTeamId = teamId;
     currentDetailPlayerId = playerId;
     playerDetails.innerHTML = `
-    
+     
       <h4><i class="fa-solid fa-user"></i> Szczegóły zawodnika: <span>${playerData.name}</span></h4>
       <form id="trainingScoreForm">
-      
+        <button id="transferPlayerBtn"><i class="fa fa-exchange-alt"></i> Przenieś zawodnika</button>
         <label>Dodaj ocenę treningu (0-10):</label>
         <input type="number" id="trainingScoreInput" min="0" max="10" step="0.5" required />
         <button type="submit"><i class="fa fa-plus"></i></button>
@@ -677,7 +677,6 @@ list.appendChild(li);
         <input type="number" id="matchScoreInputPlayer" min="0" max="10" step="0.5" required />
         <button type="submit"><i class="fa fa-plus"></i></button>
       </form>
-       <button id="transferPlayerBtn"><i class="fa fa-exchange-alt"></i> Przenieś zawodnika</button>
       <button id="showPlayerProgressBtn"><i class="fa fa-chart-line"></i> Zobacz postęp</button>
       <div id="playerProgressChartContainer" style="display:none;">
         <canvas id="playerProgressChart" width="300" height="220"></canvas>
