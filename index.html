@@ -626,35 +626,42 @@ checkTemporaryTransfers();
           teamsList.appendChild(teamDiv);
 
           // ZALADUJ ZAWODNIKA 
-  db.ref('players').once('value').then(allPlayersSnap => {
+ db.ref('players').once('value').then(allPlayersSnap => {
   const allPlayers = allPlayersSnap.val() || {};
   for (const id in teamsData) {
-    const players = allPlayers[id] || {};
-    // Dodaj zawodników tymczasowych z innych drużyn!
+    // 1. Zawodnicy tej drużyny
+    const localPlayers = allPlayers[id] || {};
+
+    // 2. Zawodnicy tymczasowi z innych drużyn
+    const tempPlayers = {};
     for (const otherTeamId in allPlayers) {
-  if (otherTeamId === id) continue;
-  for (const pid in allPlayers[otherTeamId]) {
-    const p = allPlayers[otherTeamId][pid];
-    // Dodaj zawodnika tymczasowego TYLKO jeśli NIE istnieje już w tej drużynie!
-    if (p.temporaryTransfer?.to === id && !(pid in players)) {
-      if (new Date(p.temporaryTransfer.endDate) > new Date()) {
-        players[pid] = {...p, temporaryTransfer:true, originalTeam:otherTeamId};
+      if (otherTeamId === id) continue;
+      for (const pid in allPlayers[otherTeamId]) {
+        const p = allPlayers[otherTeamId][pid];
+        // Dodaj zawodnika TYLKO jeśli NIE istnieje już w tej drużynie!
+        if (p.temporaryTransfer?.to === id && !(pid in localPlayers)) {
+          if (new Date(p.temporaryTransfer.endDate) > new Date()) {
+            tempPlayers[pid] = {...p, temporaryTransfer:true, originalTeam:otherTeamId};
+          }
+        }
       }
     }
-  }
-}
-    const list = teamsList.querySelector(`#playersList_${id}`);
-    for (const pid in players) {
+
+    // 3. Połącz do jednej listy dla renderowania
+    const mergedPlayers = {...localPlayers, ...tempPlayers};
+    const list = document.getElementById(`playersList_${id}`);
+    list.innerHTML = '';
+    for (const pid in mergedPlayers) {
+      const p = mergedPlayers[pid];
       const li = document.createElement('li');
-      li.innerHTML = `<span>${players[pid].name}</span>
-        <button class="player-edit-btn" title="Edytuj" onclick="event.stopPropagation();window.editPlayer('${id}','${pid}','${players[pid].name.replace(/'/g,"\\'")}')"><i class="fa fa-pen"></i></button>
+      li.innerHTML = `<span>${p.name}</span>
+        <button class="player-edit-btn" title="Edytuj" onclick="event.stopPropagation();window.editPlayer('${id}','${pid}','${p.name.replace(/'/g,"\\'")}')"><i class="fa fa-pen"></i></button>
         <button class="player-remove-btn" title="Usuń" onclick="event.stopPropagation();window.removePlayer('${id}','${pid}')"><i class="fa fa-trash"></i></button>
       `;
-      // Dodaj znacznik tymczasowego transferu!
-      if (players[pid].temporaryTransfer) {
-        li.innerHTML += ` <span style="color:#ffb400;font-weight:bold;">(tymczasowo do ${players[pid].temporaryTransfer.endDate})</span>`;
+      if (p.temporaryTransfer) {
+        li.innerHTML += ` <span style="color:#ffb400;font-weight:bold;">(tymczasowo do ${p.temporaryTransfer.endDate})</span>`;
       }
-      li.addEventListener('click', () => showPlayerDetails(id, pid, players[pid]));
+      li.addEventListener('click', () => showPlayerDetails(id, pid, p));
       list.appendChild(li);
     }
   }
