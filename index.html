@@ -1284,13 +1284,13 @@ document.getElementById('transferPlayerBtn').onclick = function() {
       <select id="transferTargetTeam">${teamsOpts}</select>
       <label>Typ przeniesienia:</label>
       <select id="transferType">
-        <option value="permanent">Na stałe</option>
+        <option value ="permanent">Na stałe</option>
         <option value="temporary">Tymczasowo</option>
-      </select>
+      <select>
       <div id="transferPeriodDiv" style="display:none;">
         <label>Do kiedy? (data)</label>
         <input type="date" id="transferEndDate">
-      </div>
+      <div>
       <button id="confirmTransferBtn">Przenieś</button>
     ;
     playerDetails.innerHTML += html;
