@@ -1279,7 +1279,7 @@ document.getElementById('transferPlayerBtn').onclick = function() {
   db.ref('teams').once('value').then(snap=>{
     const teams = snap.val()||{};
     let teamsOpts = Object.entries(teams).map(([tid,t])=>`<option value="${tid}">${t.name}</option>`).join('');
-    const html = `
+    const html = 
       <label>Do której drużyny?</label>
       <select id="transferTargetTeam">${teamsOpts}</select>
       <label>Typ przeniesienia:</label>
@@ -1292,7 +1292,7 @@ document.getElementById('transferPlayerBtn').onclick = function() {
         <input type="date" id="transferEndDate">
       </div>
       <button id="confirmTransferBtn">Przenieś</button>
-    `;
+    ;
     playerDetails.innerHTML += html;
     document.getElementById('transferType').onchange = function() {
       document.getElementById('transferPeriodDiv').style.display =
